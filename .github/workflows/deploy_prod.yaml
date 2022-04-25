@@ -34,6 +34,6 @@ jobs:
           --vpc-connector=curator-vpc-connector \
           --source=. \
           --port=8000 \
-          --set-env-vars=DJANGO_SETTINGS_MODULE=curation_portal.settings.base,ALLOWED_HOSTS=curator.populationgenomics.org.au,CURATION_PORTAL_AUTH_HEADER=X-Goog-Authenticated-User-Email,DB_ENGINE=django.db.backends.postgresql,DB_HOST=10.48.64.3,DB_PORT=5432,DB_DATABASE=lof_curation,DB_USER=lof_curation \
+          --set-env-vars=DJANGO_SETTINGS_MODULE=curation_portal.settings.base,ALLOWED_HOSTS=curator.populationgenomics.org.au,CURATION_PORTAL_AUTH_HEADER=X-Goog-Authenticated-User-Email,DB_ENGINE=django.db.backends.postgresql,DB_HOST=10.48.64.3,DB_PORT=5432,DB_DATABASE=curator-prod,DB_USER=curator-prod \
           --update-secrets=SECRET_KEY=django-secret-key-prod:latest,DB_PASSWORD=postgres-password-prod:latest \
           curator-prod

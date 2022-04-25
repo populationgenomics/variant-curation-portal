@@ -18,11 +18,11 @@ The following steps use the `prod` environment, but simply replace `prod` with a
 1. Reserve a static external IP address.
 1. Create a CNAME record to associate the IP address with a subdomain.
 1. Create a managed PostgreSQL instance, called `curator-postgres-prod`, with the smallest possible resource footprint and a private IP. Make sure to enable regular backups. To enable [full query logs](https://cloud.google.com/sql/docs/postgres/pg-audit), enable the `cloudsql.enable_pgaudit` flag and set the `pgaudit.log` flag to `all`.
-1. Add an `lof_curation` DB user and a database of the same name.
+1. Add a `curator-prod` DB user and a database of the same name.
 1. Create a service account `curator-prod` for running the Cloud Run instance.
 1. In the Secret Manager, create two secrets:
     - `django-secret-key-prod` (50 random characters)
-    - `postgres-password-prod` (copy password from the `lof_curation` DB user)
+    - `postgres-password-prod` (copy password from the `curator-prod` DB user)
 1. Grant the `curator-prod` service account *Secret Manager Secret Accessor* permissions to the secrets.
 1. Create a VM called `curator-admin` using the `curator-prod` service account and connect using ssh:
 
