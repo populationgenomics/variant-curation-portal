@@ -31,9 +31,9 @@ jobs:
           --region=australia-southeast1 \
           --service-account=curator-prod@curator-348003.iam.gserviceaccount.com \
           --no-allow-unauthenticated \
-          --vpc-connector=curator-vpc-connector \
+          --add-cloudsql-instances=curator-348003:australia-southeast1:curator-postgres \
           --source=. \
           --port=8000 \
-          --set-env-vars=DJANGO_SETTINGS_MODULE=curation_portal.settings.base,ALLOWED_HOSTS=curator.populationgenomics.org.au,CURATION_PORTAL_AUTH_HEADER=X-Goog-Authenticated-User-Email,DB_ENGINE=django.db.backends.postgresql,DB_HOST=10.48.64.3,DB_PORT=5432,DB_DATABASE=curator-prod,DB_USER=curator-prod \
+          --set-env-vars=DJANGO_SETTINGS_MODULE=curation_portal.settings.base,ALLOWED_HOSTS=curator.populationgenomics.org.au,CURATION_PORTAL_AUTH_HEADER=X-Goog-Authenticated-User-Email,DB_ENGINE=django.db.backends.postgresql,DB_HOST=/cloudsql/curator-348003:australia-southeast1:curator-postgres,DB_DATABASE=curator-prod,DB_USER=curator-prod \
           --update-secrets=SECRET_KEY=django-secret-key-prod:latest,DB_PASSWORD=postgres-password-prod:latest \
           curator-prod
