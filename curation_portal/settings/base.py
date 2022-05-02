@@ -138,7 +138,9 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 SECURE_BROWSER_XSS_FILTER = True
 
-SECURE_SSL_REDIRECT = True
+# The HTTPS load balancer on GCP terminates the SSL connection
+# (and redirects HTTP to HTTPS), so don't redirect repeatedly.
+SECURE_SSL_REDIRECT = False
 
 SESSION_COOKIE_SECURE = True
 
