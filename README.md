@@ -71,7 +71,7 @@ The following steps use the `prod` environment, but simply replace `prod` with a
 1. Set up a `curator-deploy` service account and store its JSON key as the `GCP_DEPLOY_KEY` GitHub Actions secret.
 1. Grant the `curator-deploy` service account the *Cloud Run Admin* role for the `curator-prod` Cloud Run service.
 1. Grant the `curator-deploy` service account the *Artifact Registry Writer* role for the `cloud-run-source-deploy` Artifact Registry repository.
-1. Grant the `curator-deploy` service account the *Storage Object Admin* role for the `curator-348003_cloudbuild` bucket.
+1. Grant the `curator-deploy` service account the *Storage Admin* role for the `curator-348003_cloudbuild` bucket.
 1. Set up an HTTPS load balancer pointing to the Cloud Run endpoint, using the previously reserved external IP address. Create a new Google-managed certificate that points to the subdomain chosen before.
 1. Configure an OAuth consent screen.
 1. Set up IAP for the HTTPS load balancer.
