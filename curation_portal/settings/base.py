@@ -97,7 +97,7 @@ AUTH_USER_MODEL = "curation_portal.User"
 
 AUTHENTICATION_BACKENDS = [
     "rules.permissions.ObjectPermissionBackend",
-    "django.contrib.auth.backends.RemoteUserBackend",
+    "curation_portal.auth.AuthBackend",
 ]
 
 # Password validation
