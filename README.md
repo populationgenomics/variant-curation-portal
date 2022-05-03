@@ -35,7 +35,8 @@ The following steps use the `prod` environment, but simply replace `prod` with a
     - `postgres-password-prod` (copy password from the `curator-prod` DB user)
     - `django-secret-key-prod` (50 random characters)
 1. Create a service account `curator-prod` for running the Cloud Run instance.
-1. Grant the `curator-prod` service account *Secret Manager Secret Accessor* permissions to the secrets.
+1. Grant the `curator-prod` service account the *Secret Manager Secret Accessor* role to the secrets.
+1. Grant the `curator-prod` service account the *Cloud SQL Client* role.
 1. Open a Cloud Shell and build the Docker container:
 
     ```sh
@@ -68,9 +69,15 @@ The following steps use the `prod` environment, but simply replace `prod` with a
 
 1. Deploy to Cloud Run, using the `gcloud run deploy` command from the [`deploy_prod` workflow](.github/workflows/deploy_prod.yaml).
 1. Set up a `curator-deploy` service account and store its JSON key as the `GCP_DEPLOY_KEY` GitHub Actions secret.
-1. Grant the `curator-deploy` service account *Cloud Run Admin* permissions for the `curator-prod` Cloud Run service.
+1. Grant the `curator-deploy` service account the *Cloud Run Admin* role for the `curator-prod` Cloud Run service.
 1. Set up an HTTPS load balancer pointing to the Cloud Run endpoint, using the previously reserved external IP address. Create a new Google-managed certificate that points to the subdomain chosen before.
 1. Configure an OAuth consent screen.
 1. Set up IAP for the HTTPS load balancer.
 1. Create a Google Group called `curator-prod-access` to control who can access the portal through IAP.
 1. On the IAP resource, grant the *IAP-Secured Web App User* role to the `curator-prod-access` group.
+
+## Authentication using IAP
+
+IAP sets the [`X-Goog-Authenticated-User-Email`](https://cloud.google.com/iap/docs/identity-howto#getting_the_users_identity_with_signed_headers) header, which has a value of the form `accounts.google.com:example@gmail.com`. In order to use this header in the Django [`RemoteUserMiddleware`](https://docs.djangoproject.com/en/4.0/howto/auth-remote-user/), `CURATION_PORTAL_AUTH_HEADER` must be set to `HTTP_X_GOOG_AUTHENTICATED_USER_EMAIL` (note the `HTTP_` prefix), as that's used for the HTTP header key in Django's `request.META`.
+
+We override `clean_username` in the [`AuthBackend`](curation_portal/auth.py), to remove the `accounts.google.com:` prefix from the user name.
