@@ -19,16 +19,24 @@ The following steps use the `prod` environment, but simply replace `prod` with a
 1. Create a CNAME record to associate the IP address with a subdomain.
 1. Create a managed PostgreSQL instance, called `curator-postgres`, with a public IP and the smallest possible resource footprint. Make sure to enable regular backups. To enable [full query logs](https://cloud.google.com/sql/docs/postgres/pg-audit), enable the `cloudsql.enable_pgaudit` flag and set the `pgaudit.log` flag to `all`.
 1. Add a `curator-prod` DB user and a database of the same name.
-1. Connect to the instance to configure audit logs:
+1. Connect to the instance:
 
     ```sh
     gcloud sql connnect curator-postgres
     ```
 
-    Enable the `pgaudit` extension:
+    To enable audit logs, create the `pgaudit` extension:
 
     ```sql
     CREATE EXTENSION pgaudit;
+    ```
+
+    To isolate the database from other users (e.g. `curator-dev`), run:
+
+    ```sql
+    REVOKE connect ON DATABASE "curator-prod" FROM PUBLIC;
+
+    GRANT connect ON DATABASE "curator-prod" TO "curator-prod";
     ```
 
 1. In the Secret Manager, create two secrets:
