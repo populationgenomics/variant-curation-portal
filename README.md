@@ -2,6 +2,11 @@
 
 ![CI status bage](https://github.com/populationgenomics/variant-curation-portal/workflows/CI/badge.svg)
 
+## Issue tracking
+
+- For non-confidential issues, please use [this repository's issue tracker](https://github.com/populationgenomics/variant-curation-portal/issues).
+- For confidential issues (e.g. referring to individual-level data), please use the [*private* issue tracker](https://github.com/populationgenomics/variant-curation-portal-private/issues).
+
 ## Deployment
 
 In the [upstream repository](https://github.com/macarthur-lab/lof-curation-portal-env), deployment is based on Kubernetes. At the CPG, we use the Identity-Aware Proxy (IAP) and Cloud Run instead.
