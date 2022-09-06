@@ -92,35 +92,6 @@ def load_gnomad_v3_variants():
     return ds
 
 
-def fetch_gene(gene_id, reference_genome):
-    query = """
-    query Gene($gene_id: String!, $reference_genome: ReferenceGenomeId!) {
-        gene(gene_id: $gene_id, reference_genome: $reference_genome) {
-            chrom
-            start
-            stop
-        }
-    }
-    """
-
-    variables = {
-        "gene_id": gene_id,
-        "reference_genome": reference_genome,
-    }
-
-    headers = {"content-type": "application/json"}
-    response = requests.post(
-        "https://gnomad.broadinstitute.org/api",
-        json={"query": query, "variables": variables},
-        headers=headers,
-    ).json()
-
-    if "errors" in response:
-        raise Exception(f"Failed to fetch gene ({', '.join(response['errors'])})")
-
-    return response["data"]["gene"]
-
-
 def variant_id(locus, alleles):
     return (
         locus.contig.replace("^chr", "")
@@ -147,17 +118,16 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         ds = load_gnomad_v3_variants()
 
     reference_genome = "GRCh37" if gnomad_version == 2 else "GRCh38"
-    genes = [fetch_gene(gene_id, reference_genome) for gene_id in gene_ids]
-
-    ds = hl.filter_intervals(
-        ds,
-        [
-            hl.parse_locus_interval(
-                f"{gene['chrom']}:{gene['start']}-{gene['stop']}", reference_genome=reference_genome
-            )
-            for gene in genes
-        ],
+    # Work around rate limit of the gnomAD API for fetching gene intervals by
+    # using the GENCODE table directly.
+    # Would need to provide the correct GENCODE GTF here for gnomAD v3.
+    assert gnomad_version == 2
+    gene_intervals = hl.experimental.get_gene_intervals(
+        gene_ids=gene_ids,
+        reference_genome=reference_genome
     )
+
+    ds = hl.filter_intervals(ds, gene_intervals)
 
     gene_ids = hl.set(gene_ids)
 
@@ -179,7 +149,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
 
     # Format for LoF curation portal
     ds = ds.select(
-        reference_genome="GRCh37" if gnomad_version == 2 else "GRCh38",
+        reference_genome=reference_genome,
         variant_id=variant_id(ds.locus, ds.alleles),
         liftover_variant_id=hl.missing(hl.tstr),
         qc_filter=hl.delimit(
