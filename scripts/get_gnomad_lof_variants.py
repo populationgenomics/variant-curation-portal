@@ -3,6 +3,7 @@ import argparse
 import hail as hl
 import requests
 
+from cpg_utils.hail_batch import init_batch, output_path
 
 CONSEQUENCE_TERMS = [
     "transcript_ablation",
@@ -242,12 +243,14 @@ if __name__ == "__main__":
         with open_file(args.genes_file) as f:
             genes = [l.strip() for l in f if l.strip()]
 
+    init_batch()
+
     variants = get_gnomad_lof_variants(
         args.gnomad_version, genes, include_low_confidence=args.include_low_confidence
     )
 
     if args.output.endswith(".ht"):
-        variants.write(args.output)
+        variants.write(output_path(args.output))
     else:
         # Convert to JSON and write
         rows = variants.annotate(json=hl.json(variants.row_value)).key_by().select("json").collect()
