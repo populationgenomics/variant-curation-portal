@@ -196,7 +196,7 @@ if __name__ == "__main__":
     group.add_argument("--gene-ids", nargs="+", metavar="GENE", help="Ensembl IDs of genes")
     group.add_argument(
         "--genes-table",
-        help="relative dataset path to a Hail table with a gene_id field containing Ensembl IDs",
+        help="relative dataset path (analysis category) to a Hail table with a gene_id field containing Ensembl IDs",
     )
     parser.add_argument(
         "--gnomad-version",
@@ -211,7 +211,9 @@ if __name__ == "__main__":
         help="Include variants marked low-confidence by LOFTEE",
     )
     parser.add_argument(
-        "--output", required=True, help="relative dataset path destination for variants file"
+        "--output",
+        required=True,
+        help="relative dataset path (analysis category) for variants file",
     )
     args = parser.parse_args()
 
@@ -220,7 +222,7 @@ if __name__ == "__main__":
     if args.gene_ids:
         genes = args.gene_ids
     else:
-        genes_table = hl.read_table(dataset_path(args.genes_table))
+        genes_table = hl.read_table(dataset_path(args.genes_table, "analysis"))
         genes = list(set(genes_table.gene_id.collect()))
 
     variants = get_gnomad_lof_variants(
