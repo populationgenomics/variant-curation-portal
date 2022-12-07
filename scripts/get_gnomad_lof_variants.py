@@ -85,7 +85,9 @@ def load_gnomad_v2_variants():
 
 
 def load_gnomad_v3_variants():
-    ds = hl.read_table("gs://gcp-public-data--gnomad/release/3.1.1/ht/genomes/gnomad.genomes.v3.1.1.sites.ht")
+    ds = hl.read_table(
+        "gs://gcp-public-data--gnomad/release/3.1.1/ht/genomes/gnomad.genomes.v3.1.1.sites.ht"
+    )
     ds = ds.select(genome=ds.row_value.drop("vep"), vep=ds.vep)
     ds = ds.annotate(exome=hl.missing(ds.genome.dtype))
 
@@ -123,8 +125,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
     # Would need to provide the correct GENCODE GTF here for gnomAD v3.
     assert gnomad_version == 2
     gene_intervals = hl.experimental.get_gene_intervals(
-        gene_ids=gene_ids,
-        reference_genome=reference_genome
+        gene_ids=gene_ids, reference_genome=reference_genome
     )
 
     ds = hl.filter_intervals(ds, gene_intervals)
@@ -193,7 +194,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Get gnomAD pLoF variants in selected genes.")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--gene-ids", nargs="+", metavar="GENE", help="Ensembl IDs of genes")
-    group.add_argument("--genes-file", help="path to file containing list of Ensembl IDs of genes")
+    group.add_argument(
+        "--genes-table",
+        help="relative dataset path to a Hail table with a gene_id field containing Ensembl IDs",
+    )
     parser.add_argument(
         "--gnomad-version",
         type=int,
@@ -206,23 +210,25 @@ if __name__ == "__main__":
         action="store_true",
         help="Include variants marked low-confidence by LOFTEE",
     )
-    parser.add_argument("--output", required=True, help="destination for variants file")
+    parser.add_argument(
+        "--output", required=True, help="relative dataset path destination for variants file"
+    )
     args = parser.parse_args()
+
+    init_batch()
 
     if args.gene_ids:
         genes = args.gene_ids
     else:
-        with open_file(dataset_path(args.genes_file)) as f:
-            genes = [l.strip() for l in f if l.strip()]
-
-    init_batch()
+        genes_table = hl.read_table(dataset_path(args.genes_table))
+        genes = list(set(genes_table.gene_id.collect()))
 
     variants = get_gnomad_lof_variants(
         args.gnomad_version, genes, include_low_confidence=args.include_low_confidence
     )
 
     if args.output.endswith(".ht"):
-        variants.write(output_path(args.output, 'analysis'))
+        variants.write(output_path(args.output, "analysis"))
     else:
         # Convert to JSON and write
         rows = variants.annotate(json=hl.json(variants.row_value)).key_by().select("json").collect()
