@@ -5,7 +5,7 @@ import argparse
 import hail as hl
 import requests
 
-from cpg_utils.hail_batch import init_batch, output_path
+from cpg_utils.hail_batch import init_batch, dataset_path, output_path
 
 CONSEQUENCE_TERMS = [
     "transcript_ablation",
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     if args.gene_ids:
         genes = args.gene_ids
     else:
-        with open_file(args.genes_file) as f:
+        with open_file(dataset_path(args.genes_file)) as f:
             genes = [l.strip() for l in f if l.strip()]
 
     init_batch()
