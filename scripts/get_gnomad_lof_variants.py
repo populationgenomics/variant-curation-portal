@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+
 import argparse
 
 import hail as hl
 import requests
 
+from cpg_utils.hail_batch import init_batch, dataset_path, output_path
 
 CONSEQUENCE_TERMS = [
     "transcript_ablation",
@@ -82,40 +85,13 @@ def load_gnomad_v2_variants():
 
 
 def load_gnomad_v3_variants():
-    ds = hl.read_table("gs://gcp-public-data--gnomad/release/3.1.1/ht/genomes/gnomad.genomes.v3.1.1.sites.ht")
+    ds = hl.read_table(
+        "gs://gcp-public-data--gnomad/release/3.1.1/ht/genomes/gnomad.genomes.v3.1.1.sites.ht"
+    )
     ds = ds.select(genome=ds.row_value.drop("vep"), vep=ds.vep)
     ds = ds.annotate(exome=hl.missing(ds.genome.dtype))
 
     return ds
-
-
-def fetch_gene(gene_id, reference_genome):
-    query = """
-    query Gene($gene_id: String!, $reference_genome: ReferenceGenomeId!) {
-        gene(gene_id: $gene_id, reference_genome: $reference_genome) {
-            chrom
-            start
-            stop
-        }
-    }
-    """
-
-    variables = {
-        "gene_id": gene_id,
-        "reference_genome": reference_genome,
-    }
-
-    headers = {"content-type": "application/json"}
-    response = requests.post(
-        "https://gnomad.broadinstitute.org/api",
-        json={"query": query, "variables": variables},
-        headers=headers,
-    ).json()
-
-    if "errors" in response:
-        raise Exception(f"Failed to fetch gene ({', '.join(response['errors'])})")
-
-    return response["data"]["gene"]
 
 
 def variant_id(locus, alleles):
@@ -144,17 +120,15 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         ds = load_gnomad_v3_variants()
 
     reference_genome = "GRCh37" if gnomad_version == 2 else "GRCh38"
-    genes = [fetch_gene(gene_id, reference_genome) for gene_id in gene_ids]
-
-    ds = hl.filter_intervals(
-        ds,
-        [
-            hl.parse_locus_interval(
-                f"{gene['chrom']}:{gene['start']}-{gene['stop']}", reference_genome=reference_genome
-            )
-            for gene in genes
-        ],
+    # Work around rate limit of the gnomAD API for fetching gene intervals by
+    # using the GENCODE table directly.
+    # Would need to provide the correct GENCODE GTF here for gnomAD v3.
+    assert gnomad_version == 2
+    gene_intervals = hl.experimental.get_gene_intervals(
+        gene_ids=gene_ids, reference_genome=reference_genome
     )
+
+    ds = hl.filter_intervals(ds, gene_intervals)
 
     gene_ids = hl.set(gene_ids)
 
@@ -176,7 +150,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
 
     # Format for LoF curation portal
     ds = ds.select(
-        reference_genome="GRCh37" if gnomad_version == 2 else "GRCh38",
+        reference_genome=reference_genome,
         variant_id=variant_id(ds.locus, ds.alleles),
         liftover_variant_id=hl.missing(hl.tstr),
         qc_filter=hl.delimit(
@@ -220,7 +194,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Get gnomAD pLoF variants in selected genes.")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--gene-ids", nargs="+", metavar="GENE", help="Ensembl IDs of genes")
-    group.add_argument("--genes-file", help="path to file containing list of Ensembl IDs of genes")
+    group.add_argument(
+        "--genes-table",
+        help="relative dataset path (analysis category) to a Hail table with a gene_id field containing Ensembl IDs",
+    )
     parser.add_argument(
         "--gnomad-version",
         type=int,
@@ -233,21 +210,27 @@ if __name__ == "__main__":
         action="store_true",
         help="Include variants marked low-confidence by LOFTEE",
     )
-    parser.add_argument("--output", required=True, help="destination for variants file")
+    parser.add_argument(
+        "--output",
+        required=True,
+        help="relative dataset path (analysis category) for variants file",
+    )
     args = parser.parse_args()
+
+    init_batch()
 
     if args.gene_ids:
         genes = args.gene_ids
     else:
-        with open_file(args.genes_file) as f:
-            genes = [l.strip() for l in f if l.strip()]
+        genes_table = hl.read_table(dataset_path(args.genes_table, "analysis"))
+        genes = list(set(genes_table.gene_id.collect()))
 
     variants = get_gnomad_lof_variants(
         args.gnomad_version, genes, include_low_confidence=args.include_low_confidence
     )
 
     if args.output.endswith(".ht"):
-        variants.write(args.output)
+        variants.write(output_path(args.output, "analysis"))
     else:
         # Convert to JSON and write
         rows = variants.annotate(json=hl.json(variants.row_value)).key_by().select("json").collect()
