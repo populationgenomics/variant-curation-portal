@@ -252,7 +252,7 @@ if __name__ == "__main__":
     )
 
     if args.output.endswith(".ht"):
-        variants.write(output_path(args.output))
+        variants.write(output_path(args.output, 'analysis'))
     else:
         # Convert to JSON and write
         rows = variants.annotate(json=hl.json(variants.row_value)).key_by().select("json").collect()
