@@ -22,3 +22,9 @@ htmlcov
 
 # Hail logs
 hail-*.log
+
+# Python virtual env
+venv
+
+# VS Code
+.vscode
