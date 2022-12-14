@@ -20,6 +20,9 @@ htmlcov
 # dotenv for Docker Compose
 .env
 
+# direnv dotenv for shell
+.envrc
+
 # Hail logs
 hail-*.log
 
