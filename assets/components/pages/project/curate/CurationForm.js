@@ -142,34 +142,73 @@ class CurationForm extends React.Component {
           />
           <div style={{ columns: 2 }}>
             <Header sub>Technical</Header>
-            {[
-              "flag_mapping_error",
-              "flag_genotyping_error",
-              "flag_homopolymer",
-              "flag_no_read_data",
-              "flag_reference_error",
-              "flag_strand_bias",
-            ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
-            <Header sub>Rescue</Header>
-            {["flag_mnp", "flag_essential_splice_rescue", "flag_in_frame_exon"].map(flag =>
+            {["flag_no_read_data", "flag_reference_error"].map(flag =>
               this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
             )}
+            <Header sub style={{ paddingLeft: "1em" }}>
+              Genotyping Error
+            </Header>
+            <div style={{ paddingLeft: "1em" }}>
+              {[
+                "flag_low_genotype_quality",
+                "flag_low_read_depth",
+                "flag_allele_balance",
+                "flag_gc_rich",
+                "flag_homopolymer_or_str",
+                "flag_strand_bias",
+              ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+            </div>
+            <Header sub style={{ paddingLeft: "1em" }}>
+              Mapping Error
+            </Header>
+            <div style={{ paddingLeft: "1em" }}>
+              {["flag_self_chain", "flag_str_or_low_complexity", "flag_low_umap_m50"].map(flag =>
+                this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
+              )}
+            </div>
+            <Header sub style={{ paddingLeft: "2em" }}>
+              Dubious Read Alignment
+            </Header>
+            <div style={{ paddingLeft: "2em" }}>
+              {[
+                "flag_mismapped_read",
+                "flag_complex_event",
+                "flag_stutter",
+                "flag_unknown",
+              ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+            </div>
+
             <Header sub>Impact</Header>
-            {[
-              "flag_minority_of_transcripts",
-              "flag_weak_exon_conservation",
-              "flag_last_exon",
-              "flag_other_transcript_error",
-              "flag_first_150_bp",
-              "flag_long_exon",
-              "flag_low_pext",
-              "flag_pext_less_than_half_max",
-              "flag_uninformative_pext",
-              "flag_weak_gene_conservation",
-              "flag_untranslated_transcript",
-            ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+            <Header sub style={{ paddingLeft: "1em" }}>
+              Inconsequential Transcript
+            </Header>
+            <div style={{ paddingLeft: "1em" }}>
+              {[
+                "flag_multiple_annotations",
+                "flag_pext_less_than_half_max",
+                "flag_uninformative_pext",
+                "flag_minority_of_transcripts",
+                "flag_weak_exon_conservation",
+                "flag_untranslated_transcript",
+              ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+            </div>
+            <Header sub style={{ paddingLeft: "1em" }}>
+              Rescue
+            </Header>
+            <div style={{ paddingLeft: "1em" }}>
+              {[
+                "flag_mnp",
+                "flag_frame_restoring_indel",
+                "flag_first_150_bp",
+                "flag_in_frame_sai",
+                "flag_methionine_resuce",
+                "flag_escapes_nmd",
+                "flag_low_truncated",
+              ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+            </div>
+
             <Header sub>Comments</Header>
-            {["flag_skewed_ab", "flag_possible_splice_site_rescue"].map(flag =>
+            {["flag_flow_chart_overridden", "flag_second_opinion_required"].map(flag =>
               this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
             )}
           </div>
