@@ -33,10 +33,6 @@
         "description": "Genotyping error",
         "type": ["boolean", "null"]
       },
-      "flag_homopolymer": {
-        "description": "Homopolymer",
-        "type": ["boolean", "null"]
-      },
       "flag_no_read_data": {
         "description": "No read data",
         "type": ["boolean", "null"]
@@ -45,48 +41,92 @@
         "description": "Reference error",
         "type": ["boolean", "null"]
       },
+      "flag_self_chain": {
+        "description": "Self chain > 5",
+        "type": ["boolean", "null"]
+      },
+      "flag_str_or_low_complexity": {
+        "description": "STR/Low complexity",
+        "type": ["boolean", "null"]
+      },
+      "flag_mismapped_read": {
+        "description": "Mis-mapped read",
+        "type": ["boolean", "null"]
+      },
+      "flag_complex_event": {
+        "description": "Complex event",
+        "type": ["boolean", "null"]
+      },
+      "flag_stutter": {
+        "description": "Stutter",
+        "type": ["boolean", "null"]
+      },
+      "flag_unknown": {
+        "description": "Unknown",
+        "type": ["boolean", "null"]
+      },
+      "flag_low_genotype_quality": {
+        "description": "Genotype quality < 30",
+        "type": ["boolean", "null"]
+      },
+      "flag_low_read_depth": {
+        "description": "Read depth < 15",
+        "type": ["boolean", "null"]
+      },
+      "flag_allele_balance": {
+        "description": "Allele balance het. < 0.25, hom. < 0.8",
+        "type": ["boolean", "null"]
+      },
+      "flag_gc_rich": {
+        "description": "GC rich +/- 50 bp",
+        "type": ["boolean", "null"]
+      },
+      "flag_homopolymer_or_str": {
+        "description": "Homopolymer/STR > 5",
+        "type": ["boolean", "null"]
+      },
       "flag_strand_bias": {
         "description": "Strand bias",
         "type": ["boolean", "null"]
       },
+      "flag_multiple_annotations": {
+        "description": "Multiple annotations",
+        "type": ["boolean", "null"]
+      },
+      "flag_in_frame_sai": {
+        "description": "In-frame SAI ≥ 0.2",
+        "type": ["boolean", "null"]
+      },
+      "flag_methionine_resuce": {
+        "description": "Methionine rescue",
+        "type": ["boolean", "null"]
+      },
+      "flag_escapes_nmd": {
+        "description": "Escapes NMD",
+        "type": ["boolean", "null"]
+      },
+      "flag_frame_restoring_indel": {
+        "description": "Frame-restoring indel",
+        "type": ["boolean", "null"]
+      },
+      "flag_low_truncated": {
+        "description": "< 25% truncated",
+        "type": ["boolean", "null"]
+      },
       "flag_mnp": {
-        "description": "Multi-nucleotide variant",
-        "type": ["boolean", "null"]
-      },
-      "flag_essential_splice_rescue": {
-        "description": "Essential splice rescue",
-        "type": ["boolean", "null"]
-      },
-      "flag_in_frame_exon": {
-        "description": "In-frame exon",
+        "description": "In-phase multi-nucleotide variant",
         "type": ["boolean", "null"]
       },
       "flag_minority_of_transcripts": {
-        "description": "Minority of transcripts",
+        "description": "Minority of transcripts ≤ 50%",
         "type": ["boolean", "null"]
       },
       "flag_weak_exon_conservation": {
         "description": "Weak exon conservation",
         "type": ["boolean", "null"]
       },
-      "flag_last_exon": {
-        "description": "Last exon",
-        "type": ["boolean", "null"]
-      },
-      "flag_other_transcript_error": {
-        "description": "Other transcript error",
-        "type": ["boolean", "null"]
-      },
       "flag_first_150_bp": {
-        "description": "First 150 base pairs",
-        "type": ["boolean", "null"]
-      },
-      "flag_long_exon": {
-        "description": "Long exon",
-        "type": ["boolean", "null"]
-      },
-      "flag_low_pext": {
-        "description": "Low pext (< 0.2)",
+        "description": "First 150 bp",
         "type": ["boolean", "null"]
       },
       "flag_pext_less_than_half_max": {
@@ -97,20 +137,16 @@
         "description": "Uninformative pext",
         "type": ["boolean", "null"]
       },
-      "flag_weak_gene_conservation": {
-        "description": "Weak gene conservation",
-        "type": ["boolean", "null"]
-      },
       "flag_untranslated_transcript": {
         "description": "Untranslated transcript",
         "type": ["boolean", "null"]
       },
-      "flag_skewed_ab": {
-        "description": "Skewed AB",
+      "flag_second_opinion_required": {
+        "description": "Second opinion required",
         "type": ["boolean", "null"]
       },
-      "flag_possible_splice_site_rescue": {
-        "description": "Possible splice site rescue",
+      "flag_flow_chart_overridden": {
+        "description": "Flow chart overridden",
         "type": ["boolean", "null"]
       },
       "created_at": {
