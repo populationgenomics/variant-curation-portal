@@ -1,4 +1,3 @@
-from django.contrib.auth.models import Permission
 from django.core.management import BaseCommand
 
 from curation_portal.models import User, Variant, Project, CurationAssignment, VariantAnnotation
