@@ -268,7 +268,7 @@ if __name__ == "__main__":
     # Fetch the (optionally filtered and annotated) pLoF variants from the appropriate gnomAD dataset.
     variants = get_gnomad_lof_variants(
         args.gnomad_version, genes, include_low_confidence=args.include_low_confidence,
-        annotate_caf=args.annotate_caf, flag_curation=args.flag_curated
+        annotate_caf=args.annotate_caf, flag_curated=args.flag_curated
     )
 
     # Output the final dataset.
