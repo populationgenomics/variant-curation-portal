@@ -176,6 +176,8 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         # Annotate already-curated variants with their verdict.
         ds = ds.annotate(**curation[ds.locus, ds.alleles].select("Verdict")).rename({'Verdict' : 'curation_verdict'})
 
+    ds.describe()
+
     # Format for the LoF curation portal.
     ds = ds.select(
         reference_genome=reference_genome,
