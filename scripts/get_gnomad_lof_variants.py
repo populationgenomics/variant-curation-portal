@@ -162,7 +162,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         # Annotate each variant with the max CAF for the associated gene.
         ds = ds.annotate(**caf_per_gene[ds.gene_symbol])
 
-    if flag_curated:
+    if flag_curated and reference_genome == "GRCh37":
         # Read the curation results from the gnomAD Downloads page.
         curation = hl.Table.from_pandas(pd.read_csv('https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/all_homozygous_curation_results.csv'))
 
