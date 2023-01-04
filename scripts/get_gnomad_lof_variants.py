@@ -159,11 +159,11 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         constraint = constraint.repartition(10)
 
         # Extract the max CAF score per gene (from across transcripts).
-        caf_per_gene = constraint.group_by(constraint.gene) \
+        caf_per_gene = constraint.group_by(constraint.gene_id) \
                                  .aggregate(max_caf=hl.agg.max(constraint.classic_caf))
 
         # Annotate each variant with the max CAF for the associated gene.
-        ds = ds.annotate(**caf_per_gene[ds.gene_symbol])
+        ds = ds.annotate(**caf_per_gene[ds.vep.transcript_consequences.gene_id])
 
     # Optionally annotate with the results of the previous gnomAD v2 curation.
     if flag_curated and gnomad_version == 2:
