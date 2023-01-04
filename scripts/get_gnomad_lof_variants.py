@@ -190,19 +190,20 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         AC=add(ds.exome.freq[0].AC, ds.genome.freq[0].AC),
         AN=add(ds.exome.freq[0].AN, ds.genome.freq[0].AN),
         n_homozygotes=add(ds.exome.freq[0].homozygote_count, ds.genome.freq[0].homozygote_count),
+        max_caf = ds.max_caf,
         annotations=ds.lof_consequences.map(
             lambda csq: csq.select(
                 "gene_id",
                 "gene_symbol",
                 "transcript_id",
-                "max_caf",
-                "curation_verdict",
                 consequence=hl.sorted(csq.consequence_terms, lambda t: CONSEQUENCE_TERM_RANK[t])[0],
                 loftee=csq.lof,
                 loftee_flags=csq.lof_flags,
                 loftee_filter=csq.lof_filter,
             )
         ),
+
+        curation_verdict = ds.curation_verdict,
     )
 
     ds = ds.annotate(
