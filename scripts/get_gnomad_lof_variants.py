@@ -52,7 +52,6 @@ CONSEQUENCE_TERMS = [
 # Maps each consequence term to its rank in the list
 CONSEQUENCE_TERM_RANK = hl.dict({term: rank for rank, term in enumerate(CONSEQUENCE_TERMS)})
 
-
 PLOF_CONSEQUENCE_TERMS = hl.set(
     [
         "transcript_ablation",
@@ -120,6 +119,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         ds = load_gnomad_v3_variants()
 
     reference_genome = "GRCh37" if gnomad_version == 2 else "GRCh38"
+    
     # Work around rate limit of the gnomAD API for fetching gene intervals by
     # using the GENCODE table directly.
     # Would need to provide the correct GENCODE GTF here for gnomAD v3.
@@ -139,6 +139,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
                 gene_ids.contains(csq.gene_id)
                 & csq.consequence_terms.any(lambda term: PLOF_CONSEQUENCE_TERMS.contains(term))
                 & (include_low_confidence | (csq.lof == "HC"))
+                & (include_low_confidence | (hl.is_missing(csq.lof_flags)))
             )
         )
     )
@@ -182,7 +183,6 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
 
     return ds
 
-
 def open_file(path, mode="r"):
     if path.startswith("gs://"):
         return hl.hadoop_open(path, mode)
@@ -193,7 +193,11 @@ def open_file(path, mode="r"):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Get gnomAD pLoF variants in selected genes.")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--gene-ids", nargs="+", metavar="GENE", help="Ensembl IDs of genes")
+    group.add_argument(
+        "--gene-ids", 
+        nargs="+", 
+        metavar="GENE", 
+        help="Ensembl IDs of genes")
     group.add_argument(
         "--genes-table",
         help="relative dataset path (analysis category) to a Hail table with a gene_id field containing Ensembl IDs",
@@ -208,7 +212,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--include-low-confidence",
         action="store_true",
-        help="Include variants marked low-confidence by LOFTEE",
+        help="Include variants marked low-confidence or otherwise flagged by LOFTEE",
     )
     parser.add_argument(
         "--output",
