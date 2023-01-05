@@ -250,12 +250,12 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--annotate-caf",
-        action="store_false",
+        action="store_true",
         help="Annotate the variants with cumulative allele frequency estimates (gnomAD v2 only)",
     )
     parser.add_argument(
         "--flag-curated",
-        action="store_false",
+        action="store_true",
         help="Flag variants that have already been curated (gnomAD v2 only)",
     )
     parser.add_argument(
@@ -289,5 +289,5 @@ if __name__ == "__main__":
     else:
         # Convert to JSON and write
         rows = variants.annotate(json=hl.json(variants.row_value)).key_by().select("json").collect()
-        with open_file(args.output, "w") as f:
+        with open_file(output_path(args.output, "analysis"), "w") as f:
             f.write("[" + ",".join([row.json for row in rows]) + "]")
