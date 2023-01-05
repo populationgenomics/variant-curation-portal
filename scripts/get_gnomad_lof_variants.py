@@ -66,7 +66,16 @@ PLOF_CONSEQUENCE_TERMS = hl.set(
 GNOMAD_V2_EXOMES = 'gs://gcp-public-data--gnomad/release/2.1.1/ht/exomes/gnomad.exomes.r2.1.1.sites.ht'
 GNOMAD_V2_GENOMES = 'gs://gcp-public-data--gnomad/release/2.1.1/ht/genomes/gnomad.genomes.r2.1.1.sites.ht'
 GNOMAD_V2_CONSTRAINT = 'gs://gcp-public-data--gnomad/release/2.1.1/constraint/gnomad.v2.1.1.lof_metrics.by_transcript.ht'
-GNOMAD_V2_CURATION = 'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/all_homozygous_curation_results.csv'
+GNOMAD_V2_CURATION = ['https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/all_homozygous_curation_results.csv',
+                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/lysosomal_storage_disease_genes_curation_results.csv',
+                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/haploinsufficient_genes_curation_results.csv',
+                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/metabolic_conditions_genes_curation_results.csv',
+                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/gnomAD_addendum_curation_results.csv',
+                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/AP4_curation_results.csv',
+                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/FIG4_curation_results.csv',
+                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/MCOLN1_curation_results.csv',
+                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/NSD1_curation_results.csv'
+                     ]
 
 GNOMAD_V3_GENOMES = 'gs://gcp-public-data--gnomad/release/3.1.1/ht/genomes/gnomad.genomes.v3.1.1.sites.ht'
 
@@ -205,8 +214,11 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
 
     # Optionally annotate with the results of the previous gnomAD v2 curation.
     if flag_curated and gnomad_version == 2:
-        # Read the curation results from the gnomAD Downloads page.
-        curation = hl.Table.from_pandas(pd.read_csv(GNOMAD_V2_CURATION))
+       # Loop through all the curation files and read them into pandas.
+        df_list = (pd.read_csv(file, usecols = ['Variant ID', 'Verdict']) for file in GNOMAD_V2_CURATION)
+
+        # Combine, and convert to a hail table.
+        curation = hl.Table.from_pandas(pd.concat(df_list, ignore_index = True))
 
         # Key the curation results by the locus and alleles.
         curation = curation.key_by(**hl.parse_variant(curation['Variant ID'].replace("-",":"), reference_genome="GRCh37"))
