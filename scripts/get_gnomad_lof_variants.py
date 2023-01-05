@@ -149,35 +149,6 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
     # Filter to variants that passed QC filters in at least one of exomes/genomes
     ds = ds.filter((hl.len(ds.exome.filters) == 0) | (hl.len(ds.genome.filters) == 0))
 
-    # Optionally annotate with CAF estimates.
-    if annotate_caf and gnomad_version == 2:
-        # Load the gnomAD v2 constraint table.
-        constraint = hl.read_table(GNOMAD_V2_CONSTRAINT)
-
-        # Filter to our genes of interest.
-        constraint = constraint.filter(gene_ids.contains(constraint.gene_id))
-        constraint = constraint.repartition(10)
-
-        # Extract the max CAF score per gene (from across transcripts).
-        caf_per_gene = constraint.group_by(constraint.gene_id) \
-                                 .aggregate(max_caf=hl.agg.max(constraint.classic_caf))
-
-        # Annotate each variant with the max CAF for the associated gene.
-        ds = ds.annotate(**caf_per_gene[ds.vep.transcript_consequences.gene_id])
-
-    # Optionally annotate with the results of the previous gnomAD v2 curation.
-    if flag_curated and gnomad_version == 2:
-        # Read the curation results from the gnomAD Downloads page.
-        curation = hl.Table.from_pandas(pd.read_csv(GNOMAD_V2_CURATION))
-
-        # Key the curation results by the locus and alleles.
-        curation = curation.key_by(**hl.parse_variant(curation['Variant ID'].replace("-",":"), reference_genome="GRCh37"))
-       
-        # Annotate already-curated variants with their verdict.
-        ds = ds.annotate(**curation[ds.locus, ds.alleles].select("Verdict")).rename({'Verdict' : 'curation_verdict'})
-
-    ds.describe()
-
     # Format for the LoF curation portal.
     ds = ds.select(
         reference_genome=reference_genome,
@@ -192,7 +163,6 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         AC=add(ds.exome.freq[0].AC, ds.genome.freq[0].AC),
         AN=add(ds.exome.freq[0].AN, ds.genome.freq[0].AN),
         n_homozygotes=add(ds.exome.freq[0].homozygote_count, ds.genome.freq[0].homozygote_count),
-        max_caf = ds.max_caf,
         annotations=ds.lof_consequences.map(
             lambda csq: csq.select(
                 "gene_id",
@@ -204,14 +174,46 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
                 loftee_filter=csq.lof_filter,
             )
         ),
-
-        curation_verdict = ds.curation_verdict,
     )
 
     ds = ds.annotate(
         qc_filter=hl.if_else(ds.qc_filter == "", "PASS", ds.qc_filter),
         AF=hl.if_else(ds.AN == 0, 0, ds.AC / ds.AN),
     )
+
+    # Optionally annotate with CAF estimates.
+    if annotate_caf and gnomad_version == 2:
+        # Load the gnomAD v2 constraint table.
+        constraint = hl.read_table(GNOMAD_V2_CONSTRAINT)
+
+        # Filter to our genes of interest.
+        constraint = constraint.filter(gene_ids.contains(constraint.gene_id))
+        constraint = constraint.repartition(10)
+
+        # Convert the constraint table to a lookup dictionary, so that map can handle it.
+        lookup = hl.dict(constraint.aggregate(hl.agg.group_by(constraint.transcript,
+                                                 hl.agg.max(constraint.classic_caf))))
+
+        # Add the CAF information for each transcript to the annotations structs.
+        ds = ds.select(
+            annotations = format.annotations.map(
+                lambda csq: csq.annotate(
+                    classic_caf=lookup[csq.transcript_id]
+                )
+            )
+        )
+
+    # Optionally annotate with the results of the previous gnomAD v2 curation.
+    if flag_curated and gnomad_version == 2:
+        # Read the curation results from the gnomAD Downloads page.
+        curation = hl.Table.from_pandas(pd.read_csv(GNOMAD_V2_CURATION))
+
+        # Key the curation results by the locus and alleles.
+        curation = curation.key_by(**hl.parse_variant(curation['Variant ID'].replace("-",":"), reference_genome="GRCh37"))
+       
+        # Annotate already-curated variants with their verdict.
+        ds = ds.annotate(**curation[ds.locus, ds.alleles].select("Verdict")).rename({'Verdict' : 'curation_verdict'})
+
 
     return ds
 
