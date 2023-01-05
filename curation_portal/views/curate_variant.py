@@ -7,9 +7,12 @@ from rest_framework.serializers import ChoiceField, ModelSerializer
 from rest_framework.views import APIView
 
 from curation_portal.filters import AssignmentFilter
+from curation_portal.serializers import CustomFlagCurationResultSerializer
 from curation_portal.models import (
     CurationAssignment,
     CurationResult,
+    CustomFlag,
+    CustomFlagCurationResult,
     Variant,
     VariantAnnotation,
     VariantTag,
@@ -44,10 +47,51 @@ class CurationResultSerializer(ModelSerializer):
         required=False,
         allow_null=True,
     )
+    custom_flags = CustomFlagCurationResultSerializer()
 
     class Meta:
         model = CurationResult
-        fields = (*FLAG_FIELDS, "notes", "should_revisit", "verdict")
+        fields = (*FLAG_FIELDS, "custom_flags", "notes", "should_revisit", "verdict")
+
+    def create(self, validated_data):
+        # Pop before calling super's update so we can handle the saving of custom flags manually.
+        custom_flags = validated_data.pop("custom_flags", {})
+
+        instance = super().create(validated_data)
+
+        for flag_field, checked in custom_flags.items():
+            cf = instance.custom_flags.filter(flag__key=flag_field).first()
+            if cf:
+                cf.checked = checked
+                cf.save()
+            else:
+                CustomFlagCurationResult.objects.create(
+                    flag=CustomFlag.objects.get(key=flag_field),
+                    result=instance,
+                    checked=checked,
+                )
+
+        return instance
+
+    def update(self, instance, validated_data):
+        # Pop before calling super's update so we can handle the saving of custom flags manually.
+        custom_flags = validated_data.pop("custom_flags", {})
+
+        instance = super().update(instance, validated_data)
+
+        for flag_field, checked in custom_flags.items():
+            cf = instance.custom_flags.filter(flag__key=flag_field).first()
+            if cf:
+                cf.checked = checked
+                cf.save()
+            else:
+                CustomFlagCurationResult.objects.create(
+                    flag=CustomFlag.objects.get(key=flag_field),
+                    result=instance,
+                    checked=checked,
+                )
+
+        return instance
 
 
 def serialize_adjacent_variant(variant_values):
@@ -64,7 +108,7 @@ class CurateVariantView(APIView):
         try:
             assignment = (
                 self.request.user.curation_assignments.select_related("variant", "result")
-                .prefetch_related("variant__annotations", "variant__tags")
+                .prefetch_related("variant__annotations", "variant__tags", "result__custom_flags")
                 .get(variant=self.kwargs["variant_id"], variant__project=self.kwargs["project_id"])
             )
 

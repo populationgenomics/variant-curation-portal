@@ -6,6 +6,7 @@ from rest_framework.serializers import ChoiceField, ModelSerializer, SerializerM
 from rest_framework.views import APIView
 
 from curation_portal.models import CurationResult, Project, Variant, FLAG_FIELDS
+from curation_portal.serializers import CustomFlagCurationResultSerializer
 
 
 class VariantSerializer(ModelSerializer):
@@ -42,10 +43,13 @@ class CurationResultSerializer(ModelSerializer):
         allow_null=True,
     )
 
+    custom_flags = CustomFlagCurationResultSerializer()
+
     class Meta:
         model = CurationResult
         fields = (
             *FLAG_FIELDS,
+            "custom_flags",
             "notes",
             "should_revisit",
             "verdict",
