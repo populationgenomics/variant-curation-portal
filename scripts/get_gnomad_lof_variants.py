@@ -196,7 +196,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
 
         # Add the CAF information for each transcript to the annotations structs.
         ds = ds.select(
-            annotations = format.annotations.map(
+            annotations = ds.annotations.map(
                 lambda csq: csq.annotate(
                     classic_caf=lookup[csq.transcript_id]
                 )
