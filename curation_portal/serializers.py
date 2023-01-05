@@ -8,18 +8,22 @@ from rest_framework.serializers import (
     ModelSerializer,
     RegexField,
     RelatedField,
+    DictField,
     ValidationError,
 )
 
 from curation_portal.models import (
     CurationAssignment,
     CurationResult,
+    CustomFlag,
     Project,
     User,
     UserSettings,
     Variant,
     VariantAnnotation,
     VariantTag,
+    FLAG_FIELDS,
+    FLAG_SHORTCUTS,
 )
 
 
@@ -229,3 +233,34 @@ class ImportedResultSerializer(ModelSerializer):
 
     def update(self, instance, validated_data):
         raise NotImplementedError
+
+
+class CustomFlagSerializer(ModelSerializer):
+    class Meta:
+        model = CustomFlag
+
+    def validate(self, attrs):
+        if attrs["key"] in set(FLAG_FIELDS):
+            raise ValidationError(f"A flag with the identifier '{attrs['key']}' already exists.")
+
+        if attrs["shortcut"] in set(FLAG_SHORTCUTS):
+            raise ValidationError(f"A flag with the shortcut '{attrs['shortcut']}' already exists.")
+
+        if CustomFlag.objects.filter(key=attrs["key"]):
+            raise ValidationError("Duplicate custom flag identifier.")
+
+        if CustomFlag.objects.filter(shortcut=attrs["shortcut"]):
+            raise ValidationError("Duplicate custom flag shortcut.")
+
+        return attrs
+
+
+class CustomFlagCurationResultSerializer(DictField):
+    def to_representation(self, value):
+        flags = {c.flag.key: c.checked for c in (value.all() if value is not None else [])}
+
+        for flag in CustomFlag.objects.all():
+            if flag.key not in flags:
+                flags[flag.key] = False
+
+        return flags
