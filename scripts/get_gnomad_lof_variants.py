@@ -198,7 +198,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         ds = ds.select(
             annotations = ds.annotations.map(
                 lambda csq: csq.annotate(
-                    classic_caf=lookup[csq.transcript_id]
+                    classic_caf= hl.if_else(lookup.contains(csq.transcript_id), lookup[csq.transcript_id], hl.missing('float64'))
                 )
             )
         )
