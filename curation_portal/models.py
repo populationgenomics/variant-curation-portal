@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch.dispatcher import receiver
+from django.core.validators import RegexValidator
 
 
 class User(AbstractUser):
@@ -225,9 +226,30 @@ class CustomFlag(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    key = models.CharField(unique=True, blank=False, null=False, default=None, max_length=25)
+    key = models.CharField(
+        unique=True,
+        blank=False,
+        null=False,
+        default=None,
+        max_length=25,
+        validators=[
+            RegexValidator(
+                regex=r"^flag_[a-z0-9]+(?:_[a-z0-9]+)*$",
+                message="Flag key must start with 'flag' and be in lower 'snake_case' format",
+            )
+        ],
+    )
     label = models.CharField(blank=False, null=False, default=None, max_length=50)
-    shortcut = models.CharField(unique=True, blank=False, null=False, default=None, max_length=2)
+    shortcut = models.CharField(
+        unique=True,
+        blank=False,
+        null=False,
+        default=None,
+        max_length=2,
+        validators=[
+            RegexValidator(regex=r"[A-Z]{2}", message="Flag shortcut must be 2 upper case letters")
+        ],
+    )
 
     class Meta:
         db_table = "custom_flag"
@@ -265,7 +287,6 @@ class CustomFlagCurationResult(models.Model):
         unique_together = ("flag", "result")
 
 
-# TODO: Add custom flag fields to serializers where FLAG_FIELDS is used
 # Track flag fields for use in serializers
 FLAG_FIELDS = [
     ## Technical
@@ -354,7 +375,6 @@ FLAG_SHORTCUTS = {
 }
 
 
-# TODO: Change logic in places where FLAG_LABELS is used and include custom flags
 # These are the column headers in exported project and variant result files
 FLAG_LABELS = {
     "flag_mnp": "Flag In-phase MNV",
