@@ -10,6 +10,6 @@ class Command(BaseCommand):
         parser.add_argument("shortcut", help="Keyboard shortcut")
 
     def handle(self, *args, **options):
-        CustomFlag.objects.create(
-            key=options["key"], label=options["label"], shortcut=options["shortcut"]
-        )
+        flag = CustomFlag(key=options["key"], label=options["label"], shortcut=options["shortcut"])
+        flag.full_clean()
+        flag.save()
