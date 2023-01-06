@@ -2,6 +2,7 @@ from collections import Counter, defaultdict
 
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import MaxLengthValidator
+from rest_framework.fields import empty
 from rest_framework.serializers import (
     ChoiceField,
     ListSerializer,
@@ -238,26 +239,45 @@ class ImportedResultSerializer(ModelSerializer):
 class CustomFlagSerializer(ModelSerializer):
     class Meta:
         model = CustomFlag
+        fields = ("id", "key", "label", "shortcut")
 
-    def validate(self, attrs):
-        if attrs["key"] in set(FLAG_FIELDS):
-            raise ValidationError(f"A flag with the identifier '{attrs['key']}' already exists.")
+    def validate_key(self, value):
+        key = value
+        if key:
+            key = str(value).lower()
 
-        if attrs["shortcut"] in set(FLAG_SHORTCUTS):
-            raise ValidationError(f"A flag with the shortcut '{attrs['shortcut']}' already exists.")
+        if key and (key in set(FLAG_FIELDS) or CustomFlag.objects.filter(key=key).count() > 0):
+            raise ValidationError(f"A flag with the identifier '{key}' already exists")
 
-        if CustomFlag.objects.filter(key=attrs["key"]):
-            raise ValidationError("Duplicate custom flag identifier.")
+        return value  # return original value for further validation
 
-        if CustomFlag.objects.filter(shortcut=attrs["shortcut"]):
-            raise ValidationError("Duplicate custom flag shortcut.")
+    def validate_shortcut(self, value):
+        shortcut = value
+        if shortcut:
+            shortcut = str(value).upper()
 
-        return attrs
+        if shortcut and (
+            shortcut in set(FLAG_SHORTCUTS.values())
+            and CustomFlag.objects.filter(shortcut=shortcut).count() > 0
+        ):
+            raise ValidationError(f"A flag with the shortcut '{shortcut}' already exists")
+
+        return value  # return original value for further validation
 
 
 class CustomFlagCurationResultSerializer(DictField):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if not self.default or self.default is empty:
+            self.default = {f.key: False for f in CustomFlag.objects.all()}
+
+        if not self.initial or self.initial is empty:
+            self.initial = {f.key: False for f in CustomFlag.objects.all()}
+
     def to_representation(self, value):
-        flags = {c.flag.key: c.checked for c in (value.all() if value is not None else [])}
+        flags_related_to_curation_result = getattr(value, "all", lambda: [])()
+        flags = {c.flag.key: c.checked for c in flags_related_to_curation_result}
 
         for flag in CustomFlag.objects.all():
             if flag.key not in flags:
