@@ -13,6 +13,7 @@ from curation_portal.models import (
     CurationAssignment,
     Project,
     VariantAnnotation,
+    CustomFlag,
     FLAG_FIELDS,
     FLAG_LABELS,
 )
@@ -80,25 +81,36 @@ class ExportProjectResultsView(APIView):
             FLAG_LABELS.get(f, " ".join(word.capitalize() for word in f.split("_")))
             for f in result_fields
         ]
+        # Custom flag headers
+        header_row += [f.label for f in CustomFlag.objects.all()]
+
         writer.writerow(header_row)
 
         for assignment in filtered_assignments.qs:
-            row = [
-                assignment.variant.variant_id,
-                ";".join(
-                    set(
-                        f"{annotation.gene_id}:{annotation.gene_symbol}"
-                        for annotation in assignment.variant.annotations.all()
-                    )
-                ),
-                ";".join(
-                    set(
-                        annotation.transcript_id
-                        for annotation in assignment.variant.annotations.all()
-                    )
-                ),
-                assignment.curator.username,
-            ] + [getattr(assignment.result, f) for f in result_fields]
+            row = (
+                [
+                    assignment.variant.variant_id,
+                    ";".join(
+                        set(
+                            f"{annotation.gene_id}:{annotation.gene_symbol}"
+                            for annotation in assignment.variant.annotations.all()
+                        )
+                    ),
+                    ";".join(
+                        set(
+                            annotation.transcript_id
+                            for annotation in assignment.variant.annotations.all()
+                        )
+                    ),
+                    assignment.curator.username,
+                ]
+                + [getattr(assignment.result, f) for f in result_fields]
+                # Custom flag results
+                + [
+                    getattr(assignment.result.custom_flags.filter(flag=f).first(), "checked", False)
+                    for f in CustomFlag.objects.all()
+                ]
+            )
             writer.writerow(row)
 
         return response
