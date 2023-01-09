@@ -132,7 +132,7 @@ urlpatterns = [
     ),
     path(
         "api/custom_flag/<int:pk>/update",
-        CustomFlagViewset.as_view({"post": "partial_update"}),
+        CustomFlagViewset.as_view({"patch": "partial_update"}),
         name="api-custom-flag-update",
     ),
     path(
