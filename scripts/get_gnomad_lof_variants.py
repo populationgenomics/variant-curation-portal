@@ -295,11 +295,17 @@ if __name__ == "__main__":
         flag_curated=args.flag_curated
     )
 
-    # Output the final dataset.
+    # Output the final dataset, as either:
+    # A Hail table if extension is ".ht";
     if args.output.endswith(".ht"):
         variants.write(output_path(args.output, "analysis"))
+    # A flattened TSV file, suitable for R and pandas, if extension is ".tsv.bgz";
+    elif args.output.endswith(".tsv.bgz"):
+        variants = variants.explode("annotations")
+        variants = variants.flatten()
+        variants.export(output_path(args.output, "analysis"))
+    # A JSON file otherwise.
     else:
-        # Convert to JSON and write
         rows = variants.annotate(json=hl.json(variants.row_value)).key_by().select("json").collect()
         with open_file(output_path(args.output, "analysis"), "w") as f:
             f.write("[" + ",".join([row.json for row in rows]) + "]")
