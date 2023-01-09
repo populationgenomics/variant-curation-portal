@@ -51,6 +51,16 @@ class ApiClient {
       method: "POST",
     });
   }
+
+  delete(path) {
+    return this.request(path, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      method: "DELETE",
+    });
+  }
 }
 
 export default new ApiClient();
