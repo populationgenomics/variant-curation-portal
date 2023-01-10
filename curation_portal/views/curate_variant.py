@@ -1,3 +1,5 @@
+# pylint: disable=too-many-locals
+
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.exceptions import NotFound
@@ -65,10 +67,10 @@ class CurationResultSerializer(ModelSerializer):
             if not CustomFlag.objects.filter(key=flag_field).first():
                 raise NotFound(f"Flag with key '{flag_field}' does not exist.")
 
-            cf = instance.custom_flags.filter(flag__key=flag_field).first()
-            if cf:
-                cf.checked = checked
-                cf.save()
+            flag = instance.custom_flags.filter(flag__key=flag_field).first()
+            if flag:
+                flag.checked = checked
+                flag.save()
             else:
                 CustomFlagCurationResult.objects.create(
                     flag=CustomFlag.objects.get(key=flag_field),
@@ -90,10 +92,10 @@ class CurationResultSerializer(ModelSerializer):
             if not CustomFlag.objects.filter(key=flag_field).first():
                 raise NotFound(f"Flag with key '{flag_field}' does not exist.")
 
-            cf = instance.custom_flags.filter(flag__key=flag_field).first()
-            if cf:
-                cf.checked = checked
-                cf.save()
+            flag = instance.custom_flags.filter(flag__key=flag_field).first()
+            if flag:
+                flag.checked = checked
+                flag.save()
             else:
                 CustomFlagCurationResult.objects.create(
                     flag=CustomFlag.objects.get(key=flag_field),

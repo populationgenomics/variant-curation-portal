@@ -8,37 +8,87 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('curation_portal', '0012_auto_20221219_1110'),
+        ("curation_portal", "0012_auto_20221219_1110"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CustomFlag',
+            name="CustomFlag",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('key', models.CharField(default=None, max_length=25, unique=True, validators=[django.core.validators.RegexValidator(message="Flag key must start with 'flag' and be in lower 'snake_case' format", regex='^flag_[a-z0-9]+(?:_[a-z0-9]+)*$')])),
-                ('label', models.CharField(default=None, max_length=50)),
-                ('shortcut', models.CharField(default=None, max_length=2, unique=True, validators=[django.core.validators.RegexValidator(message='Flag shortcut must be 2 upper case letters', regex='[A-Z]{2}')])),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "key",
+                    models.CharField(
+                        default=None,
+                        max_length=25,
+                        unique=True,
+                        validators=[
+                            django.core.validators.RegexValidator(
+                                message="Flag key must start with 'flag' and be in lower 'snake_case' format",
+                                regex="^flag_[a-z0-9]+(?:_[a-z0-9]+)*$",
+                            )
+                        ],
+                    ),
+                ),
+                ("label", models.CharField(default=None, max_length=50)),
+                (
+                    "shortcut",
+                    models.CharField(
+                        default=None,
+                        max_length=2,
+                        unique=True,
+                        validators=[
+                            django.core.validators.RegexValidator(
+                                message="Flag shortcut must be 2 upper case letters",
+                                regex="[A-Z]{2}",
+                            )
+                        ],
+                    ),
+                ),
             ],
             options={
-                'db_table': 'custom_flag',
+                "db_table": "custom_flag",
             },
         ),
         migrations.CreateModel(
-            name='CustomFlagCurationResult',
+            name="CustomFlagCurationResult",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('checked', models.BooleanField(default=False)),
-                ('flag', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='custom_flag_assignments', to='curation_portal.CustomFlag')),
-                ('result', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='custom_flags', to='curation_portal.CurationResult')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("checked", models.BooleanField(default=False)),
+                (
+                    "flag",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="custom_flag_assignments",
+                        to="curation_portal.CustomFlag",
+                    ),
+                ),
+                (
+                    "result",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="custom_flags",
+                        to="curation_portal.CurationResult",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'custom_flag_curation_result',
-                'unique_together': {('flag', 'result')},
+                "db_table": "custom_flag_curation_result",
+                "unique_together": {("flag", "result")},
             },
         ),
     ]

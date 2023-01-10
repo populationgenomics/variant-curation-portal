@@ -10,7 +10,7 @@ class AuthMiddleware(RemoteUserMiddleware):
 class AuthBackend(RemoteUserBackend):
     def clean_username(self, username):
         # See https://cloud.google.com/iap/docs/identity-howto
-        IAP_PREFIX = "accounts.google.com:"
+        IAP_PREFIX = "accounts.google.com:"  # pylint: disable=invalid-name
         if username.startswith(IAP_PREFIX):
             username = username[len(IAP_PREFIX) :]
         return username
