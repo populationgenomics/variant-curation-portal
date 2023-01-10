@@ -195,7 +195,7 @@ def init_custom_flags_on_new_instance(
 
 
 @receiver(pre_save, sender=CurationResult)
-def set_additional_flags(sender, instance, *args, **kwargs):
+def set_additional_flags(sender, instance, *args, **kwargs):  # pylint: disable=unused-argument
     if instance:
         instance.flag_mapping_error = any(
             getattr(instance, flag)
