@@ -246,7 +246,9 @@ class CustomFlagSerializer(ModelSerializer):
         if key:
             key = str(value).lower()
 
-        if key and (key in set(FLAG_FIELDS) or CustomFlag.objects.filter(key=key).count() > 0):
+        existing_flag = CustomFlag.objects.filter(key=key).first()
+        is_self = existing_flag and self.instance and (existing_flag.id == self.instance.id)
+        if key and ((key in set(FLAG_FIELDS)) or (existing_flag and not is_self)):
             raise ValidationError(f"A flag with the identifier '{key}' already exists")
 
         return value  # return original value for further validation
@@ -262,9 +264,10 @@ class CustomFlagSerializer(ModelSerializer):
                 "curation result."
             )
 
+        existing_flag = CustomFlag.objects.filter(shortcut=shortcut).first()
+        is_self = existing_flag and self.instance and (existing_flag.id == self.instance.id)
         if shortcut and (
-            shortcut in set(FLAG_SHORTCUTS.values())
-            and CustomFlag.objects.filter(shortcut=shortcut).count() > 0
+            (shortcut in set(FLAG_SHORTCUTS.values())) or (existing_flag and not is_self)
         ):
             raise ValidationError(f"A flag with the shortcut '{shortcut}' already exists")
 
