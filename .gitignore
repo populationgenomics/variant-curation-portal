@@ -13,6 +13,7 @@ webpack-stats.json
 .coverage
 htmlcov
 .tox
+.pytest_cache
 
 # pyenv
 .python-version
