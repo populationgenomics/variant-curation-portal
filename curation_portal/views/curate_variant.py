@@ -49,7 +49,7 @@ class CurationResultSerializer(ModelSerializer):
         required=False,
         allow_null=True,
     )
-    custom_flags = CustomFlagCurationResultSerializer()
+    custom_flags = CustomFlagCurationResultSerializer(required=False, allow_null=True)
 
     class Meta:
         model = CurationResult
