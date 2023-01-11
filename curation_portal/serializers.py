@@ -156,86 +156,6 @@ class VariantSerializer(ModelSerializer):
         return variant
 
 
-class ImportedResultListSerializer(ListSerializer):  # pylint: disable=abstract-method
-    def validate(self, attrs):
-        # Check that all curator/variant ID pairs in the list are unique
-        assignment_counts = Counter(
-            (variant_data["curator"], variant_data["variant_id"]) for variant_data in attrs
-        )
-        duplicate_assignments = [k for k, v in assignment_counts.items() if v > 1]
-        if duplicate_assignments:
-            duplicates_by_curator = defaultdict(list)
-            for curator, variant_id in duplicate_assignments:
-                duplicates_by_curator[curator].append(variant_id)
-
-            raise ValidationError(
-                "Duplicate results for "
-                + ", ".join(
-                    f"{curator} (variants {', '.join(variants)})"
-                    for curator, variants in duplicates_by_curator.items()
-                )
-            )
-
-        return attrs
-
-
-class ImportedResultSerializer(ModelSerializer):
-    curator = UserField(required=True)
-    variant_id = RegexField(VARIANT_ID_REGEX, required=True)
-
-    verdict = ChoiceField(
-        ["lof", "likely_lof", "uncertain", "likely_not_lof", "not_lof"],
-        required=False,
-        allow_null=True,
-    )
-
-    class Meta:
-        model = CurationResult
-        exclude = ("id",)
-        list_serializer_class = ImportedResultListSerializer
-
-    def validate_variant_id(self, value):
-        if not Variant.objects.filter(project=self.context["project"], variant_id=value).exists():
-            raise ValidationError("Variant does not exist")
-
-        return value
-
-    def validate(self, attrs):
-        if CurationAssignment.objects.filter(
-            variant__project=self.context["project"],
-            variant__variant_id=attrs["variant_id"],
-            curator__username=attrs["curator"],
-        ).exists():
-            raise ValidationError("Duplicate assignment")
-
-        return attrs
-
-    def create(self, validated_data):
-        curator = validated_data.pop("curator", None)
-        variant_id = validated_data.pop("variant_id", None)
-
-        variant = Variant.objects.get(project=self.context["project"], variant_id=variant_id)
-
-        assignment = CurationAssignment.objects.create(curator=curator, variant=variant)
-
-        result = CurationResult(**validated_data)
-
-        # If a created/updated timestamp is specified, override the auto_now settings on CurationResult
-        for field in result._meta.local_fields:
-            if field.name in ["created_at", "updated_at"] and field.name in validated_data:
-                field.auto_now = False
-                field.auto_now_add = False
-
-        result.save()
-        assignment.result = result
-        assignment.save()
-
-        return result
-
-    def update(self, instance, validated_data):
-        raise NotImplementedError
-
-
 class CustomFlagSerializer(ModelSerializer):
     class Meta:
         model = CustomFlag
@@ -293,3 +213,85 @@ class CustomFlagCurationResultSerializer(DictField):
                 flags[flag.key] = False
 
         return flags
+
+
+class ImportedResultListSerializer(ListSerializer):  # pylint: disable=abstract-method
+    def validate(self, attrs):
+        # Check that all curator/variant ID pairs in the list are unique
+        assignment_counts = Counter(
+            (variant_data["curator"], variant_data["variant_id"]) for variant_data in attrs
+        )
+        duplicate_assignments = [k for k, v in assignment_counts.items() if v > 1]
+        if duplicate_assignments:
+            duplicates_by_curator = defaultdict(list)
+            for curator, variant_id in duplicate_assignments:
+                duplicates_by_curator[curator].append(variant_id)
+
+            raise ValidationError(
+                "Duplicate results for "
+                + ", ".join(
+                    f"{curator} (variants {', '.join(variants)})"
+                    for curator, variants in duplicates_by_curator.items()
+                )
+            )
+
+        return attrs
+
+
+class ImportedResultSerializer(ModelSerializer):
+    curator = UserField(required=True)
+    variant_id = RegexField(VARIANT_ID_REGEX, required=True)
+
+    verdict = ChoiceField(
+        ["lof", "likely_lof", "uncertain", "likely_not_lof", "not_lof"],
+        required=False,
+        allow_null=True,
+    )
+
+    custom_flags = CustomFlagCurationResultSerializer(required=False, allow_null=True)
+
+    class Meta:
+        model = CurationResult
+        exclude = ("id",)
+        list_serializer_class = ImportedResultListSerializer
+
+    def validate_variant_id(self, value):
+        if not Variant.objects.filter(project=self.context["project"], variant_id=value).exists():
+            raise ValidationError("Variant does not exist")
+
+        return value
+
+    def validate(self, attrs):
+        if CurationAssignment.objects.filter(
+            variant__project=self.context["project"],
+            variant__variant_id=attrs["variant_id"],
+            curator__username=attrs["curator"],
+        ).exists():
+            raise ValidationError("Duplicate assignment")
+
+        return attrs
+
+    def create(self, validated_data):
+        curator = validated_data.pop("curator", None)
+        variant_id = validated_data.pop("variant_id", None)
+
+        variant = Variant.objects.get(project=self.context["project"], variant_id=variant_id)
+
+        assignment = CurationAssignment.objects.create(curator=curator, variant=variant)
+
+        result = CurationResult(**validated_data)
+
+        # If a created/updated timestamp is specified, override the auto_now settings on CurationResult
+        for field in result._meta.local_fields:
+            if field.name in ["created_at", "updated_at"] and field.name in validated_data:
+                field.auto_now = False
+                field.auto_now_add = False
+
+        result.save()
+        assignment.result = result
+        assignment.save()
+
+        return result
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError
