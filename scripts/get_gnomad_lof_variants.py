@@ -200,16 +200,24 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         constraint = constraint.repartition(10)
 
         # Convert the constraint table to a lookup dictionary, so that map can handle it.
-        lookup = hl.dict(constraint.aggregate(hl.agg.group_by(constraint.transcript,
-                                                 hl.agg.max(constraint.classic_caf))))
+        caf_max = constraint.aggregate(hl.agg.group_by(constraint.transcript, 
+                                            hl.agg.max(constraint.classic_caf)))
+        lookup = hl.dict({k: caf_max[k] if caf_max[k] != None else hl.missing("float64") for k in caf_max.keys()})
 
         # Add the CAF information for each transcript to the annotations structs.
-        ds = ds.select(
-            annotations = ds.annotations.map(
-                lambda csq: csq.annotate(
-                    classic_caf= hl.if_else(lookup.contains(csq.transcript_id), lookup[csq.transcript_id], hl.missing('float64'))
-                )
-            )
+        ds = ds.select('reference_genome',
+                       'variant_id',
+                       'liftover_variant_id',
+                       'qc_filter',
+                       'AC',
+                       'AN',
+                       'n_homozygotes',
+                       'AF',
+                        annotations = ds.annotations.map(
+                            lambda csq: csq.annotate(
+                                classic_caf= hl.if_else(lookup.contains(csq.transcript_id), lookup[csq.transcript_id], hl.missing('float64'))
+                            )
+                        )
         )
 
     # Optionally annotate with the results of the previous gnomAD v2 curation.
