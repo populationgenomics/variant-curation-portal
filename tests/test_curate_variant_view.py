@@ -2,7 +2,15 @@
 import pytest
 from rest_framework.test import APIClient
 
-from curation_portal.models import CurationAssignment, CurationResult, Project, User, Variant
+from curation_portal.models import (
+    CurationAssignment,
+    CurationResult,
+    Project,
+    User,
+    Variant,
+    CustomFlag,
+    CustomFlagCurationResult,
+)
 
 pytestmark = pytest.mark.django_db  # pylint: disable=invalid-name
 
@@ -145,6 +153,96 @@ def test_curate_variant_stores_result(db_setup):
     assert assignment.result
     assert assignment.result.verdict == "lof"
     assert assignment.result.notes == "LoF for sure"
+
+
+def test_curate_variant_stores_custom_flags(db_setup):
+    flag = CustomFlag.objects.create(key="flag_foo_bar", label="Flag Foo Bar", shortcut="FB")
+
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user2@example.com"))
+
+    variant1 = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    assert not CurationResult.objects.filter(
+        assignment__curator__username="user2@example.com",
+        assignment__variant__project=1,
+        assignment__variant__variant_id="1-100-A-G",
+    ).exists()
+
+    response = client.post(
+        f"/api/project/1/variant/{variant1.id}/curate/",
+        {"custom_flags": {"flag_foo_bar": True}},
+        format="json",
+    )
+
+    assert response.status_code == 200
+
+    assignment = CurationAssignment.objects.get(
+        curator__username="user2@example.com", variant__project=1, variant__variant_id="1-100-A-G"
+    )
+
+    assert assignment.result
+    assert assignment.result.custom_flags.first().flag.key == flag.key
+    assert assignment.result.custom_flags.first().checked
+
+
+def test_curate_variant_stores_custom_flag_defaults(db_setup):
+    flag = CustomFlag.objects.create(key="flag_foo_bar", label="Flag Foo Bar", shortcut="FB")
+
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user2@example.com"))
+
+    variant1 = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    assert not CurationResult.objects.filter(
+        assignment__curator__username="user2@example.com",
+        assignment__variant__project=1,
+        assignment__variant__variant_id="1-100-A-G",
+    ).exists()
+
+    response = client.post(
+        f"/api/project/1/variant/{variant1.id}/curate/",
+        {"custom_flags": {}},
+        format="json",
+    )
+
+    assert response.status_code == 200
+
+    assignment = CurationAssignment.objects.get(
+        curator__username="user2@example.com", variant__project=1, variant__variant_id="1-100-A-G"
+    )
+
+    assert assignment.result
+    assert assignment.result.custom_flags.first().flag.key == flag.key
+    assert not assignment.result.custom_flags.first().checked
+
+
+def test_curate_variant_fails_if_custom_flag_does_not_exist(db_setup):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user2@example.com"))
+
+    variant1 = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    assert not CurationResult.objects.filter(
+        assignment__curator__username="user2@example.com",
+        assignment__variant__project=1,
+        assignment__variant__variant_id="1-100-A-G",
+    ).exists()
+
+    response = client.post(
+        f"/api/project/1/variant/{variant1.id}/curate/",
+        {"custom_flags": {"flag_foo_bar": True}},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "'flag_foo_bar' does not exist" in str(response.data[0])
+
+    assignment = CurationAssignment.objects.get(
+        curator__username="user2@example.com", variant__project=1, variant__variant_id="1-100-A-G"
+    )
+
+    assert not assignment.result
 
 
 @pytest.mark.parametrize("verdict", ["some_invalid_verdict", ""])
