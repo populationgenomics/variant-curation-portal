@@ -13,8 +13,6 @@ from curation_portal.serializers import CustomFlagCurationResultSerializer
 from curation_portal.models import (
     CurationAssignment,
     CurationResult,
-    CustomFlag,
-    CustomFlagCurationResult,
     Variant,
     VariantAnnotation,
     VariantTag,
