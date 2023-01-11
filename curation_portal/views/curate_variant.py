@@ -61,23 +61,7 @@ class CurationResultSerializer(ModelSerializer):
 
         instance = super().create(validated_data)
 
-        for flag_field, checked in custom_flags.items():
-            # Check if a flag with this flag_field still exists. Might have been deleted or modified
-            # by another concurrent user during the time of submission.
-            if not CustomFlag.objects.filter(key=flag_field).first():
-                raise NotFound(f"Flag with key '{flag_field}' does not exist.")
-
-            flag = instance.custom_flags.filter(flag__key=flag_field).first()
-            if flag:
-                flag.checked = checked
-                flag.save()
-            else:
-                CustomFlagCurationResult.objects.create(
-                    flag=CustomFlag.objects.get(key=flag_field),
-                    result=instance,
-                    checked=checked,
-                )
-
+        self.fields["custom_flags"].create(instance, custom_flags)
         return instance
 
     def update(self, instance, validated_data):
@@ -86,23 +70,7 @@ class CurationResultSerializer(ModelSerializer):
 
         instance = super().update(instance, validated_data)
 
-        for flag_field, checked in custom_flags.items():
-            # Check if a flag with this flag_field still exists. Might have been deleted or modified
-            # by another concurrent user during the time of submission.
-            if not CustomFlag.objects.filter(key=flag_field).first():
-                raise NotFound(f"Flag with key '{flag_field}' does not exist.")
-
-            flag = instance.custom_flags.filter(flag__key=flag_field).first()
-            if flag:
-                flag.checked = checked
-                flag.save()
-            else:
-                CustomFlagCurationResult.objects.create(
-                    flag=CustomFlag.objects.get(key=flag_field),
-                    result=instance,
-                    checked=checked,
-                )
-
+        self.fields["custom_flags"].create(instance, custom_flags)
         return instance
 
 
