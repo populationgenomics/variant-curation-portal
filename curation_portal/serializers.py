@@ -2,7 +2,6 @@ from collections import Counter, defaultdict
 
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import MaxLengthValidator
-from rest_framework.fields import empty
 from rest_framework.serializers import (
     ChoiceField,
     ListSerializer,
@@ -17,6 +16,7 @@ from curation_portal.models import (
     CurationAssignment,
     CurationResult,
     CustomFlag,
+    CustomFlagCurationResult,
     Project,
     User,
     UserSettings,
@@ -197,12 +197,21 @@ class CustomFlagSerializer(ModelSerializer):
 class CustomFlagCurationResultSerializer(DictField):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.error_messages[
+            "not_found"
+        ] = "A flag with identifier '{flag_identifier}' does not exist."
 
-        if not self.default or self.default is empty:
-            self.default = {f.key: False for f in CustomFlag.objects.all()}
+    def get_default(self):
+        default = super().get_default()
+        if not default:
+            return {f.key: False for f in CustomFlag.objects.all()}
+        return default
 
-        if not self.initial or self.initial is empty:
-            self.initial = {f.key: False for f in CustomFlag.objects.all()}
+    def get_initial(self):
+        initial = super().get_initial()
+        if not initial:
+            return {f.key: False for f in CustomFlag.objects.all()}
+        return initial
 
     def to_representation(self, value):
         flags_related_to_curation_result = getattr(value, "all", lambda: [])()
@@ -213,6 +222,24 @@ class CustomFlagCurationResultSerializer(DictField):
                 flags[flag.key] = False
 
         return flags
+
+    def create(self, result, data):
+        for flag, checked in data.items():
+            if not CustomFlag.objects.filter(key=flag).exists():
+                self.fail("not_found", flag_identifier=flag)
+
+            flag = result.custom_flags.filter(flag__key=flag).first()
+            if flag:
+                flag.checked = checked
+                flag.save()
+            else:
+                CustomFlagCurationResult.objects.create(
+                    flag=CustomFlag.objects.get(key=flag),
+                    result=result,
+                    checked=checked,
+                )
+
+        return result
 
 
 class ImportedResultListSerializer(ListSerializer):  # pylint: disable=abstract-method
@@ -279,6 +306,7 @@ class ImportedResultSerializer(ModelSerializer):
 
         assignment = CurationAssignment.objects.create(curator=curator, variant=variant)
 
+        custom_flags = validated_data.pop("custom_flags", {})
         result = CurationResult(**validated_data)
 
         # If a created/updated timestamp is specified, override the auto_now settings on CurationResult
@@ -288,6 +316,9 @@ class ImportedResultSerializer(ModelSerializer):
                 field.auto_now_add = False
 
         result.save()
+        if custom_flags:
+            self.fields["custom_flags"].create(result=result, data=custom_flags)
+
         assignment.result = result
         assignment.save()
 
