@@ -9,7 +9,6 @@ from curation_portal.models import (
     User,
     Variant,
     CustomFlag,
-    CustomFlagCurationResult,
 )
 
 pytestmark = pytest.mark.django_db  # pylint: disable=invalid-name
