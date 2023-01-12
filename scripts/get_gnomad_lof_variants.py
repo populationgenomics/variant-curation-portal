@@ -149,7 +149,6 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
                 gene_ids.contains(csq.gene_id)
                 & csq.consequence_terms.any(lambda term: PLOF_CONSEQUENCE_TERMS.contains(term))
                 & (include_low_confidence | (csq.lof == "HC"))
-                & (include_low_confidence | (hl.is_missing(csq.lof_flags)))
             )
         )
     )
