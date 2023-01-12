@@ -178,7 +178,7 @@ class CustomFlagSerializer(ModelSerializer):
         if shortcut:
             shortcut = str(value).upper()
 
-        if shortcut.upper()[0] in ("R", "S"):
+        if shortcut.upper().startswith("S"):
             raise ValidationError(
                 "Shortcut cannot start with 'S' since it is used as the shortcut to save a "
                 "curation result."
