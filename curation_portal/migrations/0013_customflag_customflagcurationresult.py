@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
                         unique=True,
                         validators=[
                             django.core.validators.RegexValidator(
-                                message="Flag key must start with 'flag' and be in lower 'snake_case' format",
+                                message="Flag key must start with 'flag_' and be in lower 'snake_case' format",
                                 regex="^flag_[a-z0-9]+(?:_[a-z0-9]+)*$",
                             )
                         ],
