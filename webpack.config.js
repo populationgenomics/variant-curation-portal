@@ -49,6 +49,7 @@ const config = {
     path: path.resolve(__dirname, "static/bundles"),
     publicPath: "/static/bundles/",
     filename: isDev ? "[name].js" : "[name]-[hash].js",
+    hashFunction: "sha256",
   },
   plugins: [
     new webpack.EnvironmentPlugin({ NODE_ENV: "production" }),
