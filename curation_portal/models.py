@@ -129,20 +129,22 @@ class CurationResult(models.Model):
 
     # Flags
     ## Technical
-    flag_mapping_error = models.BooleanField(default=False)
-    flag_genotyping_error = models.BooleanField(default=False)
     flag_no_read_data = models.BooleanField(default=False)
     flag_reference_error = models.BooleanField(default=False)
     ### Mapping errors
+    flag_mapping_error = models.BooleanField(default=False)
     flag_self_chain = models.BooleanField(default=False)
     flag_str_or_low_complexity = models.BooleanField(default=False)
     flag_low_umap_m50 = models.BooleanField(default=False)
     #### Dubious read alignment
+    flag_dubious_read_alignment = models.BooleanField(default=False)
     flag_mismapped_read = models.BooleanField(default=False)
     flag_complex_event = models.BooleanField(default=False)
     flag_stutter = models.BooleanField(default=False)
-    flag_unknown = models.BooleanField(default=False)
+    flag_dubious_str_or_low_complexity = models.BooleanField(default=False)
+    flag_dubious_other = models.BooleanField(default=False)
     ### Genotyping errors
+    flag_genotyping_error = models.BooleanField(default=False)
     flag_low_genotype_quality = models.BooleanField(default=False)
     flag_low_read_depth = models.BooleanField(default=False)
     flag_allele_balance = models.BooleanField(default=False)
@@ -152,6 +154,7 @@ class CurationResult(models.Model):
 
     ## Impact
     ### Inconsequential transcript
+    flag_inconsequential_transcript = models.BooleanField(default=False)
     flag_multiple_annotations = models.BooleanField(default=False)
     flag_pext_less_than_half_max = models.BooleanField(default=False)
     flag_uninformative_pext = models.BooleanField(default=False)
@@ -159,6 +162,7 @@ class CurationResult(models.Model):
     flag_weak_exon_conservation = models.BooleanField(default=False)
     flag_untranslated_transcript = models.BooleanField(default=False)
     ### Rescue
+    flag_rescue = models.BooleanField(default=False)
     flag_mnp = models.BooleanField(default=False)
     flag_frame_restoring_indel = models.BooleanField(default=False)
     flag_first_150_bp = models.BooleanField(default=False)
@@ -168,6 +172,8 @@ class CurationResult(models.Model):
     flag_low_truncated = models.BooleanField(default=False)
 
     ## Comment
+    flag_complex_splicing = models.BooleanField(default=False)
+    flag_complex_other = models.BooleanField(default=False)
     flag_second_opinion_required = models.BooleanField(default=False)
     flag_flow_chart_overridden = models.BooleanField(default=False)
 
@@ -185,47 +191,36 @@ class CurationResult(models.Model):
 @receiver(pre_save, sender=CurationResult)
 def set_additional_flags(sender, instance, *args, **kwargs):  # pylint: disable=unused-argument
     if instance:
-        instance.flag_mapping_error = any(
+        instance.flag_dubious_read_alignment = any(
             getattr(instance, flag)
             for flag in [
-                "flag_self_chain",
-                "flag_str_or_low_complexity",
-                "flag_low_umap_m50",
                 "flag_mismapped_read",
                 "flag_complex_event",
                 "flag_stutter",
-                "flag_unknown",
-            ]
-        )
-        instance.flag_genotyping_error = any(
-            getattr(instance, flag)
-            for flag in [
-                "flag_low_genotype_quality",
-                "flag_low_read_depth",
-                "flag_allele_balance",
-                "flag_gc_rich",
-                "flag_homopolymer_or_str",
-                "flag_strand_bias",
+                "flag_dubious_str_or_low_complexity",
+                "flag_dubious_other",
             ]
         )
 
 
 FLAG_FIELDS = [
     ## Technical
-    "flag_mapping_error",
-    "flag_genotyping_error",
     "flag_no_read_data",
     "flag_reference_error",
     ### Mapping errors
+    "flag_mapping_error",
     "flag_self_chain",
     "flag_str_or_low_complexity",
     "flag_low_umap_m50",
     #### Dubious read alignment
+    "flag_dubious_read_alignment",
     "flag_mismapped_read",
     "flag_complex_event",
     "flag_stutter",
-    "flag_unknown",
+    "flag_dubious_str_or_low_complexity",
+    "flag_dubious_other",
     ### Genotyping errors
+    "flag_genotyping_error",
     "flag_low_genotype_quality",
     "flag_low_read_depth",
     "flag_allele_balance",
@@ -234,6 +229,7 @@ FLAG_FIELDS = [
     "flag_strand_bias",
     ## Impact
     ### Inconsequential transcript
+    "flag_inconsequential_transcript",
     "flag_multiple_annotations",
     "flag_pext_less_than_half_max",
     "flag_uninformative_pext",
@@ -241,6 +237,7 @@ FLAG_FIELDS = [
     "flag_weak_exon_conservation",
     "flag_untranslated_transcript",
     ### Rescue
+    "flag_rescue",
     "flag_mnp",
     "flag_frame_restoring_indel",
     "flag_first_150_bp",
@@ -249,6 +246,8 @@ FLAG_FIELDS = [
     "flag_escapes_nmd",
     "flag_low_truncated",
     ## Comment
+    "flag_complex_splicing",
+    "flag_complex_other",
     "flag_second_opinion_required",
     "flag_flow_chart_overridden",
 ]
