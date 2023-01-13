@@ -42,6 +42,7 @@ const ProjectAssignmentsPage = ({ project }) => {
                   right: "10px",
                   top: "60px",
                   zIndex: 1,
+                  maxWidth: "40%",
                 }}
               >
                 <Segment raised>

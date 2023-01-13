@@ -53,6 +53,16 @@ class CurationForm extends React.Component {
   constructor(props) {
     super(props);
 
+    this.syncedFields = {
+      flag_dubious_read_alignment: [
+        "flag_mismapped_read",
+        "flag_complex_event",
+        "flag_stutter",
+        "flag_dubious_str_or_low_complexity",
+        "flag_dubious_other",
+      ],
+    };
+
     this.state = {
       isSaving: false,
       showCreateFlagForm: false,
@@ -62,7 +72,7 @@ class CurationForm extends React.Component {
 
   setResultField(field, fieldValue) {
     const { value, onChange } = this.props;
-    onChange({ ...value, [field]: fieldValue });
+    onChange(this.syncFields({ ...value, [field]: fieldValue }));
   }
 
   setCustomFlagField(field, fieldValue) {
@@ -103,7 +113,7 @@ class CurationForm extends React.Component {
 
   toggleResultField(field) {
     const { value, onChange } = this.props;
-    onChange({ ...value, [field]: !value[field] });
+    onChange(this.syncFields({ ...value, [field]: !value[field] }));
   }
 
   toggleCustomFlagField(field) {
@@ -128,8 +138,21 @@ class CurationForm extends React.Component {
     );
   }
 
-  renderFlagInput(field, label, shortcut, isCustomFlag = false) {
+  syncFields(result) {
+    const newResult = { ...result };
+
+    Object.entries(this.syncedFields).forEach(([field, children]) => {
+      newResult[field] = children.reduce((acc, f) => acc || newResult[f], false);
+    });
+
+    return newResult;
+  }
+
+  renderFlagInput(field, label, shortcut, parent = false, isCustomFlag = false) {
     const { value, customFlags } = this.props;
+
+    const disabledFields = Object.keys(this.syncedFields);
+
     return (
       <React.Fragment key={field}>
         <Form.Field
@@ -140,8 +163,8 @@ class CurationForm extends React.Component {
           label={{
             children: (
               <React.Fragment>
-                {label}
-                <KeyboardShortcutHint keys={shortcut} />
+                {parent ? <Header sub>{label}</Header> : label}
+                {shortcut != null ? <KeyboardShortcutHint keys={shortcut} /> : null}
                 {isCustomFlag ? (
                   <Button
                     onClick={e => {
@@ -166,17 +189,21 @@ class CurationForm extends React.Component {
             ),
           }}
           onChange={e => {
-            return isCustomFlag
-              ? this.setCustomFlagField(field, e.target.checked)
-              : this.setResultField(field, e.target.checked);
+            if (disabledFields.includes(field)) return null;
+            if (isCustomFlag) return this.setCustomFlagField(field, e.target.checked);
+            return this.setResultField(field, e.target.checked);
           }}
         />
-        <KeyboardShortcut
-          keys={shortcut}
-          onShortcut={() => {
-            return isCustomFlag ? this.toggleCustomFlagField(field) : this.toggleResultField(field);
-          }}
-        />
+        {shortcut != null ? (
+          <KeyboardShortcut
+            keys={shortcut}
+            onShortcut={() => {
+              if (disabledFields.includes(field)) return null;
+              if (isCustomFlag) return this.toggleCustomFlagField(field);
+              return this.toggleResultField(field);
+            }}
+          />
+        ) : null}
       </React.Fragment>
     );
   }
@@ -194,6 +221,7 @@ class CurationForm extends React.Component {
             .toLowerCase()
             .split("")
             .join(" "),
+          false,
           true
         )
       );
@@ -267,14 +295,40 @@ class CurationForm extends React.Component {
             }}
           />
           <div style={{ columns: 2 }}>
-            <Header sub>Technical</Header>
+            {/* Render Technical Flags */}
+            <Header sub style={{ marginBottom: "0.5rem" }}>
+              Technical
+            </Header>
             {["flag_no_read_data", "flag_reference_error"].map(flag =>
               this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
             )}
-            <Header sub style={{ paddingLeft: "1em" }}>
-              Genotyping Error
-            </Header>
-            <div style={{ paddingLeft: "1em" }}>
+            {/* Render Mapping Error Flags */}
+            {["flag_mapping_error"].map(flag =>
+              this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
+            )}
+            <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
+              {["flag_self_chain", "flag_str_or_low_complexity", "flag_low_umap_m50"].map(flag =>
+                this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
+              )}
+              {/* Render Dubious Read Alignment Flags */}
+              {["flag_dubious_read_alignment"].map(flag =>
+                this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
+              )}
+              <div style={{ marginLeft: "2rem" }}>
+                {[
+                  "flag_mismapped_read",
+                  "flag_complex_event",
+                  "flag_stutter",
+                  "flag_dubious_str_or_low_complexity",
+                  "flag_dubious_other",
+                ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+              </div>
+            </div>
+            {/* Render Genotyping Error Flags */}
+            {["flag_genotyping_error"].map(flag =>
+              this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
+            )}
+            <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
               {[
                 "flag_low_genotype_quality",
                 "flag_low_read_depth",
@@ -284,31 +338,15 @@ class CurationForm extends React.Component {
                 "flag_strand_bias",
               ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
             </div>
-            <Header sub style={{ paddingLeft: "1em" }}>
-              Mapping Error
+            {/* Render Impact Flags */}
+            <Header sub style={{ marginBottom: "0.5rem" }}>
+              Impact
             </Header>
-            <div style={{ paddingLeft: "1em" }}>
-              {["flag_self_chain", "flag_str_or_low_complexity", "flag_low_umap_m50"].map(flag =>
-                this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
-              )}
-            </div>
-            <Header sub style={{ paddingLeft: "2em" }}>
-              Dubious Read Alignment
-            </Header>
-            <div style={{ paddingLeft: "2em" }}>
-              {[
-                "flag_mismapped_read",
-                "flag_complex_event",
-                "flag_stutter",
-                "flag_unknown",
-              ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
-            </div>
-
-            <Header sub>Impact</Header>
-            <Header sub style={{ paddingLeft: "1em" }}>
-              Inconsequential Transcript
-            </Header>
-            <div style={{ paddingLeft: "1em" }}>
+            {/* Render Inconsequential Transcript Flags */}
+            {["flag_inconsequential_transcript"].map(flag =>
+              this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
+            )}
+            <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
               {[
                 "flag_multiple_annotations",
                 "flag_pext_less_than_half_max",
@@ -318,10 +356,11 @@ class CurationForm extends React.Component {
                 "flag_untranslated_transcript",
               ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
             </div>
-            <Header sub style={{ paddingLeft: "1em" }}>
-              Rescue
-            </Header>
-            <div style={{ paddingLeft: "1em" }}>
+            {/* Render Rescue Flags */}
+            {["flag_rescue"].map(flag =>
+              this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
+            )}
+            <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
               {[
                 "flag_mnp",
                 "flag_frame_restoring_indel",
@@ -332,11 +371,16 @@ class CurationForm extends React.Component {
                 "flag_low_truncated",
               ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
             </div>
-
-            <Header sub>Comments</Header>
-            {["flag_flow_chart_overridden", "flag_second_opinion_required"].map(flag =>
-              this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
-            )}
+            {/* Render comment flags */}
+            <Header sub style={{ marginBottom: "0.5rem" }}>
+              Comments
+            </Header>
+            {[
+              "flag_complex_splicing",
+              "flag_complex_other",
+              "flag_flow_chart_overridden",
+              "flag_second_opinion_required",
+            ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
           </div>
 
           {this.renderCustomFlags()}
