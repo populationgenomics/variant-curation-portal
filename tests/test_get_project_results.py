@@ -2,7 +2,7 @@
 import pytest
 from rest_framework.test import APIClient
 
-from curation_portal.models import CurationAssignment, CurationResult, Project, User
+from curation_portal.models import CurationAssignment, CurationResult, Project, User, CustomFlag
 
 pytestmark = pytest.mark.django_db  # pylint: disable=invalid-name
 
@@ -86,3 +86,15 @@ def test_get_results_returns_all_curated_variants(db_setup):
     )
 
     assert actual == expected
+
+
+def test_get_results_returns_custom_flags(db_setup):
+    CustomFlag.objects.create(key="flag_one", label="Flag One", shortcut="FF")
+
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="project_owner"))
+    response = client.get("/api/project/1/results/", format="json").json()
+
+    assert len(response["results"]) == 3
+    for result in response["results"]:
+        assert result.get("custom_flags", {}) == {"flag_one": False}

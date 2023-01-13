@@ -2,7 +2,7 @@
 import pytest
 from rest_framework.test import APIClient
 
-from curation_portal.models import CurationAssignment, CurationResult, Project, User
+from curation_portal.models import CurationAssignment, CurationResult, Project, User, CustomFlag
 
 pytestmark = pytest.mark.django_db  # pylint: disable=invalid-name
 
@@ -130,6 +130,22 @@ def test_projects_assignments_list_shows_assigned_variants(db_setup, username, e
         assignment["variant"]["variant_id"] for assignment in response["assignments"]
     ]
     assert assigned_variants == expected_variants
+
+
+def test_projects_assignments_list_shows_custom_flags(db_setup):
+    CustomFlag.objects.create(key="flag_one", label="Flag One", shortcut="FF")
+
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user2@example.com"))
+    response = client.get("/api/project/1/assignments/").json()
+
+    curation_results = [
+        a
+        for a in response["assignments"]
+        if a["variant"]["variant_id"] in ("1-100-A-G", "1-120-G-A")
+    ]
+    for assignment in curation_results:
+        assert assignment["result"]["custom_flags"] == {"flag_one": False}
 
 
 @pytest.mark.parametrize(
