@@ -80,7 +80,17 @@ def test_validation_error_flag_key_is_not_lower_case(django_db_setup, django_db_
 def test_validation_error_flag_shortcut_is_not_upper_case(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
         flag = CustomFlag(key="flag_foo_bar", label="New Flag", shortcut="fn")
-        with pytest.raises(ValidationError, match="must be 2 upper case letters"):
+        with pytest.raises(ValidationError, match="must be 2 uppercase alphanumeric"):
+            flag.full_clean()
+
+        flag = CustomFlag(key="flag_foo_bar", label="New Flag", shortcut="FN")
+        flag.full_clean()
+
+
+def test_validation_error_flag_shortcut_starts_with_a_number(django_db_setup, django_db_blocker):
+    with django_db_blocker.unblock():
+        flag = CustomFlag(key="flag_foo_bar", label="New Flag", shortcut="5N")
+        with pytest.raises(ValidationError, match="must be 2 uppercase alphanumeric"):
             flag.full_clean()
 
         flag = CustomFlag(key="flag_foo_bar", label="New Flag", shortcut="FN")
