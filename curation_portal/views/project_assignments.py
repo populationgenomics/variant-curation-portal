@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 
 from curation_portal.constants import CONSEQUENCE_TERM_RANK
 from curation_portal.filters import AssignmentFilter
+from curation_portal.serializers import CustomFlagCurationResultSerializer
 from curation_portal.models import (
     CurationAssignment,
     CurationResult,
@@ -42,6 +43,8 @@ class VariantSerializer(serializers.ModelSerializer):
 
 
 class ResultSerializer(serializers.ModelSerializer):
+    custom_flags = CustomFlagCurationResultSerializer(required=False, allow_null=True)
+
     class Meta:
         model = CurationResult
         fields = "__all__"
