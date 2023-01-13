@@ -8,18 +8,23 @@ from rest_framework.serializers import (
     ModelSerializer,
     RegexField,
     RelatedField,
+    DictField,
     ValidationError,
 )
 
 from curation_portal.models import (
     CurationAssignment,
     CurationResult,
+    CustomFlag,
+    CustomFlagCurationResult,
     Project,
     User,
     UserSettings,
     Variant,
     VariantAnnotation,
     VariantTag,
+    FLAG_FIELDS,
+    FLAG_SHORTCUTS,
 )
 
 
@@ -151,6 +156,92 @@ class VariantSerializer(ModelSerializer):
         return variant
 
 
+class CustomFlagSerializer(ModelSerializer):
+    class Meta:
+        model = CustomFlag
+        fields = ("id", "key", "label", "shortcut")
+
+    def validate_key(self, value):
+        key = value
+        if key:
+            key = str(value).lower()
+
+        existing_flag = CustomFlag.objects.filter(key=key).first()
+        is_self = existing_flag and self.instance and (existing_flag.id == self.instance.id)
+        if key and ((key in set(FLAG_FIELDS)) or (existing_flag and not is_self)):
+            raise ValidationError(f"A flag with the identifier '{key}' already exists")
+
+        return value  # return original value for further validation
+
+    def validate_shortcut(self, value):
+        shortcut = value
+        if shortcut:
+            shortcut = str(value).upper()
+
+        if shortcut.upper().startswith("S"):
+            raise ValidationError(
+                "Shortcut cannot start with 'S' since it is used as the shortcut to save a "
+                "curation result."
+            )
+
+        existing_flag = CustomFlag.objects.filter(shortcut=shortcut).first()
+        is_self = existing_flag and self.instance and (existing_flag.id == self.instance.id)
+        if shortcut and (
+            (shortcut in set(FLAG_SHORTCUTS.values())) or (existing_flag and not is_self)
+        ):
+            raise ValidationError(f"A flag with the shortcut '{shortcut}' already exists")
+
+        return value  # return original value for further validation
+
+
+class CustomFlagCurationResultSerializer(DictField):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.error_messages[
+            "not_found"
+        ] = "A flag with identifier '{flag_identifier}' does not exist."
+
+    def get_default(self):
+        default = super().get_default()
+        if not default:
+            return {f.key: False for f in CustomFlag.objects.all()}
+        return default
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if not initial:
+            return {f.key: False for f in CustomFlag.objects.all()}
+        return initial
+
+    def to_representation(self, value):
+        flags_related_to_curation_result = getattr(value, "all", lambda: [])()
+        flags = {c.flag.key: c.checked for c in flags_related_to_curation_result}
+
+        for flag in CustomFlag.objects.all():
+            if flag.key not in flags:
+                flags[flag.key] = False
+
+        return flags
+
+    def create(self, result, data):
+        for flag, checked in data.items():
+            if not CustomFlag.objects.filter(key=flag).exists():
+                self.fail("not_found", flag_identifier=flag)
+
+            flag = result.custom_flags.filter(flag__key=flag).first()
+            if flag:
+                flag.checked = checked
+                flag.save()
+            else:
+                CustomFlagCurationResult.objects.create(
+                    flag=CustomFlag.objects.get(key=flag),
+                    result=result,
+                    checked=checked,
+                )
+
+        return result
+
+
 class ImportedResultListSerializer(ListSerializer):  # pylint: disable=abstract-method
     def validate(self, attrs):
         # Check that all curator/variant ID pairs in the list are unique
@@ -184,6 +275,8 @@ class ImportedResultSerializer(ModelSerializer):
         allow_null=True,
     )
 
+    custom_flags = CustomFlagCurationResultSerializer(required=False, allow_null=True)
+
     class Meta:
         model = CurationResult
         exclude = ("id",)
@@ -213,6 +306,7 @@ class ImportedResultSerializer(ModelSerializer):
 
         assignment = CurationAssignment.objects.create(curator=curator, variant=variant)
 
+        custom_flags = validated_data.pop("custom_flags", {})
         result = CurationResult(**validated_data)
 
         # If a created/updated timestamp is specified, override the auto_now settings on CurationResult
@@ -222,6 +316,9 @@ class ImportedResultSerializer(ModelSerializer):
                 field.auto_now_add = False
 
         result.save()
+        if custom_flags:
+            self.fields["custom_flags"].create(result=result, data=custom_flags)
+
         assignment.result = result
         assignment.save()
 

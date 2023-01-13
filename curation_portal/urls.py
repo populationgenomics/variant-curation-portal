@@ -23,6 +23,7 @@ from curation_portal.views.variants import VariantsView
 from curation_portal.views.variant_projects import VariantProjectsView
 from curation_portal.views.variant_results import VariantResultsView
 from curation_portal.views.variant_results_export import ExportVariantResultsView
+from curation_portal.views.custom_flag import CustomFlagViewset
 
 
 class VariantIdConverter:
@@ -113,6 +114,31 @@ urlpatterns = [
         "api/variant/<variant_id:variant_id>/results/export/",
         ExportVariantResultsView.as_view(),
         name="api-variant-results-export",
+    ),
+    path(
+        "api/custom_flag/",
+        CustomFlagViewset.as_view({"get": "list"}),
+        name="api-custom-flag-list",
+    ),
+    path(
+        "api/custom_flag/<int:pk>/",
+        CustomFlagViewset.as_view({"get": "retrieve"}),
+        name="api-custom-flag-detail",
+    ),
+    path(
+        "api/custom_flag/create",
+        CustomFlagViewset.as_view({"post": "create"}),
+        name="api-custom-flag-create",
+    ),
+    path(
+        "api/custom_flag/<int:pk>/update",
+        CustomFlagViewset.as_view({"patch": "partial_update"}),
+        name="api-custom-flag-update",
+    ),
+    path(
+        "api/custom_flag/<int:pk>/delete",
+        CustomFlagViewset.as_view({"delete": "destroy"}),
+        name="api-custom-flag-update",
     ),
 ]
 

@@ -1,7 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models.signals import post_delete, pre_save
+from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch.dispatcher import receiver
+from django.core.validators import RegexValidator
 
 
 class User(AbstractUser):
@@ -188,6 +189,17 @@ class CurationResult(models.Model):
         db_table = "curation_result"
 
 
+@receiver(post_save, sender=CurationResult)
+def init_custom_flags_on_new_instance(
+    sender, instance, created, *args, **kwargs
+):  # pylint: disable=unused-argument
+    if instance and created:
+        CustomFlagCurationResult.objects.bulk_create(
+            CustomFlagCurationResult(result=instance, flag=flag)
+            for flag in CustomFlag.objects.all()
+        )
+
+
 @receiver(pre_save, sender=CurationResult)
 def set_additional_flags(sender, instance, *args, **kwargs):  # pylint: disable=unused-argument
     if instance:
@@ -203,6 +215,78 @@ def set_additional_flags(sender, instance, *args, **kwargs):  # pylint: disable=
         )
 
 
+class CustomFlag(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    key = models.CharField(
+        unique=True,
+        blank=False,
+        null=False,
+        default=None,
+        max_length=25,
+        validators=[
+            RegexValidator(
+                regex=r"^flag_[a-z0-9]+(?:_[a-z0-9]+)*$",
+                message="Flag key must start with 'flag_' and be in lower 'snake_case' format",
+            )
+        ],
+    )
+    label = models.CharField(blank=False, null=False, default=None, max_length=50)
+    shortcut = models.CharField(
+        unique=True,
+        blank=False,
+        null=False,
+        default=None,
+        max_length=2,
+        validators=[
+            RegexValidator(
+                regex=r"[A-Z]{1}[A-Z0-9]{1}",
+                message=(
+                    "Flag shortcut must be 2 uppercase alphanumeric characters, "
+                    "and not start with a number."
+                ),
+            )
+        ],
+    )
+
+    class Meta:
+        db_table = "custom_flag"
+
+
+@receiver(post_save, sender=CustomFlag)
+def add_new_custom_flag_to_existing_curation_results(
+    sender, instance, created, *args, **kwargs
+):  # pylint: disable=unused-argument
+    if instance and created:
+        CustomFlagCurationResult.objects.bulk_create(
+            CustomFlagCurationResult(flag=instance, result=result, checked=False)
+            for result in CurationResult.objects.all()
+        )
+
+
+class CustomFlagCurationResult(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    flag = models.ForeignKey(
+        "CustomFlag",
+        related_name="custom_flag_assignments",
+        on_delete=models.CASCADE,
+    )
+    result = models.ForeignKey(
+        "CurationResult",
+        related_name="custom_flags",
+        on_delete=models.CASCADE,
+    )
+    checked = models.BooleanField(default=False, null=False)
+
+    class Meta:
+        db_table = "custom_flag_curation_result"
+        unique_together = ("flag", "result")
+
+
+# Track flag fields for use in serializers
 FLAG_FIELDS = [
     ## Technical
     "flag_no_read_data",
@@ -252,7 +336,51 @@ FLAG_FIELDS = [
     "flag_flow_chart_overridden",
 ]
 
+# FLAG_SHORTCUTS is so far only used to validate an incoming custom flag to make sure that we don't
+# re-assign pre-existing keyboard shortcuts.
+FLAG_SHORTCUTS = {
+    # Technical
+    "flag_no_read_data": "NR",
+    "flag_reference_error": "RE",
+    ## Mapping errors
+    "flag_self_chain": "SC",
+    "flag_str_or_low_complexity": "LC",
+    "flag_low_umap_m50": "M5",
+    ### Dubious read alignment
+    "flag_mismapped_read": "MM",
+    "flag_complex_event": "CE",
+    "flag_stutter": "TS",
+    "flag_unknown": "UN",
+    ## Genotyping errors
+    "flag_low_genotype_quality": "GQ",
+    "flag_low_read_depth": "RD",
+    "flag_allele_balance": "BA",
+    "flag_gc_rich": "GC",
+    "flag_homopolymer_or_str": "HO",
+    "flag_strand_bias": "BI",
+    # Impact
+    ## Inconsequential transcript
+    "flag_multiple_annotations": "MA",
+    "flag_pext_less_than_half_max": "P5",
+    "flag_uninformative_pext": "UP",
+    "flag_minority_of_transcripts": "MI",
+    "flag_weak_exon_conservation": "WE",
+    "flag_untranslated_transcript": "UT",
+    ## Rescue
+    "flag_mnp": "IN",
+    "flag_frame_restoring_indel": "FR",
+    "flag_first_150_bp": "F1",
+    "flag_in_frame_sai": "IF",
+    "flag_methionine_resuce": "MR",
+    "flag_escapes_nmd": "EN",
+    "flag_low_truncated": "TR",
+    # Comment
+    "flag_second_opinion_required": "OR",
+    "flag_flow_chart_overridden": "FO",
+}
 
+
+# These are the column headers in exported project and variant result files
 FLAG_LABELS = {
     "flag_mnp": "Flag In-phase MNV",
     "flag_pext_less_than_half_max": "Flag pext < 50% max",

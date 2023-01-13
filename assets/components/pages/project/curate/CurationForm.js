@@ -1,5 +1,6 @@
-import PropTypes from "prop-types";
 import React from "react";
+import PropTypes from "prop-types";
+import { omit, sortBy } from "lodash";
 import { connect } from "react-redux";
 import {
   Button,
@@ -20,20 +21,24 @@ import {
   getCurationResult,
   getCurationResultErrors,
 } from "../../../../redux/selectors/curationResultSelectors";
+import { getCustomFlags } from "../../../../redux/selectors/customFlagSelectors";
 import { showNotification } from "../../../Notifications";
-import { CurationResultPropType } from "../../../propTypes";
+import { CurationResultPropType, CustomFlagPropType } from "../../../propTypes";
 import KeyboardShortcut, { KeyboardShortcutHint } from "../../../KeyboardShortcut";
+import CustomFlagForm from "./CustomFlagForm";
 
 class CurationForm extends React.Component {
   static propTypes = {
     value: CurationResultPropType.isRequired,
     errors: PropTypes.object, // eslint-disable-line react/forbid-prop-types
+    customFlags: PropTypes.arrayOf(CustomFlagPropType),
     onChange: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
     errors: null,
+    customFlags: [],
   };
 
   formElement = React.createRef();
@@ -53,6 +58,8 @@ class CurationForm extends React.Component {
 
     this.state = {
       isSaving: false,
+      showCreateFlagForm: false,
+      flagToUpdate: null,
     };
   }
 
@@ -61,9 +68,51 @@ class CurationForm extends React.Component {
     onChange(this.syncFields({ ...value, [field]: fieldValue }));
   }
 
+  setCustomFlagField(field, fieldValue) {
+    const { value, onChange } = this.props;
+    const customFlags = value.custom_flags;
+    onChange({ ...value, custom_flags: { ...customFlags, [field]: fieldValue } });
+  }
+
+  updateCustomFlagField(oldField, newField) {
+    const { value, onChange } = this.props;
+    const customFlags = { ...(value.custom_flags || {}) };
+
+    // Adding a new custom flag
+    if (oldField == null && newField != null) {
+      onChange({
+        ...value,
+        custom_flags: { ...customFlags, [newField]: false },
+      });
+    }
+
+    // Deleting an existing field
+    if (oldField != null && newField == null) {
+      onChange({
+        ...value,
+        custom_flags: { ...omit(customFlags, oldField) },
+      });
+    }
+
+    // Updating an existing custom flag
+    if (oldField != null && newField != null) {
+      const fieldValue = customFlags[oldField];
+      onChange({
+        ...value,
+        custom_flags: { ...omit(customFlags, oldField), [newField]: fieldValue },
+      });
+    }
+  }
+
   toggleResultField(field) {
     const { value, onChange } = this.props;
     onChange(this.syncFields({ ...value, [field]: !value[field] }));
+  }
+
+  toggleCustomFlagField(field) {
+    const { value, onChange } = this.props;
+    const customFlags = value.custom_flags;
+    onChange({ ...value, custom_flags: { ...customFlags, [field]: !customFlags[field] } });
   }
 
   saveResult() {
@@ -92,15 +141,15 @@ class CurationForm extends React.Component {
     return newResult;
   }
 
-  renderFlagInput(field, label, shortcut, parent = false) {
-    const { value } = this.props;
+  renderFlagInput(field, label, shortcut, parent = false, isCustomFlag = false) {
+    const { value, customFlags } = this.props;
 
     const disabledFields = Object.keys(this.syncedFields);
 
     return (
       <React.Fragment key={field}>
         <Form.Field
-          checked={value[field]}
+          checked={isCustomFlag ? value.custom_flags[field] : value[field]}
           className="mousetrap"
           control={Checkbox}
           id={field}
@@ -109,25 +158,129 @@ class CurationForm extends React.Component {
               <React.Fragment>
                 {parent ? <Header sub>{label}</Header> : label}
                 {shortcut != null ? <KeyboardShortcutHint keys={shortcut} /> : null}
+                {isCustomFlag ? (
+                  <Button
+                    onClick={e => {
+                      e.preventDefault();
+                      this.setState({ flagToUpdate: customFlags.find(f => f.key === field) });
+                    }}
+                    style={{
+                      borderColor: "rgba(0,0,0,0.55)",
+                      borderStyle: "solid",
+                      borderWidth: "1px",
+                      borderRadius: "5px",
+                      padding: "1px 4px 2px",
+                      marginLeft: "0.5em",
+                      color: "rgba(0,0,0,0.55)",
+                      fontSize: "0.8em",
+                    }}
+                  >
+                    edit
+                  </Button>
+                ) : null}
               </React.Fragment>
             ),
           }}
           onChange={e => {
-            return disabledFields.includes(field)
-              ? null
-              : this.setResultField(field, e.target.checked);
+            if (disabledFields.includes(field)) return null;
+            if (isCustomFlag) return this.setCustomFlagField(field, e.target.checked);
+            return this.setResultField(field, e.target.checked);
           }}
         />
         {shortcut != null ? (
           <KeyboardShortcut
             keys={shortcut}
             onShortcut={() => {
-              return disabledFields.includes(field) ? null : this.toggleResultField(field);
+              if (disabledFields.includes(field)) return null;
+              if (isCustomFlag) return this.toggleCustomFlagField(field);
+              return this.toggleResultField(field);
             }}
           />
         ) : null}
       </React.Fragment>
     );
+  }
+
+  renderCustomFlags = () => {
+    const { customFlags } = this.props;
+
+    let customFlagContent = <p>Click the &apos;+&apos; button above to a new custom flag.</p>;
+    if (customFlags?.length) {
+      customFlagContent = sortBy(customFlags, ["key"]).map(flag =>
+        this.renderFlagInput(
+          flag.key,
+          flag.label,
+          flag.shortcut
+            .toLowerCase()
+            .split("")
+            .join(" "),
+          false,
+          true
+        )
+      );
+    }
+
+    return (
+      <>
+        <div style={{ marginBottom: 8 }}>
+          <Header sub style={{ display: "inline" }}>
+            Custom Flags
+          </Header>
+          <Button
+            onClick={e => {
+              e.preventDefault();
+              this.setState({ showCreateFlagForm: true });
+            }}
+            style={{
+              borderColor: "rgba(0,0,0,0.55)",
+              borderStyle: "solid",
+              borderWidth: "1px",
+              borderRadius: "5px",
+              padding: "1px 4px 2px",
+              marginLeft: "0.5em",
+              color: "rgba(0,0,0,0.55)",
+              fontSize: "0.8em",
+            }}
+          >
+            +
+          </Button>
+        </div>
+        <div style={{ columns: 2 }}>{customFlagContent}</div>
+      </>
+    );
+  };
+
+  renderCustomFlagForm() {
+    const { flagToUpdate, showCreateFlagForm } = this.state;
+
+    if (showCreateFlagForm) {
+      return (
+        <CustomFlagForm
+          open={showCreateFlagForm}
+          onSave={(oldKey, newKey) => {
+            this.setState({ showCreateFlagForm: false });
+            this.updateCustomFlagField(oldKey, newKey);
+          }}
+          onCancel={() => this.setState({ showCreateFlagForm: false })}
+        />
+      );
+    }
+
+    if (flagToUpdate != null) {
+      return (
+        <CustomFlagForm
+          open={flagToUpdate != null}
+          flag={flagToUpdate}
+          onSave={(oldKey, newKey) => {
+            this.setState({ flagToUpdate: null });
+            this.updateCustomFlagField(oldKey, newKey);
+          }}
+          onCancel={() => this.setState({ flagToUpdate: null })}
+        />
+      );
+    }
+
+    return null;
   }
 
   render() {
@@ -255,6 +408,10 @@ class CurationForm extends React.Component {
               "flag_second_opinion_required",
             ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
           </div>
+
+          {this.renderCustomFlags()}
+          {this.renderCustomFlagForm()}
+
           <Header sub>Verdict</Header>
           <Form.Group>
             {verdicts.map((verdict, i) => (
@@ -318,6 +475,7 @@ const ConnectedCurationForm = connect(
   state => ({
     errors: getCurationResultErrors(state),
     value: getCurationResult(state),
+    customFlags: getCustomFlags(state),
   }),
   (dispatch, ownProps) => ({
     onChange: result => dispatch(setResult(result)),

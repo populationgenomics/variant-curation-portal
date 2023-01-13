@@ -177,6 +177,13 @@
         "description": "Flow chart overridden",
         "type": ["boolean", "null"]
       },
+      "custom_flags": {
+        "description": "Custom flag boolean values",
+        "type": ["object"],
+        "propertyNames": {
+          "pattern": "^flag_[a-z0-9]+(?:_[a-z0-9]+)*$"
+        }
+      },
       "created_at": {
         "description": "Date and time the variant was first curated",
         "type": ["string", "null"]
