@@ -350,7 +350,8 @@ FLAG_SHORTCUTS = {
     "flag_mismapped_read": "MM",
     "flag_complex_event": "CE",
     "flag_stutter": "TS",
-    "flag_unknown": "UN",
+    "flag_dubious_str_or_low_complexity": "DC",
+    "flag_dubious_other": "DO",
     ## Genotyping errors
     "flag_low_genotype_quality": "GQ",
     "flag_low_read_depth": "RD",
@@ -375,6 +376,8 @@ FLAG_SHORTCUTS = {
     "flag_escapes_nmd": "EN",
     "flag_low_truncated": "TR",
     # Comment
+    "flag_complex_splicing": "CS",
+    "flag_complex_other": "CO",
     "flag_second_opinion_required": "OR",
     "flag_flow_chart_overridden": "FO",
 }
