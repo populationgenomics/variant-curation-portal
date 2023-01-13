@@ -117,8 +117,13 @@ class CustomFlagForm extends React.Component {
 
     return (
       <React.Fragment>
-        <Modal.Header>Create Custom Flag</Modal.Header>
+        <Modal.Header>Add Custom Flag</Modal.Header>
+
         <Modal.Content>
+          <p>
+            Create a new custom flag. Note that this flag will be added to all existing and future
+            curation results, and be visible to all curators.
+          </p>
           <Form id="create-custom-flag-form">{this.renderFormFields()}</Form>
         </Modal.Content>
         <Modal.Actions>
@@ -140,8 +145,14 @@ class CustomFlagForm extends React.Component {
 
     return (
       <React.Fragment>
-        <Modal.Header>Update Custom Flag</Modal.Header>
+        <Modal.Header>Edit Custom Flag</Modal.Header>
         <Modal.Content>
+          <p>
+            Delete this flag, or edit this flag&apos;s unique identifier, label or shortcut. Note
+            that this will update the flag in all existing curation results, for all curators.
+            Similarly, deleting this flag will remove it from all existing curation results, for all
+            curators.
+          </p>
           <Form id="update-custom-flag-form">{this.renderFormFields()}</Form>
         </Modal.Content>
         <Modal.Actions>
