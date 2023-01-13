@@ -147,16 +147,20 @@ class Legend extends React.PureComponent {
           </List>
         </List.Item>
 
-        <Header style={{ marginTop: "0.5rem" }}>Custom Flags</Header>
-        <List.Item>
-          <List horizontal>
-            {customFlags.map(flag => (
-              <List.Item key={flag.key}>
-                {flag.shortcut} = {flag.label}
-              </List.Item>
-            ))}
-          </List>
-        </List.Item>
+        {customFlags.length ? (
+          <>
+            <Header style={{ marginTop: "0.5rem" }}>Custom Flags</Header>
+            <List.Item>
+              <List horizontal>
+                {customFlags.map(flag => (
+                  <List.Item key={flag.key}>
+                    {flag.shortcut} = {flag.label}
+                  </List.Item>
+                ))}
+              </List>
+            </List.Item>
+          </>
+        ) : null}
 
         <Header sub style={{ marginTop: "0.5rem" }}>
           Verdict
