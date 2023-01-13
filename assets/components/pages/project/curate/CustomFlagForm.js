@@ -32,11 +32,17 @@ class CustomFlagForm extends React.Component {
   constructor(props) {
     super(props);
 
+    const { flag } = this.props;
+
     this.state = {
       isSaving: false,
-      flagData: {},
+      flagData: { key: "", label: "", shortcut: "", ...(flag || {}) },
       errors: null,
     };
+  }
+
+  componentWillUnmount() {
+    this.resetForm();
   }
 
   createFlag() {
@@ -47,7 +53,6 @@ class CustomFlagForm extends React.Component {
     onCreate({ key: null, label: null, shortcut: null, ...flagData }).then(
       () => {
         showNotification({ title: "Success", message: "Custom flag created", status: "success" });
-        this.resetForm();
         return onSave(null, flagData.key);
       },
       error => {
@@ -64,7 +69,6 @@ class CustomFlagForm extends React.Component {
     onUpdate({ ...flag, ...flagData }).then(
       () => {
         showNotification({ title: "Success", message: "Custom flag updated", status: "success" });
-        this.resetForm();
         return onSave(flag.key, flagData.key);
       },
       error => {
@@ -84,7 +88,6 @@ class CustomFlagForm extends React.Component {
     onDelete(flag).then(
       () => {
         showNotification({ title: "Success", message: "Custom flag deleted", status: "success" });
-        this.resetForm();
         return onSave(flag.key, null);
       },
       error => {
@@ -96,13 +99,17 @@ class CustomFlagForm extends React.Component {
 
   cancel() {
     const { onCancel } = this.props;
-
-    this.resetForm();
     return onCancel();
   }
 
   resetForm() {
-    this.setState({ isSaving: false, flagData: {}, errors: null });
+    const { flag } = this.props;
+
+    this.setState({
+      isSaving: false,
+      flagData: { key: "", label: "", shortcut: "", ...flag },
+      errors: null,
+    });
   }
 
   renderCreateForm() {
@@ -117,9 +124,9 @@ class CustomFlagForm extends React.Component {
         <Modal.Actions>
           <Button
             color="green"
-            onClick={() => this.createFlag()}
             disabled={isSaving}
             loading={isSaving}
+            onClick={() => this.createFlag()}
           >
             Create
           </Button>
@@ -160,19 +167,18 @@ class CustomFlagForm extends React.Component {
   }
 
   renderFormFields(action = "create") {
-    const { flag } = this.props;
     const { flagData, errors } = this.state;
-    const { key, label, shortcut } = flagData;
 
     return (
       <React.Fragment>
         <Form.Field>
           <Form.Input
             id={`form-input-${action}-custom-flag-key`}
+            name="key"
             help="Hello world"
             label="Unique Identifier"
             placeholder="flag_lower_snake_case"
-            value={key == null ? flag?.key : key}
+            value={flagData.key}
             onChange={e => this.setState({ flagData: { ...flagData, key: e.target.value } })}
             error={
               errors?.key
@@ -185,9 +191,10 @@ class CustomFlagForm extends React.Component {
           />
           <Form.Input
             id={`form-input-${action}-custom-flag-label`}
+            name="label"
             label="Flag Label"
             placeholder="A brief descriptive label"
-            value={label == null ? flag?.label : label}
+            value={flagData.label}
             onChange={e => this.setState({ flagData: { ...flagData, label: e.target.value } })}
             error={
               errors?.label
@@ -200,9 +207,10 @@ class CustomFlagForm extends React.Component {
           />
           <Form.Input
             id={`form-input-${action}-custom-flag-shortcut`}
+            name="shortcut"
             label="Keyboard Shortcut"
             placeholder="Two upper-case letters"
-            value={shortcut == null ? flag?.shortcut : shortcut}
+            value={flagData.shortcut}
             onChange={e => this.setState({ flagData: { ...flagData, shortcut: e.target.value } })}
             error={
               errors?.shortcut
