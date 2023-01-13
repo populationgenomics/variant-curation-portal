@@ -172,7 +172,7 @@ class CurationForm extends React.Component {
                       padding: "1px 4px 2px",
                       marginLeft: "0.5em",
                       color: "rgba(0,0,0,0.55)",
-                      fontSize: "0.8em",
+                      fontSize: "0.85em",
                     }}
                   >
                     edit
