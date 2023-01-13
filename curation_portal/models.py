@@ -228,7 +228,7 @@ class CustomFlag(models.Model):
         validators=[
             RegexValidator(
                 regex=r"^flag_[a-z0-9]+(?:_[a-z0-9]+)*$",
-                message="Flag key must start with 'flag' and be in lower 'snake_case' format",
+                message="Flag key must start with 'flag_' and be in lower 'snake_case' format",
             )
         ],
     )
@@ -240,7 +240,13 @@ class CustomFlag(models.Model):
         default=None,
         max_length=2,
         validators=[
-            RegexValidator(regex=r"[A-Z]{2}", message="Flag shortcut must be 2 upper case letters")
+            RegexValidator(
+                regex=r"[A-Z]{1}[A-Z0-9]{1}",
+                message=(
+                    "Flag shortcut must be 2 uppercase alphanumeric characters, "
+                    "and not start with a number."
+                ),
+            )
         ],
     )
 
