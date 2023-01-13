@@ -1,5 +1,5 @@
-import PropTypes from "prop-types";
 import React from "react";
+import PropTypes from "prop-types";
 import { omit, sortBy } from "lodash";
 import { connect } from "react-redux";
 import {
@@ -23,7 +23,7 @@ import {
 } from "../../../../redux/selectors/curationResultSelectors";
 import { getCustomFlags } from "../../../../redux/selectors/customFlagSelectors";
 import { showNotification } from "../../../Notifications";
-import { CurationResultPropType } from "../../../propTypes";
+import { CurationResultPropType, CustomFlagPropType } from "../../../propTypes";
 import KeyboardShortcut, { KeyboardShortcutHint } from "../../../KeyboardShortcut";
 import CustomFlagForm from "./CustomFlagForm";
 
@@ -31,14 +31,7 @@ class CurationForm extends React.Component {
   static propTypes = {
     value: CurationResultPropType.isRequired,
     errors: PropTypes.object, // eslint-disable-line react/forbid-prop-types
-    customFlags: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number.isRequired,
-        key: PropTypes.string.isRequired,
-        label: PropTypes.string.isRequired,
-        shortcut: PropTypes.string.isRequired,
-      })
-    ),
+    customFlags: PropTypes.arrayOf(CustomFlagPropType),
     onChange: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
   };

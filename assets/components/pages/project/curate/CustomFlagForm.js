@@ -9,16 +9,12 @@ import {
   updateCustomFlag,
 } from "../../../../redux/actions/customFlagActions";
 import { showNotification } from "../../../Notifications";
+import { CustomFlagPropType } from "../../../propTypes";
 
 class CustomFlagForm extends React.Component {
   static propTypes = {
     open: PropTypes.bool,
-    flag: PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      key: PropTypes.string.isRequired,
-      label: PropTypes.string.isRequired,
-      shortcut: PropTypes.string.isRequired,
-    }),
+    flag: CustomFlagPropType,
     onCreate: PropTypes.func.isRequired,
     onUpdate: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
