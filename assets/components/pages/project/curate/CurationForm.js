@@ -204,7 +204,7 @@ class CurationForm extends React.Component {
   renderCustomFlags = () => {
     const { customFlags } = this.props;
 
-    let customFlagContent = <p>There are no custom flags</p>;
+    let customFlagContent = <p>Click the &apos;+&apos; button above to a new custom flag.</p>;
     if (customFlags?.length) {
       customFlagContent = sortBy(customFlags, ["key"]).map(flag =>
         this.renderFlagInput(
@@ -250,9 +250,42 @@ class CurationForm extends React.Component {
     );
   };
 
+  renderCustomFlagForm() {
+    const { flagToUpdate, showCreateFlagForm } = this.state;
+
+    if (showCreateFlagForm) {
+      return (
+        <CustomFlagForm
+          open={showCreateFlagForm}
+          onSave={(oldKey, newKey) => {
+            this.setState({ showCreateFlagForm: false });
+            this.updateCustomFlagField(oldKey, newKey);
+          }}
+          onCancel={() => this.setState({ showCreateFlagForm: false })}
+        />
+      );
+    }
+
+    if (flagToUpdate != null) {
+      return (
+        <CustomFlagForm
+          open={flagToUpdate != null}
+          flag={flagToUpdate}
+          onSave={(oldKey, newKey) => {
+            this.setState({ flagToUpdate: null });
+            this.updateCustomFlagField(oldKey, newKey);
+          }}
+          onCancel={() => this.setState({ flagToUpdate: null })}
+        />
+      );
+    }
+
+    return null;
+  }
+
   render() {
     const { value, errors } = this.props;
-    const { isSaving, flagToUpdate, showCreateFlagForm } = this.state;
+    const { isSaving } = this.state;
 
     return (
       <Ref innerRef={this.formElement}>
@@ -377,17 +410,7 @@ class CurationForm extends React.Component {
           </div>
 
           {this.renderCustomFlags()}
-          <CustomFlagForm
-            open={flagToUpdate !== null || showCreateFlagForm}
-            flag={flagToUpdate}
-            onSave={(oldKey, newKey) => {
-              this.setState({ flagToUpdate: null, showCreateFlagForm: false });
-              this.updateCustomFlagField(oldKey, newKey);
-            }}
-            onCancel={() => {
-              this.setState({ flagToUpdate: null, showCreateFlagForm: false });
-            }}
-          />
+          {this.renderCustomFlagForm()}
 
           <Header sub>Verdict</Header>
           <Form.Group>
