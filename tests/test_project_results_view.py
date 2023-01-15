@@ -2,7 +2,14 @@
 import pytest
 from rest_framework.test import APIClient
 
-from curation_portal.models import CurationAssignment, CurationResult, Project, User
+from curation_portal.models import (
+    CurationAssignment,
+    CurationResult,
+    Project,
+    User,
+    CustomFlag,
+    CustomFlagCurationResult,
+)
 
 pytestmark = pytest.mark.django_db  # pylint: disable=invalid-name
 
@@ -199,3 +206,82 @@ def test_upload_results_rejects_duplicate_assignments(db_setup):
         assignment__variant__variant_id="1-300-T-C",
         assignment__curator__username="user3@example.com",
     ).exists()
+
+
+def test_upload_results_sets_custom_flags(db_setup):
+    custom_flag = CustomFlag.objects.create(
+        key="flag_foo_bar",
+        label="Flag Foo Bar",
+        shortcut="FB",
+    )
+
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    response = client.post(
+        "/api/project/1/results/",
+        [
+            {
+                "curator": "user1@example.com",
+                "variant_id": "1-100-A-G",
+                "custom_flags": {"flag_foo_bar": True},
+            }
+        ],
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert CurationResult.objects.filter(assignment__variant__variant_id="1-100-A-G").exists()
+
+    result = CurationResult.objects.get(assignment__variant__variant_id="1-100-A-G")
+    assert CustomFlagCurationResult.objects.filter(result=result, flag=custom_flag).exists()
+
+    custom_result = CustomFlagCurationResult.objects.get(result=result, flag=custom_flag)
+    assert custom_result.checked
+
+
+def test_upload_results_rejects_results_with_custom_flags_that_do_not_exist(db_setup):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    response = client.post(
+        "/api/project/1/results/",
+        [
+            {
+                "curator": "user1@example.com",
+                "variant_id": "1-100-A-G",
+                "custom_flags": {"flag_foo_bar": True},
+            }
+        ],
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "'flag_foo_bar' does not exist" in str(response.data[0])
+    assert not CurationResult.objects.filter(assignment__variant__variant_id="1-100-A-G").exists()
+
+
+def test_upload_results_sets_all_custom_flags_as_false_if_not_specified(db_setup):
+    custom_flag = CustomFlag.objects.create(
+        key="flag_foo_bar",
+        label="Flag Foo Bar",
+        shortcut="FB",
+    )
+
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    response = client.post(
+        "/api/project/1/results/",
+        [{"curator": "user1@example.com", "variant_id": "1-100-A-G"}],
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert CurationResult.objects.filter(assignment__variant__variant_id="1-100-A-G").exists()
+
+    result = CurationResult.objects.get(assignment__variant__variant_id="1-100-A-G")
+    assert CustomFlagCurationResult.objects.filter(result=result, flag=custom_flag).exists()
+
+    custom_result = CustomFlagCurationResult.objects.get(result=result, flag=custom_flag)
+    assert not custom_result.checked

@@ -13,6 +13,7 @@ webpack-stats.json
 .coverage
 htmlcov
 .tox
+.pytest_cache
 
 # pyenv
 .python-version
@@ -20,5 +21,14 @@ htmlcov
 # dotenv for Docker Compose
 .env
 
+# direnv dotenv for shell
+.envrc
+
 # Hail logs
 hail-*.log
+
+# Python virtual env
+venv
+
+# VS Code
+.vscode

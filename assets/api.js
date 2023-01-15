@@ -7,6 +7,7 @@ class ApiClient {
   request(path, options) {
     return fetch(`/api${path}`, options).then(response => {
       const isOk = response.ok;
+      if (response.status === 204) return {};
       return response.json().then(
         data => {
           if (isOk) {
@@ -49,6 +50,16 @@ class ApiClient {
         "X-CSRFToken": getCookie("csrftoken"),
       },
       method: "POST",
+    });
+  }
+
+  delete(path) {
+    return this.request(path, {
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      method: "DELETE",
     });
   }
 }

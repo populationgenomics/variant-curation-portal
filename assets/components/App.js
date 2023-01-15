@@ -20,6 +20,7 @@ import ProjectPage from "./pages/project/ProjectPage";
 import SettingsPage from "./pages/SettingsPage";
 import VariantsPage from "./pages/variants/VariantsPage";
 import VariantPage from "./pages/variant/VariantPage";
+import { loadCustomFLags } from "../redux/actions/customFlagActions";
 
 const App = ({ settings, user }) => {
   return (
@@ -114,7 +115,8 @@ const ConnectedApp = connect(
     user: getUser(state),
   }),
   dispatch => ({
-    initializeApp: () => Promise.all([dispatch(loadAppSettings()), dispatch(loadUser())]),
+    initializeApp: () =>
+      Promise.all([dispatch(loadAppSettings()), dispatch(loadUser()), dispatch(loadCustomFLags())]),
   })
 )(({ initializeApp, ...otherProps }) => {
   const [isInitializing, setIsInitializing] = useState(true);
