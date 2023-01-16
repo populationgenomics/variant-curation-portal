@@ -34,17 +34,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: "install Cloud SQL Proxy"
-        run: |
-          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
-          chmod +x cloud_sql_proxy
+      - name: "authenticate google cloud"
+        id: "auth"
+        uses: "google-github-actions/auth@v1"
+        with:
+          service_account: ${{ secrets.GCP_DEPLOY_KEY }}
 
       - name: "gcloud setup"
-        id: "auth"
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: curator-348003
-          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
+          install_components: "cloud_sql_proxy"
 
       - name: "gcloud secrets"
         id: "secrets"
@@ -58,13 +58,16 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: curation_portal.settings.base
           DB_ENGINE: django.db.backends.postgresql
-          DB_HOST: /cloudsql/curator-348003:australia-southeast1:curator-postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
           DB_DATABASE: curator-prod
           DB_USER: curator-prod
           DB_PASSWORD: "${{ steps.secrets.outputs.db_password }}"
           SECRET_KEY: "${{ steps.secrets.outputs.secret_key }}"
         run: |
-          python manage.py migrate
+          ./cloud-sql-proxy \
+            --port 5432 curator-348003:australia-southeast1:curator-postgres &
+            python manage.py migrate
 
   deploy_server:
     runs-on: ubuntu-latest
@@ -78,11 +81,16 @@ jobs:
       - name: "checkout repo"
         uses: actions/checkout@v2
 
+      - name: "authenticate google cloud"
+        id: "auth"
+        uses: "google-github-actions/auth@v1"
+        with:
+          service_account: ${{ secrets.GCP_DEPLOY_KEY }}
+
       - name: "gcloud setup"
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: curator-348003
-          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
 
       - name: "build and deploy"
         run: |
