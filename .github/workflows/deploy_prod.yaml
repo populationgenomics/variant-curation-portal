@@ -6,6 +6,66 @@ on:
       - main
 
 jobs:
+  migrate_database:
+    runs-on: ubuntu-latest
+
+    env:
+      CLOUDSDK_CORE_DISABLE_PROMPTS: 1
+
+    steps:
+      - name: "checkout repo"
+        uses: actions/checkout@v2
+
+      - name: "setup Python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: "use pip cache"
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            pip-
+
+      - name: "install dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: "install Cloud SQL Proxy"
+        run: |
+          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+          chmod +x cloud_sql_proxy
+
+      - name: "gcloud setup"
+        id: "auth"
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: curator-348003
+          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
+
+      - name: "gcloud secrets"
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v1"
+        with:
+          secrets: |-
+            secret_key:curator-348003/django-secret-key-prod/latest
+            db_password:curator-348003/postgres-password-prod/latest
+
+      - name: "apply database migrations"
+        env:
+          DJANGO_SETTINGS_MODULE: curation_portal.settings.base
+          DB_ENGINE: django.db.backends.postgresql
+          DB_HOST: /cloudsql/curator-348003:australia-southeast1:curator-postgres
+          DB_DATABASE: curator-prod
+          DB_USER: curator-prod
+          DB_PASSWORD: "${{ steps.secrets.outputs.db_password }}"
+          SECRET_KEY: "${{ steps.secrets.outputs.secret_key }}"
+        run: |
+          python manage.py migrate
+
   deploy_server:
     runs-on: ubuntu-latest
 
@@ -15,25 +75,25 @@ jobs:
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
 
     steps:
-    - name: "checkout repo"
-      uses: actions/checkout@v2
+      - name: "checkout repo"
+        uses: actions/checkout@v2
 
-    - name: "gcloud setup"
-      uses: google-github-actions/setup-gcloud@v0
-      with:
-        project_id: curator-348003
-        service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
+      - name: "gcloud setup"
+        uses: google-github-actions/setup-gcloud@v0
+        with:
+          project_id: curator-348003
+          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
 
-    - name: "build and deploy"
-      run: |
-        gcloud run deploy \
-          --project=curator-348003 \
-          --region=australia-southeast1 \
-          --service-account=curator-prod@curator-348003.iam.gserviceaccount.com \
-          --no-allow-unauthenticated \
-          --add-cloudsql-instances=curator-348003:australia-southeast1:curator-postgres \
-          --source=. \
-          --port=8000 \
-          --set-env-vars=DJANGO_SETTINGS_MODULE=curation_portal.settings.base,ALLOWED_HOSTS=curator.populationgenomics.org.au,CURATION_PORTAL_AUTH_HEADER=HTTP_X_GOOG_AUTHENTICATED_USER_EMAIL,DB_ENGINE=django.db.backends.postgresql,DB_HOST=/cloudsql/curator-348003:australia-southeast1:curator-postgres,DB_DATABASE=curator-prod,DB_USER=curator-prod \
-          --update-secrets=SECRET_KEY=django-secret-key-prod:latest,DB_PASSWORD=postgres-password-prod:latest \
-          curator-prod
+      - name: "build and deploy"
+        run: |
+          gcloud run deploy \
+            --project=curator-348003 \
+            --region=australia-southeast1 \
+            --service-account=curator-prod@curator-348003.iam.gserviceaccount.com \
+            --no-allow-unauthenticated \
+            --add-cloudsql-instances=curator-348003:australia-southeast1:curator-postgres \
+            --source=. \
+            --port=8000 \
+            --set-env-vars=DJANGO_SETTINGS_MODULE=curation_portal.settings.base,ALLOWED_HOSTS=curator.populationgenomics.org.au,CURATION_PORTAL_AUTH_HEADER=HTTP_X_GOOG_AUTHENTICATED_USER_EMAIL,DB_ENGINE=django.db.backends.postgresql,DB_HOST=/cloudsql/curator-348003:australia-southeast1:curator-postgres,DB_DATABASE=curator-prod,DB_USER=curator-prod \
+            --update-secrets=SECRET_KEY=django-secret-key-prod:latest,DB_PASSWORD=postgres-password-prod:latest \
+            curator-prod
