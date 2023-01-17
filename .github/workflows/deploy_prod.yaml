@@ -1,18 +1,22 @@
-name: Deploy to prod
+name: Deploy
 
 on:
   push:
     branches:
       - main
+      - dev
 
 jobs:
-  build:
-   runs-on: ubuntu-latest 
+  build_and_deploy:
+    runs-on: ubuntu-latest
 
     env:
       DOCKER_BUILDKIT: 1
       BUILDKIT_PROGRESS: plain
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
+      PROJECT_ID: curator-348003
+      REGION_ID: australia-southeast1
+      DB_ENGINE: django.db.backends.postgresql
 
     steps:
       - name: "checkout repo"
@@ -21,88 +25,75 @@ jobs:
       - name: "gcloud setup"
         uses: google-github-actions/setup-gcloud@v0
         with:
-          project_id: curator-348003
+          project_id: ${{ PROJECT_ID }}
           service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
 
-      - name: 'gcloud docker auth'
+      - name: "set deployment info"
+        id: "deploy_info"
         run: |
-          gcloud auth configure-docker australia-southeast1-docker.pkg.dev
+          SHA=$(git rev-parse --short HEAD)
 
-      - name: "set short SHA"
-        id: repo
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-   
-      - name: 'build image'
+          if [[ "${{ github.ref_name }}" == "main" ]];
+          then
+            TYPE=prod
+            echo "django_settings_module=curation_portal.settings.base" >> $GITHUB_OUTPUT
+            echo "cloud_sql_id=curator-348003:australia-southeast1:curator-postgres" >> $GITHUB_OUTPUT
+          else
+            TYPE=${{ github.ref_name }}
+            echo "django_settings_module=curation_portal.settings.$TYPE" >> $GITHUB_OUTPUT
+            echo "cloud_sql_id=curator-348003:australia-southeast1:curator-postgres-$TYPE" >> $GITHUB_OUTPUT
+          fi
+
+          if grep -q "curator-$TYPE-migrate-db" "$(gcloud beta run jobs list)";
+          then
+            SUB_COMMAND=update
+          else
+            SUB_COMMAND=create
+          fi
+
+          echo "job_command=$SUB_COMMAND" >> $GITHUB_OUTPUT
+          echo "type=$TYPE" >> $GITHUB_OUTPUT
+          echo "db_user=curator-$TYPE" >> $GITHUB_OUTPUT
+          echo "db_database=curator-$TYPE" >> $GITHUB_OUTPUT
+          echo "service_account=curator-$TYPE@curator-348003.iam.gserviceaccount.com" >> $GITHUB_OUTPUT
+          echo "image_tag=$REGION_ID-docker.pkg.dev/$PROJECT_ID/images/curator-$TYPE:$SHA" >> $GITHUB_OUTPUT
+
+      - name: "gcloud docker auth"
         run: |
-          docker build -t australia-southeast1-docker.pkg.dev/curator-348003/images/curator-prod:${{ steps.repo.outputs.short_sha }} . --no-cache
-      
-      - name: 'push image'
+          gcloud auth configure-docker $REGION_ID-docker.pkg.dev
+
+      - name: "build image"
         run: |
-          docker push $DOCKER_IMAGE
+          docker build -t ${{ steps.deploy_info.outputs.image_tag }} . --no-cache
 
-  migrate:
-    runs-on: ubuntu-latest
-
-    env:
-      CLOUDSDK_CORE_DISABLE_PROMPTS: 1
-
-    steps:
-      - name: "checkout repo"
-        uses: actions/checkout@v2
-
-      - name: "gcloud setup"
-        uses: google-github-actions/setup-gcloud@v0
-        with:
-          project_id: curator-348003
-          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
-
-      - name: "set short SHA"
-        id: repo
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: "build and deploy"
+      - name: "push image"
         run: |
-          gcloud beta run jobs create \
-            curator-prod-migrate-db \
-            --region=australia-southeast1 \
-            --image=australia-southeast1-docker.pkg.dev/curator-348003/images/curator-prod:${{ steps.repo.outputs.short_sha }} \
-            --service-account=curator-prod@curator-348003.iam.gserviceaccount.com \
-            --set-cloudsql-instances=curator-348003:australia-southeast1:curator-postgres \
-            --set-env-vars=DJANGO_SETTINGS_MODULE=curation_portal.settings.base,DB_ENGINE=django.db.backends.postgresql,DB_HOST=/cloudsql/curator-348003:australia-southeast1:curator-postgres,DB_DATABASE=curator-prod,DB_USER=curator-prod \
-            --set-secrets=SECRET_KEY=django-secret-key-prod:latest,DB_PASSWORD=postgres-password-prod:latest \
-            --command="python manage.py migrate" \
-            --execute-now
+          docker push ${{ steps.deploy_info.outputs.image_tag }}
 
-  deploy:
-    runs-on: ubuntu-latest
+      - name: "run migrations"
+        run: |
+          gcloud beta run jobs ${{ steps.deploy_info.outputs.job_command }} \
+            curator-${{ steps.deploy_info.outputs.type }}-migrate-db \
+            --region=$REGION_ID \
+            --image=${{ steps.deploy_info.outputs.image_tag }} \
+            --service-account=${{ steps.deploy_info.outputs.service_account }} \
+            --set-cloudsql-instances=${{ steps.deploy_info.outputs.cloud_sql_id }} \
+            --set-env-vars=DJANGO_SETTINGS_MODULE=${{ steps.deploy_info.outputs.django_settings_module }},DB_ENGINE=$DB_ENGINE,DB_HOST=/cloudsql/${{ steps.deploy_info.outputs.cloud_sql_id }},DB_DATABASE=${{ steps.deploy_info.outputs.db_database }},DB_USER=${{ steps.deploy_info.outputs.db_user }} \
+            --set-secrets=SECRET_KEY=django-secret-key-${{ steps.deploy_info.outputs.type }}:latest,DB_PASSWORD=postgres-password-${{ steps.deploy_info.outputs.type }}:latest \
+            --command='python,manage.py,migrate' \
+            --execute-now \
+            --wait
 
-    env:
-      CLOUDSDK_CORE_DISABLE_PROMPTS: 1
-
-    steps:
-      - name: "checkout repo"
-        uses: actions/checkout@v2
-
-      - name: "gcloud setup"
-        uses: google-github-actions/setup-gcloud@v0
-        with:
-          project_id: curator-348003
-          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
-
-      - name: "set short SHA"
-        id: repo
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-      - name: "build and deploy"
+      - name: "deploy"
         run: |
           gcloud run deploy \
-            --project=curator-348003 \
-            --region=australia-southeast1 \
-            --service-account=curator-prod@curator-348003.iam.gserviceaccount.com \
+            curator-${{ steps.deploy_info.outputs.type }} \
+            --project=$PROJECT_ID \
+            --region=$REGION_ID \
+            --service-account=${{ steps.deploy_info.outputs.service_account }} \
             --no-allow-unauthenticated \
-            --add-cloudsql-instances=curator-348003:australia-southeast1:curator-postgres \
-            --image=australia-southeast1-docker.pkg.dev/curator-348003/images/curator-prod:${{ steps.repo.outputs.short_sha }} \
+            --add-cloudsql-instances=${{ steps.deploy_info.outputs.cloud_sql_id }} \
+            --image=${{ steps.deploy_info.outputs.image_tag }} \
             --port=8000 \
-            --set-env-vars=DJANGO_SETTINGS_MODULE=curation_portal.settings.base,ALLOWED_HOSTS=curator.populationgenomics.org.au,CURATION_PORTAL_AUTH_HEADER=HTTP_X_GOOG_AUTHENTICATED_USER_EMAIL,DB_ENGINE=django.db.backends.postgresql,DB_HOST=/cloudsql/curator-348003:australia-southeast1:curator-postgres,DB_DATABASE=curator-prod,DB_USER=curator-prod \
-            --update-secrets=SECRET_KEY=django-secret-key-prod:latest,DB_PASSWORD=postgres-password-prod:latest \
-            curator-prod
+            --set-env-vars=DJANGO_SETTINGS_MODULE=${{ steps.deploy_info.outputs.django_settings_module }},DB_ENGINE=$DB_ENGINE,DB_HOST=/cloudsql/${{ steps.deploy_info.outputs.cloud_sql_id }},DB_DATABASE=${{ steps.deploy_info.outputs.db_database }},DB_USER=${{ steps.deploy_info.outputs.db_user }},ALLOWED_HOSTS=curator.populationgenomics.org.au,CURATION_PORTAL_AUTH_HEADER=HTTP_X_GOOG_AUTHENTICATED_USER_EMAIL \
+            --update-secrets=SECRET_KEY=django-secret-key-${{ steps.deploy_info.outputs.type }}:latest,DB_PASSWORD=postgres-password-${{ steps.deploy_info.outputs.type }}:latest
