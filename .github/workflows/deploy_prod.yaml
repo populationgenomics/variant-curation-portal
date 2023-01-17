@@ -46,9 +46,9 @@ jobs:
 
           if grep -q "curator-$TYPE-migrate-db" "$(gcloud beta run jobs list)";
           then
-            SUB_COMMAND=update
-          else
             SUB_COMMAND=create
+          else
+            SUB_COMMAND=update
           fi
 
           echo "job_command=$SUB_COMMAND" >> $GITHUB_OUTPUT
