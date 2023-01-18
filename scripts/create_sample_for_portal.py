@@ -51,11 +51,11 @@ def main():
 
     # Set the random sampler seed, and extract the requested number of variants.
     random.seed(args.seed)
-    random.sample(rows, args.n_variants)
+    sample = random.sample(rows, args.n_variants)
     
     # Write the output to a JSON file.
     with open_file(output_path(args.output, "analysis"), "w") as f:
-        f.write("[" + ",".join([row.json for row in rows]) + "]")
+        f.write("[" + ",".join([row.json for row in sample]) + "]")
 
 
 if __name__ == '__main__':
