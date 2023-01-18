@@ -120,7 +120,7 @@ def add(a, b):
     return hl.or_else(a, 0) + hl.or_else(b, 0)
 
 
-def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=False, annotate_caf=False, flag_curated=False):
+def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=False, annotate_caf=False, flag_curated="ignore"):
     if gnomad_version not in (2, 3):
         raise Exception(f"Invalid gnomAD version {gnomad_version}")
 
@@ -220,7 +220,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         )
 
     # Optionally annotate with the results of the previous gnomAD v2 curation.
-    if flag_curated and gnomad_version == 2:
+    if flag_curated != "ignore" and gnomad_version == 2:
        # Loop through all the curation files and read them into pandas.
         df_list = (pd.read_csv(file, usecols = ['Variant ID', 'Verdict']) for file in GNOMAD_V2_CURATION)
 
@@ -233,6 +233,9 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         # Annotate already-curated variants with their verdict.
         ds = ds.annotate(**curation[ds.locus, ds.alleles].select("Verdict")).rename({'Verdict' : 'curation_verdict'})
 
+        # Optionally remove those variants that have already been curated.
+        if flag_curated == "remove":
+            ds = ds.filter(hl.is_missing(ds.curation_verdict))
 
     return ds
 
@@ -274,8 +277,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--flag-curated",
-        action="store_true",
-        help="Flag variants that have already been curated (gnomAD v2 only)",
+        type=str,
+        choices=("ignore", "flag", "remove"),
+        default="ignore",
+        help="Optionally flag or remove variants that have already been curated (gnomAD v2 only)",
     )
     parser.add_argument(
         "--output",
