@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+'''Samples a hail table and converts to JSON, for input into the variant curation portal.'''
+
 import hail as hl
 from cpg_utils.hail_batch import init_batch, output_path
 
