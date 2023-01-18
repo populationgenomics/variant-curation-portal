@@ -235,7 +235,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
 
         # Optionally remove those variants that have already been curated.
         if flag_curated == "remove":
-            ds = ds.filter(ds.curation_verdict == hl.missing('str'))
+            ds = ds.filter(hl.is_missing(ds.curation_verdict))
 
     return ds
 
