@@ -4,7 +4,15 @@
 
 import argparse
 import hail as hl
+import random
+
 from cpg_utils.hail_batch import init_batch, output_path
+
+def open_file(path, mode="r"):
+    if path.startswith("gs://"):
+        return hl.hadoop_open(path, mode)
+    else:
+        return open(path, mode)
 
 def main():
 
@@ -31,6 +39,7 @@ def main():
         required=True,
         help="Relative dataset path (analysis category) for sampled variants file.",
     )
+    args = parser.parse_args()
 
     init_batch()
 
