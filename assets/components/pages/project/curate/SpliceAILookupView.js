@@ -3,9 +3,7 @@ import React from "react";
 import { Header, Segment } from "semantic-ui-react";
 
 const SpliceAILookupView = ({ variant, scoreType, maxDistance, usePrecomputed }) => {
-  console.log(variant);
   const spliceAiVariantId = variant.variant_id;
-  // Remove "GRCh" characters
   const referenceGenome = variant.reference_genome.replace("GRCh", "");
 
   if (!spliceAiVariantId) {
