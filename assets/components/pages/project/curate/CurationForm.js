@@ -204,7 +204,7 @@ class CurationForm extends React.Component {
   renderCustomFlags = () => {
     const { customFlags } = this.props;
 
-    let customFlagContent = <p>Click the &apos;+&apos; button above to a new custom flag.</p>;
+    let customFlagContent = <p>Click the &apos;+&apos; button above to add a new custom flag</p>;
     if (customFlags?.length) {
       customFlagContent = sortBy(customFlags, ["key"]).map(flag =>
         this.renderFlagInput(
