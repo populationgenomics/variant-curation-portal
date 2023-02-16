@@ -29,7 +29,33 @@ VARIANTS = [
                 "transcript_id": "ENST00000466300",
             }
         ],
-    }
+    },
+    {
+        "reference_genome": "GRCh37",
+        "variant_id": "1-949643-AC-A",
+        "liftover_variant_id": None,
+        "chrom": "2",
+        "pos": 949643,
+        "xpos": 1000949643,
+        "ref": "AC",
+        "alt": "A",
+        "qc_filter": None,
+        "AC": 1,
+        "AN": 31398,
+        "AF": 0.000031849162367029746,
+        "n_homozygotes": 0,
+        "annotations": [
+            {
+                "consequence": "frameshift_variant",
+                "gene_id": "ENSG00000187608",
+                "gene_symbol": "ISG15",
+                "loftee": None,
+                "loftee_filter": None,
+                "loftee_flags": None,
+                "transcript_id": "ENST00000379389",
+            }
+        ],
+    },
 ]
 
 
