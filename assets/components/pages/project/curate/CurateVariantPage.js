@@ -48,6 +48,10 @@ class CurateVariantPage extends React.Component {
     showSpliceAI: false,
   };
 
+  componentDidMount() {
+    setTimeout(() => this.makeSpliceAIVisible(), 1000);
+  }
+
   goToVariant(variantId) {
     const { history, project, saveCurrentResult } = this.props;
     saveCurrentResult().then(
