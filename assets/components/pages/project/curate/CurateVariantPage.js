@@ -45,6 +45,7 @@ class CurateVariantPage extends React.Component {
 
   state = {
     showForm: true,
+    showSpliceAI: false,
   };
 
   goToVariant(variantId) {
@@ -57,9 +58,13 @@ class CurateVariantPage extends React.Component {
     );
   }
 
+  makeSpliceAIVisible() {
+    this.setState({ showSpliceAI: true });
+  }
+
   render() {
     const { project, user, variantId, onLoadResult } = this.props;
-    const { showForm } = this.state;
+    const { showForm, showSpliceAI } = this.state;
 
     return (
       <React.Fragment>
@@ -192,7 +197,9 @@ class CurateVariantPage extends React.Component {
                             {hasAnnotations ? <a href="#ucsc-gene">UCSC (gene)</a> : "UCSC (gene)"}
                           </List.Item>
                           <List.Item>
-                            <a href="#splice-ai-lookup">SpliceAI lookup</a>
+                            <a href="#splice-ai-lookup" onClick={() => this.makeSpliceAIVisible()}>
+                              SpliceAI lookup
+                            </a>
                           </List.Item>
                         </List>
                       </div>
@@ -298,7 +305,9 @@ class CurateVariantPage extends React.Component {
                   <br />
                   <UCSCGeneView settings={user.settings} variant={variant} />
                   <br />
-                  <SpliceAILookupView variant={variant} maxDistance={500} />
+                  <div hidden={!showSpliceAI}>
+                    <SpliceAILookupView variant={variant} maxDistance={500} />
+                  </div>
                 </div>
               </div>
             );
