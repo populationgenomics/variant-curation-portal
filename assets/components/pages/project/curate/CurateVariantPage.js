@@ -18,6 +18,7 @@ import CurationForm from "./CurationForm";
 import { GnomadVariantView, GnomadGeneView } from "./gnomad";
 import { UCSCVariantView, UCSCGeneView } from "./UCSC";
 import VariantData from "./VariantData";
+import SpliceAILookupView from "./SpliceAILookupView";
 
 const ResultVerdict = connect(state => ({
   verdict: getCurationResult(state).verdict,
@@ -190,6 +191,9 @@ class CurateVariantPage extends React.Component {
                           <List.Item>
                             {hasAnnotations ? <a href="#ucsc-gene">UCSC (gene)</a> : "UCSC (gene)"}
                           </List.Item>
+                          <List.Item>
+                            <a href="#splice-ai-lookup">SpliceAI lookup</a>
+                          </List.Item>
                         </List>
                       </div>
                     </div>
@@ -294,6 +298,7 @@ class CurateVariantPage extends React.Component {
                   <br />
                   <UCSCGeneView settings={user.settings} variant={variant} />
                   <br />
+                  <SpliceAILookupView variant={variant} maxDistance={500} />
                 </div>
               </div>
             );
