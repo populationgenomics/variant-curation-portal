@@ -45,30 +45,10 @@ class CurateVariantPage extends React.Component {
 
   state = {
     showForm: true,
-    showSpliceAI: false,
   };
-
-  componentDidMount() {
-    // Show the SpliceAI iframe after a timeout to prevent it from hijacking the scroll position.
-    setTimeout(() => this.showSpliceAI(), 1000);
-  }
-
-  componentDidUpdate() {
-    const { showSpliceAI } = this.state;
-
-    // User clicked 'next/previous variant', so make sure to unhide SpliceAI again.
-    if (!showSpliceAI) {
-      setTimeout(() => this.showSpliceAI(), 1000);
-    }
-  }
 
   goToVariant(variantId) {
     const { history, project, saveCurrentResult } = this.props;
-
-    // `history.push` preserves component state, hide the SpliceAI iframe to stop it from hijacking
-    // the scroll position again.
-    this.hideSpliceAI();
-
     saveCurrentResult().then(
       () => {
         history.push(`/project/${project.id}/variant/${variantId}/curate/`);
@@ -77,17 +57,9 @@ class CurateVariantPage extends React.Component {
     );
   }
 
-  showSpliceAI() {
-    this.setState({ showSpliceAI: true });
-  }
-
-  hideSpliceAI() {
-    this.setState({ showSpliceAI: false });
-  }
-
   render() {
     const { project, user, variantId, onLoadResult } = this.props;
-    const { showForm, showSpliceAI } = this.state;
+    const { showForm } = this.state;
 
     return (
       <React.Fragment>
@@ -326,9 +298,7 @@ class CurateVariantPage extends React.Component {
                   <br />
                   <UCSCGeneView settings={user.settings} variant={variant} />
                   <br />
-                  <div hidden={!showSpliceAI}>
-                    <SpliceAILookupView variant={variant} maxDistance={500} />
-                  </div>
+                  <SpliceAILookupView variant={variant} maxDistance={500} />
                 </div>
               </div>
             );
