@@ -1,10 +1,18 @@
 import PropTypes from "prop-types";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Header, Segment } from "semantic-ui-react";
 
 const SpliceAILookupView = ({ variant, scoreType, maxDistance, usePrecomputed }) => {
   const spliceAiVariantId = variant.variant_id;
   const referenceGenome = variant.reference_genome.replace("GRCh", "");
+
+  // Show the SpliceAI iframe after a timeout to stop it from hijacking parent's scroll position
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setVisible(true), 1000);
+    return () => clearTimeout(timeout);
+  }, []);
 
   if (!spliceAiVariantId) {
     return (
@@ -32,12 +40,14 @@ const SpliceAILookupView = ({ variant, scoreType, maxDistance, usePrecomputed })
   }
 
   return (
-    <iframe
-      title="SpliceAI lookup page"
-      id="splice-ai-lookup"
-      src={url}
-      style={{ width: "100%", height: "3900px" }}
-    />
+    <div id="splice-ai-lookup" style={{ width: "100%", height: "3900px" }}>
+      <iframe
+        hidden={!visible}
+        title="SpliceAI lookup page"
+        src={url}
+        style={{ width: "100%", height: "100%" }}
+      />
+    </div>
   );
 };
 
