@@ -260,8 +260,8 @@ if __name__ == "__main__":
         help="relative dataset path (analysis category) to a Hail table with a gene_id field containing Ensembl IDs",
     )
     group.add_argument(
-        "--genes-list",
-        help="Full path to a txt file with one Ensembl ID per line",
+        "--genes-file",
+        help="Full GCP path to a txt file with one Ensembl gene ID per line",
     )
     parser.add_argument(
         "--gnomad-version",
@@ -299,11 +299,9 @@ if __name__ == "__main__":
     # Select the genes to process.
     if args.gene_ids:
         genes = args.gene_ids
-    elif args.genes_list:
-        genes = []
+    elif args.genes_file:
         with AnyPath(args.genes_list).open('r') as f:
-            for line in f:
-                genes.append(line.strip())
+            genes = [line.strip() for line in f if line.strip()]
     else:
         genes_table = hl.read_table(dataset_path(args.genes_table, "analysis"))
         genes = list(set(genes_table.gene_id.collect()))
