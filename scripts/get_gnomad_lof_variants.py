@@ -300,7 +300,7 @@ if __name__ == "__main__":
     if args.gene_ids:
         genes = args.gene_ids
     elif args.genes_file:
-        with AnyPath(args.genes_list).open('r') as f:
+        with AnyPath(args.genes_file).open('r') as f:
             genes = [line.strip() for line in f if line.strip()]
     else:
         genes_table = hl.read_table(dataset_path(args.genes_table, "analysis"))
