@@ -302,7 +302,7 @@ if __name__ == "__main__":
     elif args.genes_list:
         genes = []
         with AnyPath(args.genes_list).open('r') as f:
-            for line in f.strip():
+            for line in f:
                 genes.append(line.strip())
     else:
         genes_table = hl.read_table(dataset_path(args.genes_table, "analysis"))
