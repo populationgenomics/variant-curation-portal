@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from cloudpathlib import AnyPath
 
 import hail as hl
 import pandas as pd
@@ -130,7 +131,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         ds = load_gnomad_v3_variants()
 
     reference_genome = "GRCh37" if gnomad_version == 2 else "GRCh38"
-    
+
     # Work around rate limit of the gnomAD API for fetching gene intervals by
     # using the GENCODE table directly.
     # Would need to provide the correct GENCODE GTF here for gnomAD v3.
@@ -199,7 +200,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         constraint = constraint.repartition(10)
 
         # Convert the constraint table to a lookup dictionary, so that map can handle it.
-        caf_max = constraint.aggregate(hl.agg.group_by(constraint.transcript, 
+        caf_max = constraint.aggregate(hl.agg.group_by(constraint.transcript,
                                             hl.agg.max(constraint.classic_caf)))
         lookup = hl.dict({k: caf_max[k] if caf_max[k] != None else hl.missing("float64") for k in caf_max.keys()})
 
@@ -229,7 +230,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
 
         # Key the curation results by the locus and alleles.
         curation = curation.key_by(**hl.parse_variant(curation['Variant ID'].replace("-",":"), reference_genome="GRCh37"))
-       
+
         # Annotate already-curated variants with their verdict.
         ds = ds.annotate(**curation[ds.locus, ds.alleles].select("Verdict")).rename({'Verdict' : 'curation_verdict'})
 
@@ -250,13 +251,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Get gnomAD pLoF variants in selected genes.")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
-        "--gene-ids", 
-        nargs="+", 
-        metavar="GENE", 
+        "--gene-ids",
+        nargs="+",
+        metavar="GENE",
         help="Ensembl IDs of genes")
     group.add_argument(
         "--genes-table",
         help="relative dataset path (analysis category) to a Hail table with a gene_id field containing Ensembl IDs",
+    )
+    group.add_argument(
+        "--genes-list",
+        help="Full path to a txt file with one Ensembl ID per line",
     )
     parser.add_argument(
         "--gnomad-version",
@@ -294,16 +299,21 @@ if __name__ == "__main__":
     # Select the genes to process.
     if args.gene_ids:
         genes = args.gene_ids
+    elif args.genes_list:
+        genes = []
+        with AnyPath(args.genes_list).open('r') as f:
+            for line in f.strip():
+                genes.append(line.strip())
     else:
         genes_table = hl.read_table(dataset_path(args.genes_table, "analysis"))
         genes = list(set(genes_table.gene_id.collect()))
 
     # Fetch the (optionally filtered and annotated) pLoF variants from the appropriate gnomAD dataset.
     variants = get_gnomad_lof_variants(
-        args.gnomad_version, 
-        genes, 
+        args.gnomad_version,
+        genes,
         include_low_confidence=args.include_low_confidence,
-        annotate_caf=args.annotate_caf, 
+        annotate_caf=args.annotate_caf,
         flag_curated=args.flag_curated
     )
 
