@@ -75,6 +75,22 @@ class CurateVariantPage extends React.Component {
           }) => {
             const hasAnnotations = variant.annotations.length > 0;
 
+            let liftoverVariant = null;
+            if (variant.liftover_variant_id) {
+              const [chrom, pos] = variant.liftover_variant_id.split("-");
+              liftoverVariant = {
+                variant_id: variant.liftover_variant_id,
+                chrom,
+                pos: parseInt(pos, 10),
+                annotations: variant.annotations.map(a => ({
+                  gene_symbol: a.gene_symbol,
+                  transcript_id: a.transcript_id,
+                })),
+                // Set opposite reference for liftover variant
+                reference_genome: variant.reference_genome === "GRCh37" ? "GRCh38" : "GRCh37",
+              };
+            }
+
             return (
               <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
                 <div
@@ -186,10 +202,38 @@ class CurateVariantPage extends React.Component {
                             </>
                           )}
                           <List.Item>
-                            <a href="#ucsc">UCSC (variant)</a>
+                            <a href={`#ucsc-variant-${variant.reference_genome.toLowerCase()}`}>
+                              UCSC ({variant.reference_genome} variant)
+                            </a>
                           </List.Item>
                           <List.Item>
-                            {hasAnnotations ? <a href="#ucsc-gene">UCSC (gene)</a> : "UCSC (gene)"}
+                            {liftoverVariant ? (
+                              <a
+                                href={`#ucsc-variant-${liftoverVariant.reference_genome.toLowerCase()}`}
+                              >
+                                UCSC ({liftoverVariant.reference_genome} variant)
+                              </a>
+                            ) : null}
+                          </List.Item>
+                          <List.Item>
+                            {hasAnnotations ? (
+                              <a href={`#ucsc-gene-${variant.reference_genome.toLowerCase()}`}>
+                                UCSC ({variant.reference_genome} gene)
+                              </a>
+                            ) : (
+                              `UCSC (${variant.reference_genome} gene)`
+                            )}
+                          </List.Item>
+                          <List.Item>
+                            {liftoverVariant && hasAnnotations ? (
+                              <a
+                                href={`#ucsc-gene-${liftoverVariant.reference_genome.toLowerCase()}`}
+                              >
+                                UCSC ({liftoverVariant.reference_genome} gene)
+                              </a>
+                            ) : (
+                              `UCSC (${liftoverVariant.reference_genome} gene)`
+                            )}
                           </List.Item>
                           <List.Item>
                             <a href="#splice-ai-lookup">SpliceAI lookup</a>
@@ -296,8 +340,20 @@ class CurateVariantPage extends React.Component {
                   <br />
                   <UCSCVariantView settings={user.settings} variant={variant} />
                   <br />
+                  {liftoverVariant ? (
+                    <>
+                      <UCSCVariantView settings={user.settings} variant={liftoverVariant} />
+                      <br />
+                    </>
+                  ) : null}
                   <UCSCGeneView settings={user.settings} variant={variant} />
                   <br />
+                  {liftoverVariant ? (
+                    <>
+                      <UCSCGeneView settings={user.settings} variant={liftoverVariant} />
+                      <br />
+                    </>
+                  ) : null}
                   <SpliceAILookupView variant={variant} maxDistance={500} />
                 </div>
               </div>
