@@ -34,7 +34,7 @@ VARIANT_ID_REGEX = r"^(\d+|X|Y)[-:]([0-9]+)[-:]([ACGT]+)[-:]([ACGT]+)$"
 class UserSettingsSerializer(ModelSerializer):
     class Meta:
         model = UserSettings
-        fields = ("ucsc_username", "ucsc_session_name")
+        fields = ("ucsc_username", "ucsc_session_name_grch37", "ucsc_session_name_grch38")
 
 
 class UserField(RelatedField):
