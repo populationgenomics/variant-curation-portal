@@ -15,7 +15,8 @@ class UserSettings(models.Model):
     user = models.OneToOneField(User, null=True, on_delete=models.CASCADE, related_name="settings")
 
     ucsc_username = models.CharField(max_length=100, null=True, blank=True)
-    ucsc_session_name = models.CharField(max_length=1000, null=True, blank=True)
+    ucsc_session_name_grch37 = models.CharField(max_length=1000, null=True, blank=True)
+    ucsc_session_name_grch38 = models.CharField(max_length=1000, null=True, blank=True)
 
     class Meta:
         db_table = "user_settings"
