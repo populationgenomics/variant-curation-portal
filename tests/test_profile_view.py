@@ -12,7 +12,9 @@ def db_setup(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
         user = User.objects.create(username="user@example.com")
         UserSettings.objects.create(
-            user=user, ucsc_username="user", ucsc_session_name="test_session"
+            user=user, ucsc_username="user", 
+            ucsc_session_name_grch37="test_session_grch37", 
+            ucsc_session_name_grch38="test_session_grch38",
         )
 
         yield
@@ -41,5 +43,6 @@ def test_profile_view_return_settings(db_setup, username):
     response = client.get("/api/profile/").json()
     assert response["user"]["settings"] == {
         "ucsc_username": "user",
-        "ucsc_session_name": "test_session",
+        "ucsc_session_name_grch37": "test_session_grch37",
+        "ucsc_session_name_grch38": "test_session_grch38"
     }
