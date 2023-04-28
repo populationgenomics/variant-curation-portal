@@ -75,19 +75,22 @@ class CurateVariantPage extends React.Component {
           }) => {
             const hasAnnotations = variant.annotations.length > 0;
 
+            // Set opposite reference for liftover variant
+            const liftoverReference =
+              variant.reference_genome.toLowerCase() === "grch37" ? "GRCh38" : "GRCh37";
+
             let liftoverVariant = null;
             if (variant.liftover_variant_id) {
               const [chrom, pos] = variant.liftover_variant_id.split("-");
               liftoverVariant = {
                 variant_id: variant.liftover_variant_id,
+                reference_genome: liftoverReference,
                 chrom,
                 pos: parseInt(pos, 10),
                 annotations: variant.annotations.map(a => ({
                   gene_symbol: a.gene_symbol,
                   transcript_id: a.transcript_id,
                 })),
-                // Set opposite reference for liftover variant
-                reference_genome: variant.reference_genome === "GRCh37" ? "GRCh38" : "GRCh37",
               };
             }
 
@@ -203,38 +206,36 @@ class CurateVariantPage extends React.Component {
                           )}
                           <List.Item>
                             <a href={`#ucsc-variant-${variant.reference_genome.toLowerCase()}`}>
-                              UCSC ({variant.reference_genome} variant)
+                              UCSC {variant.reference_genome} (variant)
                             </a>
                           </List.Item>
-                          <List.Item>
-                            {liftoverVariant ? (
-                              <a
-                                href={`#ucsc-variant-${liftoverVariant.reference_genome.toLowerCase()}`}
-                              >
-                                UCSC ({liftoverVariant.reference_genome} variant)
+                          {liftoverVariant ? (
+                            <List.Item>
+                              <a href={`#ucsc-variant-${liftoverReference.toLowerCase()}`}>
+                                UCSC {liftoverReference} (variant)
                               </a>
-                            ) : null}
-                          </List.Item>
+                            </List.Item>
+                          ) : null}
                           <List.Item>
                             {hasAnnotations ? (
                               <a href={`#ucsc-gene-${variant.reference_genome.toLowerCase()}`}>
-                                UCSC ({variant.reference_genome} gene)
+                                UCSC {variant.reference_genome} (gene)
                               </a>
                             ) : (
-                              `UCSC (${variant.reference_genome} gene)`
+                              `UCSC ${variant.reference_genome} (gene)`
                             )}
                           </List.Item>
-                          <List.Item>
-                            {liftoverVariant && hasAnnotations ? (
-                              <a
-                                href={`#ucsc-gene-${liftoverVariant.reference_genome.toLowerCase()}`}
-                              >
-                                UCSC ({liftoverVariant.reference_genome} gene)
-                              </a>
-                            ) : (
-                              `UCSC (${liftoverVariant.reference_genome} gene)`
-                            )}
-                          </List.Item>
+                          {liftoverVariant ? (
+                            <List.Item>
+                              {hasAnnotations ? (
+                                <a href={`#ucsc-gene-${liftoverReference.toLowerCase()}`}>
+                                  UCSC {liftoverReference} (gene)
+                                </a>
+                              ) : (
+                                `UCSC ${liftoverReference} (gene)`
+                              )}
+                            </List.Item>
+                          ) : null}
                           <List.Item>
                             <a href="#splice-ai-lookup">SpliceAI lookup</a>
                           </List.Item>
