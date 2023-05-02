@@ -270,7 +270,7 @@ if __name__ == "__main__":
         "--genes-file",
         help="Full GCP path to a txt file with one gene per line, in the format specified by --id-type (defaults to Ensembl ID)",
     )
-    group.add_argument(
+    parser.add_argument(
         "--id-type",
         choices=('ensembl','symbol'),
         default='ensembl',
