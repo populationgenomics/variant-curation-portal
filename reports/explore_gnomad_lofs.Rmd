@@ -1,0 +1,372 @@
+---
+title: "Putative LoF variants proposed for variant curation"
+output: html_document
+params: 
+    variants_file: ""
+    annotation_file: ""
+    annotation_key: ""
+    annotation_key_type: ""
+---
+
+<style type="text/css">
+.main-container {
+  max-width: 100% !important;
+  margin: auto;
+}
+</style>
+
+```{r include = FALSE}
+library(GenomicFeatures)
+library(plotly)
+library(reactable)
+library(reticulate)
+library(tidyverse)
+
+pd <- import("pandas")
+```
+
+```{r include = FALSE}
+# Function to determine if a variant is high confidence pLoF for at least one transcript.
+test_if_high_confidence <- function(variants){
+  variants <- variants %>% filter(loftee == "HC")
+  return(nrow(variants) > 0)
+}
+
+# Function to extract the exons coordinates for each transcript associated with a set of variants.
+get_exons <- function(variants, txdb){
+
+    # Get the list of transcripts to process.
+    tx_list <- unique(variants$transcript_id)
+    
+    # Create a map to add the extension to the transcript IDs.
+    tx_name_map <- tibble(tx_name=transcripts(gencode_v19)$tx_name) %>%
+                        mutate(simple = gsub("\\..*","",tx_name))
+
+    # Pull the exon transcript data from the passed database.
+    exons <- NULL
+    for(i in 1:length(tx_list)){
+
+        # Pull the exon data for the current transcript.
+        tx_exons <- exons(txdb, filter=list(tx_name=(tx_name_map %>% filter(simple == tx_list[i]))))
+        tx_exons$transcript_id <- tx_list[i]
+
+        # Append to the list of exons.
+        exons <- c(exons, tx_exons)
+    }
+
+    # Combine the exons into a single list and update the names to the transcript IDs.
+    exons <- do.call(c, exons)
+    names(exons) <- exons$transcript_id
+    
+    return(exons)
+}
+
+# Function to plot the variants as a series of lolliplot sticks on a transcript map.
+plot_variants_on_transcripts <- function(variants, txdb, intron_plot_length=100){
+
+    # Extract the relevant exons.
+    exons <- get_exons(variants, txdb)
+    
+    # Stack overlapping variants.
+    variants <- variants %>% 
+                    dplyr::select(locus, chr, bp, gene_id, gene_symbol, high_confidence, to_curate, curation_verdict) %>%
+                    distinct() %>%
+                    mutate(bp = as.double(bp)) %>%
+                    arrange(bp) %>%
+                    mutate(diff = bp - lag(bp, default = 0)) %>%
+                    mutate(overlap = as.integer(diff < 150)) %>%
+                    mutate(stack = purrr::accumulate(.x = overlap, .f = ~ case_when(.y == 1 ~ .x + .y, TRUE ~ .y)))
+    
+    # Merge the exons and variants, preparing to compress intronic regions and remap positions.
+    remap <- as.data.frame(ranges(exons)) %>% 
+                full_join(variants %>% 
+                              mutate(start = bp, end = bp, width = 1, names = locus) %>% 
+                              dplyr::select(start, end, width, names),
+                          by = c("start", "end", "width", "names")) %>%
+                arrange(start, end, -width) %>%
+                mutate(level = as.integer(as.factor(names)))
+    
+    # Group overlapping exons & regions.
+    remap[1, "group"] = group = 1
+    max_end = 0
+    for(i in 2:nrow(remap)){
+        
+        if(remap[i, "start"] > max_end & max_end > 0){ 
+            group = group + 1
+        }
+
+        remap[i, "group"] = group
+
+        if(remap[i, "end"] > max_end){
+            max_end <- remap[i, "end"]
+        }
+    }
+    
+    # Add the groups back into the dataframe.
+    groups <- remap %>% 
+                group_by(group) %>% 
+                summarise(max_width = max(start - min(start) + width),
+                          min_start = min(start))
+    remap <- remap %>% left_join(groups, by = "group")
+
+    # Remap the positions.    
+    remap[1, "xstart"] = prev_end = max_end = 0
+    remap[1, "xend"] = remap[1, "width"]
+    for(i in 2:nrow(remap)){
+        if(remap[i, "group"] > remap[i-1, "group"]){ 
+            prev_end <- max_end
+        }
+        remap[i, "xstart"] = remap[i, "start"] - remap[i, "min_start"] + prev_end + intron_plot_length
+        remap[i, "xend"] = remap[i, "xstart"] + remap[i, "width"]
+        if(remap[i, "xend"] > max_end){
+            max_end <- remap[i, "xend"]
+        }
+    }
+
+    # Add the remapped positions back to the variants dataframe.
+    variants <- variants %>% left_join(remap %>% filter(width == 1), by = c("locus" = "names"))
+    
+    # Map curation verdicts to colors
+    curation_colors <- c('lof'='#d7191c',
+                         'likely_lof'='#fdae61',
+                         'uncertain'='#2c7fb8',
+                         'likely_not_lof'='#a6d96a',
+                         'not_lof'='#1a9641')
+    variants <- variants %>% mutate(color = ifelse(!is.na(curation_verdict), 
+                                                    curation_colors[curation_verdict], 
+                                                    "#bdbdbd"))
+
+    # Extract the exons.
+    exons <- remap %>% filter(width > 1)
+    
+    # Create the plot.
+    p <- ggplot() +
+          geom_segment(data=variants, aes(x=xstart, xend = xstart, 
+                                          y=min(exons$level), yend=(stack/1.5)+(max(exons$level) + 0.4)), 
+                       color = "black", alpha=0.05, size=0.5) +
+          geom_rect(data=exons, mapping=aes(xmin=xstart, xmax=xend, 
+                                            ymin=level-0.25,ymax=level+0.25,
+                                            text=names),
+                    fill="#3c4978") +
+          geom_point(data=variants, aes(x=xstart, 
+                                        y=(stack/1.5)+max(exons$level) + 0.6,
+                                        fill=color,
+                                        stroke=ifelse(to_curate, 0.25, NA),
+                                        alpha=ifelse(high_confidence, 1, 0.4),,
+                                        label=locus,
+                                        text=paste0("high confidence: ", high_confidence, "\n",
+                                                    "to curate: ", to_curate, "\n",
+                                                    "curation verdict: ", curation_verdict)), 
+                     pch=21, color="black", size=2) +
+          scale_alpha_identity() +
+          scale_fill_identity() +
+          scale_y_continuous(breaks=exons$level) +
+          theme(panel.grid.major.x = element_blank(),
+                panel.grid.major.y = element_line(linewidth=.01, color="grey"),
+                axis.line=element_blank(),axis.text.x=element_blank(),
+                axis.text.y=element_blank(),axis.ticks=element_blank(),
+                axis.title.x=element_blank(),
+                axis.title.y=element_blank(),legend.position="none",
+                panel.background=element_blank(),panel.border=element_blank())
+    
+    return(p)
+}
+
+```
+
+```{r include = FALSE}
+# Read in the gencode v19 database.
+if(file.exists("gencode_v19.db")){
+    gencode_v19 <- loadDb("gencode_v19.db")
+} else{
+    options(timeout=500)
+    gencode_v19 <- makeTxDbFromGFF('https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_19/gencode.v19.annotation.gtf.gz',
+                                   dataSource="Gencode V19",
+                                   organism="Homo sapiens")
+    saveDb(gencode_v19, "gencode_v19.db") 
+}
+```
+
+```{r include = FALSE}
+# Read in the variants file, produced using the script get_gnomad_lof_variants.py and requesting an output file of the form "*.tsv.bgz".
+pLoFs <- as_tibble(pd$read_table(params$variants_file, compression="gzip", sep="\t")) %>%
+            mutate(across(curation_verdict, as.character)) %>%
+            mutate(across(everything(), ~str_replace(., "NaN", NA_character_))) %>%
+            mutate(across(c(AC, AF, AN, n_homozygotes), as.double))
+
+# Clean up the data frame, extracting the annotations and locus information.
+pLoFs <- pLoFs %>% 
+            separate(locus, c("chr","bp"), sep=":") %>%
+            mutate(alleles = gsub('\\[|\\]|"','',alleles)) %>%
+            separate(alleles, c("A1","A2"), sep=',') %>%
+            mutate(locus = paste(chr, bp, A1, A2, sep="-")) %>%
+            rename_with(~ gsub("annotations.", "", .x, fixed = TRUE))
+
+# Nest the transcript data so there is one row per variant.
+pLoFs_nested <- pLoFs %>%
+                    nest(transcript_info = c("transcript_id", "consequence", "loftee", "loftee_flags", "loftee_filter", "classic_caf"))
+
+# Annotate the data frame with whether a variant is high confidence or not, and whether or not it is marked for curation.
+pLoFs_nested <- pLoFs_nested %>%
+                    mutate(high_confidence = map_dbl(.data[["transcript_info"]], test_if_high_confidence) == 1) %>%
+                    mutate(to_curate = high_confidence & is.na(curation_verdict))
+
+# Summarise the information per gene.
+summary <- pLoFs_nested %>%
+
+                # Group by gene.
+                group_by(gene_symbol, gene_id) %>%
+
+                # Extract the number of variants, splitting by confidence and curation status.
+                summarise("total_plofs" = n_distinct(locus),
+                          "num_hc" = sum(high_confidence),
+                          "num_curated" = sum(!is.na(curation_verdict)),
+                          "num_to_curate" = sum(to_curate),
+                          .groups = "keep"
+                         ) %>%
+
+                # Annotate with affected transcripts and max CAF score.
+                left_join(pLoFs %>% 
+                              group_by(gene_id) %>%
+                              summarise("affected_txs" = paste0(unique(transcript_id), collapse=", "),
+                                        "max_caf" = as.numeric(max(na.omit(classic_caf)))),
+                          by = "gene_id") %>%
+                select(gene_symbol, gene_id, max_caf, total_plofs, num_hc, num_curated, num_to_curate, affected_txs)
+
+```
+
+```{r include = FALSE}
+# Optionally load in a CSV file containing additional annotations.
+if(params$annotation_file != "" & params$annotation_key != "" & params$annotation_key_type != ""){
+
+    # Load in the annotations file.
+    annotations <- as_tibble(pd$read_table(params$annotation_file, sep=","))
+
+    # Using the provided key column matching, annotate the variants with any additional columns found in the 
+    # annotation_file. For column matching, note that annotation_key describes the column in the annotation_file, 
+    # while annotation_key_type describes the column it should match to in the variants file.
+    summary <- summary %>% 
+                left_join(annotations, by=setNames(params$annotation_key, params$annotation_key_type))
+}
+
+```
+
+```{r include = FALSE}
+# Define the table styles
+options(reactable.theme = reactableTheme(
+    borderColor = "#dfe2e5",
+    stripedColor = "#f6f8fa",
+    highlightColor = "#f0f5f9",
+    cellPadding = "8px 12px",
+    style = list(
+      fontFamily = "Montserrat",
+      fontSize = "10pt"
+    ),
+    searchInputStyle = list(width = "100%")
+  ))
+```
+
+```{r include = FALSE}
+# Create the browsable table.
+pLoFs_table <- reactable::reactable(
+    # Create a base table listing the summary information for each gene.
+    summary,
+    outlined = TRUE,
+    filterable = TRUE,
+    defaultSorted = list(max_caf = "desc"),
+    columns = list(gene_symbol = colDef(name = "Gene Symbol", minWidth = 100),
+                   gene_id = colDef(name = "Gene ID", minWidth = 150),
+                   max_caf = colDef(name = "Max CAF", minWidth = 100),
+                   total_plofs = colDef(name = "Total # pLoFs", minWidth = 75),
+                   num_hc = colDef(name = "# high-confidence pLoFs", minWidth = 75),
+                   num_curated = colDef(name = "# pLoFs already curated", minWidth = 75),
+                   num_to_curate = colDef(name = "# pLoFs proposed for curation", minWidth = 75),
+                   affected_txs = colDef(name = "Overview",
+                                         html=TRUE,
+                                         minWidth = 500,
+                                         cell=function(values){
+                                             vars <- pLoFs_nested %>% unnest(cols=c(transcript_info)) %>% filter(transcript_id %in% str_split(values, ", ")[[1]])
+                                             ggplotly(plot_variants_on_transcripts(vars, gencode_v19), tooltip = c("label", "text"), alt="plots", width=500, height=250)
+                                         })),
+                                        
+    
+    # Expanding the details for each gene then displays the variant information.
+    details = function(index) {
+        
+                # Select all pLoFs associated with this gene.
+                gene_data <- pLoFs_nested[pLoFs_nested$gene_id == summary$gene_id[index], ] %>%
+                                unnest(cols=c(transcript_info)) %>%
+                                select(locus, AC, AN, AF, n_homozygotes, transcript_id, consequence, loftee, loftee_flags, loftee_filter, qc_filter, high_confidence, to_curate, curation_verdict)
+                
+                # Display it in a nested table.
+                htmltools::div(style = "padding: 1rem",
+                    reactable(gene_data,
+                            outlined = TRUE,
+                            resizable = TRUE,
+                            defaultPageSize = 5, 
+                            minRows = 5,
+                            filterable = TRUE,
+                            defaultExpanded = FALSE,
+                            defaultSorted = list(AF="desc",locus="asc"),
+                            groupBy = "locus",
+                            columns = list(locus = colDef(html = TRUE,
+                                                          minWidth = 100,
+                                                          name = "Variant ID",
+                                                          # Render the variant ID as a URL that links out to the gnomAD v2 page.
+                                                          grouped = JS('function(cellInfo) {
+                                                                        const url = `https://gnomad.broadinstitute.org/variant/${cellInfo.value}?dataset=gnomad_r2_1`
+                                                                        return `<a href="${url}" target="_blank">${cellInfo.value}</a>`
+                                                                        }')
+                                                        ),
+                                            
+                                            # Set column headers.
+                                            transcript_id = colDef(name = "Affected Transcript(s)", aggregate="count", minWidth = 100),
+                                            consequence = colDef(name = "Consequence", aggregate="unique", minWidth = 100),
+                                            AC = colDef(name = "AC", aggregate = "max", minWidth = 50),
+                                            AN = colDef(name = "AN", aggregate = "max", minWidth = 50),
+                                            AF = colDef(name = "AF", aggregate = "max", minWidth = 75),
+                                            n_homozygotes = colDef(name = "# of homozygotes", aggregate = "max", minWidth = 60),
+                                            loftee = colDef(name = "LOFTEE", aggregate="unique", minWidth = 50),
+                                            loftee_flags = colDef(name = "LOFTEE flags", aggregate="unique", minWidth = 75),
+                                            loftee_filter = colDef(name = "LOFTEE filter", aggregate="unique", minWidth = 75),
+                                            qc_filter = colDef(name = "QC filter", aggregate="unique", minWidth = 75),
+                                            high_confidence = colDef(name = "High confidence (in at least one transcript)", aggregate="unique", minWidth = 50,
+                                                                     style = function(value){
+                                                                       color <- ifelse(value, '#008000', '#e00000')
+                                                                       list(fontWeight = "bold", color = color)
+                                                                     }),
+                                            to_curate = colDef(name = "Proposed for curation", aggregate="unique", minWidth = 50,
+                                                                     style = function(value){
+                                                                        color <- ifelse(value, '#008000', '#e00000')
+                                                                        list(fontWeight = "bold", color = color)
+                                                                     }),
+                                            
+                                            # Color the curation verdicts to make it look pretty.
+                                            curation_verdict = colDef(name = "Curation verdict",
+                                                                    aggregate = "unique",
+                                                                    minWidth = 100,
+
+                                                                    style = function(value) {
+                                                                                curation_colors <- c('lof'='#d7191c',
+                                                                                                    'likely_lof'='#fdae61',
+                                                                                                    'uncertain'='#2c7fb8',
+                                                                                                    'likely_not_lof'='#a6d96a',
+                                                                                                    'not_lof'='#1a9641')
+                                                                                if(value %in% names(curation_colors)){
+                                                                                    list(fontWeight = "bold", color = curation_colors[[value]])
+                                                                                }
+                                                                                })
+                                            ),
+                            style = list(backgroundColor = "#f0f0f0")
+                            )
+                )
+    }
+)
+```
+
+The following table summarises the `r toString(sum(summary$num_to_curate))` putative loss of function variants proposed for manual curation, grouped by target gene. 
+Additional details can be found by mousing over or zooming into the plot, as well as clicking the drop down arrow to expand the row for a given target or variant.
+
+```{r echo = FALSE}
+pLoFs_table
+```

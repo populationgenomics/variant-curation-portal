@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+from cloudpathlib import AnyPath
 
 import hail as hl
 import pandas as pd
@@ -130,14 +131,21 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         ds = load_gnomad_v3_variants()
 
     reference_genome = "GRCh37" if gnomad_version == 2 else "GRCh38"
-    
+
     # Work around rate limit of the gnomAD API for fetching gene intervals by
     # using the GENCODE table directly.
     # Would need to provide the correct GENCODE GTF here for gnomAD v3.
     assert gnomad_version == 2
-    gene_intervals = hl.experimental.get_gene_intervals(
-        gene_ids=gene_ids, reference_genome=reference_genome
-    )
+
+    if(args.id_type == 'symbol'):
+        gene_intervals = hl.experimental.get_gene_intervals(
+            gene_symbols=gene_ids, reference_genome=reference_genome
+        )
+    else:    
+        gene_intervals = hl.experimental.get_gene_intervals(
+            gene_ids=gene_ids, reference_genome=reference_genome
+        )
+    
     ds = hl.filter_intervals(ds, gene_intervals)
 
     gene_ids = hl.set(gene_ids)
@@ -146,7 +154,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
     ds = ds.annotate(
         lof_consequences=ds.vep.transcript_consequences.filter(
             lambda csq: (
-                gene_ids.contains(csq.gene_id)
+                gene_ids.contains(csq.gene_symbol if args.id_type == "symbol" else csq.gene_id)
                 & csq.consequence_terms.any(lambda term: PLOF_CONSEQUENCE_TERMS.contains(term))
                 & (include_low_confidence | (csq.lof == "HC"))
             )
@@ -195,11 +203,11 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         constraint = hl.read_table(GNOMAD_V2_CONSTRAINT)
 
         # Filter to our genes of interest.
-        constraint = constraint.filter(gene_ids.contains(constraint.gene_id))
+        constraint = constraint.filter(gene_ids.contains(constraint.gene if args.id_type == "symbol" else constraint.gene_id))
         constraint = constraint.repartition(10)
 
         # Convert the constraint table to a lookup dictionary, so that map can handle it.
-        caf_max = constraint.aggregate(hl.agg.group_by(constraint.transcript, 
+        caf_max = constraint.aggregate(hl.agg.group_by(constraint.transcript,
                                             hl.agg.max(constraint.classic_caf)))
         lookup = hl.dict({k: caf_max[k] if caf_max[k] != None else hl.missing("float64") for k in caf_max.keys()})
 
@@ -229,7 +237,7 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
 
         # Key the curation results by the locus and alleles.
         curation = curation.key_by(**hl.parse_variant(curation['Variant ID'].replace("-",":"), reference_genome="GRCh37"))
-       
+
         # Annotate already-curated variants with their verdict.
         ds = ds.annotate(**curation[ds.locus, ds.alleles].select("Verdict")).rename({'Verdict' : 'curation_verdict'})
 
@@ -250,13 +258,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Get gnomAD pLoF variants in selected genes.")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
-        "--gene-ids", 
-        nargs="+", 
-        metavar="GENE", 
-        help="Ensembl IDs of genes")
+        "--gene-ids",
+        nargs="+",
+        metavar="GENE",
+        help="The gene(s) to process, in the format specified by --id-type (defaults to Ensembl ID)")
     group.add_argument(
         "--genes-table",
         help="relative dataset path (analysis category) to a Hail table with a gene_id field containing Ensembl IDs",
+    )
+    group.add_argument(
+        "--genes-file",
+        help="Full GCP path to a txt file with one gene per line, in the format specified by --id-type (defaults to Ensembl ID)",
+    )
+    parser.add_argument(
+        "--id-type",
+        choices=('ensembl','symbol'),
+        default='ensembl',
+        help="The type of gene ID provided; must be one of 'ensembl' or 'symbol'"
     )
     parser.add_argument(
         "--gnomad-version",
@@ -294,16 +312,20 @@ if __name__ == "__main__":
     # Select the genes to process.
     if args.gene_ids:
         genes = args.gene_ids
+    elif args.genes_file:
+        with AnyPath(args.genes_file).open('r') as f:
+            genes = [line.strip().split(',', 1)[0].split(None, 1)[0] for line in f if line.strip()]
     else:
         genes_table = hl.read_table(dataset_path(args.genes_table, "analysis"))
         genes = list(set(genes_table.gene_id.collect()))
+        args.id_type='ensembl'
 
     # Fetch the (optionally filtered and annotated) pLoF variants from the appropriate gnomAD dataset.
     variants = get_gnomad_lof_variants(
-        args.gnomad_version, 
-        genes, 
+        args.gnomad_version,
+        genes,
         include_low_confidence=args.include_low_confidence,
-        annotate_caf=args.annotate_caf, 
+        annotate_caf=args.annotate_caf,
         flag_curated=args.flag_curated
     )
 
