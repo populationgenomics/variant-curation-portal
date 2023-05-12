@@ -45,12 +45,7 @@ class CurateVariantPage extends React.Component {
 
   state = {
     showForm: true,
-    showSpliceAI: false,
   };
-
-  componentDidMount() {
-    setTimeout(() => this.makeSpliceAIVisible(), 1000);
-  }
 
   goToVariant(variantId) {
     const { history, project, saveCurrentResult } = this.props;
@@ -62,13 +57,9 @@ class CurateVariantPage extends React.Component {
     );
   }
 
-  makeSpliceAIVisible() {
-    this.setState({ showSpliceAI: true });
-  }
-
   render() {
     const { project, user, variantId, onLoadResult } = this.props;
-    const { showForm, showSpliceAI } = this.state;
+    const { showForm } = this.state;
 
     return (
       <React.Fragment>
@@ -83,6 +74,25 @@ class CurateVariantPage extends React.Component {
             },
           }) => {
             const hasAnnotations = variant.annotations.length > 0;
+
+            // Set opposite reference for liftover variant
+            const liftoverReference =
+              variant.reference_genome.toLowerCase() === "grch37" ? "GRCh38" : "GRCh37";
+
+            let liftoverVariant = null;
+            if (variant.liftover_variant_id) {
+              const [chrom, pos] = variant.liftover_variant_id.split("-");
+              liftoverVariant = {
+                variant_id: variant.liftover_variant_id,
+                reference_genome: liftoverReference,
+                chrom,
+                pos: parseInt(pos, 10),
+                annotations: variant.annotations.map(a => ({
+                  gene_symbol: a.gene_symbol,
+                  transcript_id: a.transcript_id,
+                })),
+              };
+            }
 
             return (
               <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -195,15 +205,39 @@ class CurateVariantPage extends React.Component {
                             </>
                           )}
                           <List.Item>
-                            <a href="#ucsc">UCSC (variant)</a>
-                          </List.Item>
-                          <List.Item>
-                            {hasAnnotations ? <a href="#ucsc-gene">UCSC (gene)</a> : "UCSC (gene)"}
-                          </List.Item>
-                          <List.Item>
-                            <a href="#splice-ai-lookup" onClick={() => this.makeSpliceAIVisible()}>
-                              SpliceAI lookup
+                            <a href={`#ucsc-variant-${variant.reference_genome.toLowerCase()}`}>
+                              UCSC {variant.reference_genome} (variant)
                             </a>
+                          </List.Item>
+                          {liftoverVariant ? (
+                            <List.Item>
+                              <a href={`#ucsc-variant-${liftoverReference.toLowerCase()}`}>
+                                UCSC {liftoverReference} (variant)
+                              </a>
+                            </List.Item>
+                          ) : null}
+                          <List.Item>
+                            {hasAnnotations ? (
+                              <a href={`#ucsc-gene-${variant.reference_genome.toLowerCase()}`}>
+                                UCSC {variant.reference_genome} (gene)
+                              </a>
+                            ) : (
+                              `UCSC ${variant.reference_genome} (gene)`
+                            )}
+                          </List.Item>
+                          {liftoverVariant ? (
+                            <List.Item>
+                              {hasAnnotations ? (
+                                <a href={`#ucsc-gene-${liftoverReference.toLowerCase()}`}>
+                                  UCSC {liftoverReference} (gene)
+                                </a>
+                              ) : (
+                                `UCSC ${liftoverReference} (gene)`
+                              )}
+                            </List.Item>
+                          ) : null}
+                          <List.Item>
+                            <a href="#splice-ai-lookup">SpliceAI lookup</a>
                           </List.Item>
                         </List>
                       </div>
@@ -307,11 +341,21 @@ class CurateVariantPage extends React.Component {
                   <br />
                   <UCSCVariantView settings={user.settings} variant={variant} />
                   <br />
+                  {liftoverVariant ? (
+                    <>
+                      <UCSCVariantView settings={user.settings} variant={liftoverVariant} />
+                      <br />
+                    </>
+                  ) : null}
                   <UCSCGeneView settings={user.settings} variant={variant} />
                   <br />
-                  <div hidden={!showSpliceAI}>
-                    <SpliceAILookupView variant={variant} maxDistance={500} />
-                  </div>
+                  {liftoverVariant ? (
+                    <>
+                      <UCSCGeneView settings={user.settings} variant={liftoverVariant} />
+                      <br />
+                    </>
+                  ) : null}
+                  <SpliceAILookupView variant={variant} maxDistance={500} />
                 </div>
               </div>
             );

@@ -12,7 +12,10 @@ def db_setup(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
         user1 = User.objects.create(username="user1")
         UserSettings.objects.create(
-            user=user1, ucsc_username="user1", ucsc_session_name="test_session"
+            user=user1,
+            ucsc_username="user1",
+            ucsc_session_name_grch37="test_session_grch37",
+            ucsc_session_name_grch38="test_session_grch38",
         )
 
         user2 = User.objects.create(username="user2")
@@ -48,16 +51,23 @@ def test_update_settings(db_setup):
 
     response = client.get("/api/profile/settings/").json()
     assert response["ucsc_username"] == "user1"
-    assert response["ucsc_session_name"] == "test_session"
+    assert response["ucsc_session_name_grch37"] == "test_session_grch37"
+    assert response["ucsc_session_name_grch38"] == "test_session_grch38"
 
     response = client.patch(
-        "/api/profile/settings/", {"ucsc_session_name": "a_different_session"}, format="json"
+        "/api/profile/settings/",
+        {
+            "ucsc_session_name_grch37": "a_different_session_grch37",
+            "ucsc_session_name_grch38": "a_different_session_grch38",
+        },
+        format="json",
     )
     assert response.status_code == 200
 
     response = client.get("/api/profile/settings/").json()
     assert response["ucsc_username"] == "user1"
-    assert response["ucsc_session_name"] == "a_different_session"
+    assert response["ucsc_session_name_grch37"] == "a_different_session_grch37"
+    assert response["ucsc_session_name_grch38"] == "a_different_session_grch38"
 
 
 def test_update_settings_creates_settings(db_setup):
@@ -69,4 +79,5 @@ def test_update_settings_creates_settings(db_setup):
 
     response = client.get("/api/profile/settings/").json()
     assert response["ucsc_username"] == "user2"
-    assert response["ucsc_session_name"] == None
+    assert response["ucsc_session_name_grch37"] == None
+    assert response["ucsc_session_name_grch38"] == None

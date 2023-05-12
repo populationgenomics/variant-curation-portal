@@ -60,14 +60,27 @@ const SettingsPage = ({ user, saveSettings }) => {
           </label>
         </Form.Field>
         <Form.Field>
-          <label htmlFor="ucsc_session_name">
-            UCSC browser session name
+          <label htmlFor="ucsc_session_name_grch37">
+            UCSC browser GRCh37 session name
             <input
-              id="ucsc_session_name"
+              id="ucsc_session_name_grch37"
               type="text"
-              value={settingsValues.ucsc_session_name || ""}
+              value={settingsValues.ucsc_session_name_grch37 || ""}
               onChange={e => {
-                setSettingsValues({ ...settingsValues, ucsc_session_name: e.target.value });
+                setSettingsValues({ ...settingsValues, ucsc_session_name_grch37: e.target.value });
+              }}
+            />
+          </label>
+        </Form.Field>
+        <Form.Field>
+          <label htmlFor="ucsc_session_name_grch38">
+            UCSC browser GRCh38 session name
+            <input
+              id="ucsc_session_name_grch38"
+              type="text"
+              value={settingsValues.ucsc_session_name_grch38 || ""}
+              onChange={e => {
+                setSettingsValues({ ...settingsValues, ucsc_session_name_grch38: e.target.value });
               }}
             />
           </label>
