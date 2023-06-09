@@ -1,0 +1,6 @@
+pyvcf3
+cpg_utils
+cloudpathlib
+hail
+pandas
+tqdm
