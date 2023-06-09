@@ -123,10 +123,12 @@ def convert_vcf_to_json(vcf_path, output_path, reference_genome="GRCh37", tag_fi
             else:
                 # Compute and store a chr:pos of liftover variant, since we don't need the
                 # allele info
-                variant_coordinate_id(
-                    hl.liftover(
-                        hl.parse_variant(variant_id.replace("-", ":"), reference_genome)[0],
-                        "GRCh38" if reference_genome == "GRCh37" else "GRCh37",
+                liftover_variant_id = hl.eval(
+                    variant_coordinate_id(
+                        hl.liftover(
+                            hl.parse_variant(variant_id.replace("-", ":"), reference_genome)[0],
+                            "GRCh38" if reference_genome == "GRCh37" else "GRCh37",
+                        )
                     )
                 )
 
