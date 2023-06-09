@@ -7,9 +7,9 @@ import gzip
 import json
 import re
 
-from tqdm import tqdm
+import hail as hl
 import vcf
-
+from tqdm import tqdm
 
 RANKED_CONSEQUENCE_TERMS = [
     "transcript_ablation",
@@ -60,8 +60,25 @@ def get_rank(annotation):
     return min(CONSEQUENCE_TERM_RANK.get(t) for t in terms)
 
 
+def variant_coordinate_id(locus):
+    return locus.contig.replace("^chr", "") + "-" + hl.str(locus.position)
+
+
 def convert_vcf_to_json(vcf_path, output_path, reference_genome="GRCh37", tag_fields=None):
     variants = {}
+
+    # Initialise reference genome with liftover information
+    hl_reference_genome = hl.get_reference(reference_genome)
+    if reference_genome == "GRCh37":
+        hl_reference_genome.add_liftover(
+            "gs://hail-common/references/grch37_to_grch38.over.chain.gz",
+            "GRCh38",
+        )
+    else:
+        hl_reference_genome.add_liftover(
+            "gs://hail-common/references/grch38_to_grch37.over.chain.gz",
+            "GRCh37",
+        )
 
     with gzip.open(vcf_path, "rt") as vcf_file:
         reader = vcf.Reader(vcf_file, compressed=False)
@@ -103,6 +120,15 @@ def convert_vcf_to_json(vcf_path, output_path, reference_genome="GRCh37", tag_fi
             liftover_variant_id = row.INFO.get(liftover_field, None)
             if liftover_variant_id:
                 liftover_variant_id = liftover_variant_id.replace(":", "-")
+            else:
+                # Compute and store a chr:pos of liftover variant, since we don't need the
+                # allele info
+                variant_coordinate_id(
+                    hl.liftover(
+                        hl.parse_variant(variant_id.replace("-", ":"), reference_genome)[0],
+                        "GRCh38" if reference_genome == "GRCh37" else "GRCh37",
+                    )
+                )
 
             if variant_id not in variants:
                 variants[variant_id] = {
