@@ -82,10 +82,6 @@ GNOMAD_V2_CURATION = [
     "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/MCOLN1_curation_results.csv",
     "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/NSD1_curation_results.csv",
 ]
-
-GNOMAD_V2_LIFTOVER_EXOMES = "gs://gcp-public-data--gnomad/release/2.1.1/liftover_grch38/ht/exomes/gnomad.exomes.r2.1.1.sites.liftover_grch38.ht"
-GNOMAD_V2_LIFTOVER_GENOMES = "gs://gcp-public-data--gnomad/release/2.1.1/liftover_grch38/ht/genomes/gnomad.genomes.r2.1.1.sites.liftover_grch38.ht"
-
 GNOMAD_V3_GENOMES = (
     "gs://gcp-public-data--gnomad/release/3.1.1/ht/genomes/gnomad.genomes.v3.1.1.sites.ht"
 )
@@ -115,79 +111,19 @@ def load_gnomad_v3_variants():
     return ds
 
 
-def load_liftover(reference_genome):
-    exome_liftover = hl.read_table(GNOMAD_V2_LIFTOVER_EXOMES)
-    exome_liftover = exome_liftover.select(
-        exome=hl.struct(
-            original_locus=exome_liftover.original_locus,
-            original_alleles=exome_liftover.original_alleles,
-        )
-    )
-    genome_liftover = hl.read_table(GNOMAD_V2_LIFTOVER_GENOMES).select(
-        "original_locus",
-        "original_alleles",
-    )
-    genome_liftover = genome_liftover.select(
-        genome=hl.struct(
-            original_locus=genome_liftover.original_locus,
-            original_alleles=genome_liftover.original_alleles,
-        )
-    )
-
-    ds = exome_liftover.join(genome_liftover, "outer")
-    ds = ds.transmute(**hl.or_else(ds.exome, ds.genome))
-
-    ds = ds.select_globals()
-    ds = ds.rename({"locus": "liftover_locus", "alleles": "liftover_alleles"})
-
-    ds = ds.select(
-        source=hl.struct(
-            variant_id=variant_id(ds.original_locus, ds.original_alleles),
-            locus=ds.original_locus,
-            alleles=ds.original_alleles,
-            reference_genome=ds.original_locus.dtype.reference_genome.name,
-        ),
-        liftover=hl.struct(
-            variant_id=variant_id(ds.liftover_locus, ds.liftover_alleles),
-            locus=ds.liftover_locus,
-            alleles=ds.liftover_alleles,
-            reference_genome=ds.liftover_locus.dtype.reference_genome.name,
-        ),
-    )
-
+def add_liftover_chain_to_reference(reference_genome):
     if reference_genome == "GRCh37":
-        ds = ds.key_by(
-            locus=ds.source.locus,
-            alleles=ds.source.alleles,
-        )
-    elif reference_genome == "GRCh38":
-        ds = ds.key_by(
-            locus=ds.liftover.locus,
-            alleles=ds.lifover.alleles,
-        )
-    else:
-        raise Exception(f"Invalid reference genome: {reference_genome}")
-
-    return ds
-
-
-def load_reference_genome(gnomad_version):
-    if gnomad_version == 2:
-        reference_genome = hl.get_reference("GRCh37")
-        reference_genome.add_liftover(
+        hl.get_reference(reference_genome).add_liftover(
             "gs://hail-common/references/grch37_to_grch38.over.chain.gz",
             "GRCh38",
         )
-    elif gnomad_version == 3:
-        reference_genome = hl.get_reference("GRCh38")
-        reference_genome.add_liftover(
+    elif reference_genome == "GRCh38":
+        hl.get_reference(reference_genome).add_liftover(
             "gs://hail-common/references/grch38_to_grch37.over.chain.gz",
             "GRCh37",
         )
     else:
-        raise Exception(f"Invalid gnomAD version {gnomad_version}")
-
-    return reference_genome.name
+        raise Exception(f"Invalid reference genome {reference_genome}")
 
 
 def variant_id(locus, alleles):
@@ -225,8 +161,8 @@ def get_gnomad_lof_variants(
     elif gnomad_version == 3:
         ds = load_gnomad_v3_variants()
 
-    reference_genome = load_reference_genome(gnomad_version)
-    liftover_ds = load_liftover(reference_genome)
+    reference_genome = "GRCh37" if gnomad_version == 2 else "GRCh38"
+    add_liftover_chain_to_reference(reference_genome)
 
     # Work around rate limit of the gnomAD API for fetching gene intervals by
     # using the GENCODE table directly.
@@ -265,18 +201,10 @@ def get_gnomad_lof_variants(
     ds = ds.select(
         reference_genome=reference_genome,
         variant_id=variant_id(ds.locus, ds.alleles),
-        liftover_variant_id=hl.if_else(
-            reference_genome == "GRCh37",
-            hl.if_else(
-                hl.is_defined(liftover_ds[ds.locus, ds.alleles].liftover.variant_id),
-                liftover_ds[ds.locus, ds.alleles].liftover.variant_id,
-                hl.missing(hl.tstr),
-            ),
-            hl.if_else(
-                hl.is_defined(liftover_ds[ds.locus, ds.alleles].source.variant_id),
-                liftover_ds[ds.locus, ds.alleles].source.variant_id,
-                hl.missing(hl.tstr),
-            ),
+        # Compute and store a chr:pos of liftover variant, since we don't need the
+        # allele info for the LoF curation portal.
+        liftover_variant_id=variant_coordinate_id(
+            hl.liftover(ds.locus, "GRCh38" if reference_genome == "GRCh37" else "GRCh37")
         ),
         qc_filter=hl.delimit(
             hl.array(ds.exome.filters)
@@ -301,16 +229,6 @@ def get_gnomad_lof_variants(
     )
 
     ds = ds.annotate(
-        lifover_variant_id=hl.if_else(
-            hl.is_defined(ds.liftover_variant_id),
-            ds.liftover_variant_id,
-            variant_coordinate_id(
-                hl.liftover(
-                    x=ds.locus,
-                    dest_reference_genome="GRCh38" if reference_genome == "GRCh37" else "GRCh37",
-                )
-            ),
-        ),
         qc_filter=hl.if_else(ds.qc_filter == "", "PASS", ds.qc_filter),
         AF=hl.if_else(ds.AN == 0, 0, ds.AC / ds.AN),
     )
