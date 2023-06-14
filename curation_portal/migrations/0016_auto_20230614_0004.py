@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('curation_portal', '0015_usersettings_ucsc_session_name_grch38'),
+        ("curation_portal", "0015_usersettings_ucsc_session_name_grch38"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='curationresult',
-            old_name='flag_dubious_str_or_low_complexity',
-            new_name='flag_minor_protein_isoform',
+            model_name="curationresult",
+            old_name="flag_dubious_str_or_low_complexity",
+            new_name="flag_minor_protein_isoform",
         ),
         migrations.AddField(
-            model_name='curationresult',
-            name='flag_repetitive_sequence',
+            model_name="curationresult",
+            name="flag_repetitive_sequence",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='curationresult',
-            name='flag_sanger_confirmation_recommended',
+            model_name="curationresult",
+            name="flag_sanger_confirmation_recommended",
             field=models.BooleanField(default=False),
         ),
     ]
