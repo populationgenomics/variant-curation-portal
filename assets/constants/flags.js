@@ -12,7 +12,7 @@ export const FLAGS = [
   { key: "flag_mismapped_read", label: "Mis-mapped read", shortcut: "MM" },
   { key: "flag_complex_event", label: "Complex Event", shortcut: "CE" },
   { key: "flag_stutter", label: "Stutter", shortcut: "FS" },
-  { key: "flag_dubious_str_or_low_complexity", label: "STR/Low complexity", shortcut: "DC" },
+  { key: "flag_repetitive_sequence", label: "Repetitive sequence", shortcut: "RS" },
   { key: "flag_dubious_other", label: "Other", shortcut: "DO" },
   // ## Genotyping Error
   { key: "flag_genotyping_error", label: "Genotyping Error", shortcut: null },
@@ -29,6 +29,11 @@ export const FLAGS = [
   { key: "flag_pext_less_than_half_max", label: "pext < 50% max", shortcut: "P5" },
   { key: "flag_uninformative_pext", label: "Uninformative pext", shortcut: "UP" },
   { key: "flag_minority_of_transcripts", label: "Minority of transcripts ≤ 50%", shortcut: "MI" },
+  {
+    key: "flag_minor_protein_isoform",
+    label: "Minor protein isoform (MANE/APPRIS)",
+    shortcut: "MP",
+  },
   { key: "flag_weak_exon_conservation", label: "Weak exon conservation", shortcut: "WE" },
   { key: "flag_untranslated_transcript", label: "Untranslated transcript", shortcut: "UT" },
   // ## Rescue
@@ -45,6 +50,11 @@ export const FLAGS = [
   { key: "flag_complex_other", label: "Complex other 🐰", shortcut: "CO" },
   { key: "flag_second_opinion_required", label: "Second opinion required", shortcut: "OR" },
   { key: "flag_flow_chart_overridden", label: "Flow chart overridden", shortcut: "FO" },
+  {
+    key: "flag_sanger_confirmation_recommended",
+    label: "Sanger confirmation recommended",
+    shortcut: "CR",
+  },
 ];
 
 export const FLAG_CODES = Object.fromEntries(FLAGS.map(f => [f.key, f.shortcut]));
