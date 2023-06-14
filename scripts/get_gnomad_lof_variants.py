@@ -64,21 +64,27 @@ PLOF_CONSEQUENCE_TERMS = hl.set(
     ]
 )
 
-GNOMAD_V2_EXOMES = 'gs://gcp-public-data--gnomad/release/2.1.1/ht/exomes/gnomad.exomes.r2.1.1.sites.ht'
-GNOMAD_V2_GENOMES = 'gs://gcp-public-data--gnomad/release/2.1.1/ht/genomes/gnomad.genomes.r2.1.1.sites.ht'
-GNOMAD_V2_CONSTRAINT = 'gs://gcp-public-data--gnomad/release/2.1.1/constraint/gnomad.v2.1.1.lof_metrics.by_transcript.ht'
-GNOMAD_V2_CURATION = ['https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/all_homozygous_curation_results.csv',
-                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/lysosomal_storage_disease_genes_curation_results.csv',
-                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/haploinsufficient_genes_curation_results.csv',
-                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/metabolic_conditions_genes_curation_results.csv',
-                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/gnomAD_addendum_curation_results.csv',
-                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/AP4_curation_results.csv',
-                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/FIG4_curation_results.csv',
-                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/MCOLN1_curation_results.csv',
-                      'https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/NSD1_curation_results.csv'
-                     ]
-
-GNOMAD_V3_GENOMES = 'gs://gcp-public-data--gnomad/release/3.1.1/ht/genomes/gnomad.genomes.v3.1.1.sites.ht'
+GNOMAD_V2_EXOMES = (
+    "gs://gcp-public-data--gnomad/release/2.1.1/ht/exomes/gnomad.exomes.r2.1.1.sites.ht"
+)
+GNOMAD_V2_GENOMES = (
+    "gs://gcp-public-data--gnomad/release/2.1.1/ht/genomes/gnomad.genomes.r2.1.1.sites.ht"
+)
+GNOMAD_V2_CONSTRAINT = "gs://gcp-public-data--gnomad/release/2.1.1/constraint/gnomad.v2.1.1.lof_metrics.by_transcript.ht"
+GNOMAD_V2_CURATION = [
+    "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/all_homozygous_curation_results.csv",
+    "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/lysosomal_storage_disease_genes_curation_results.csv",
+    "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/haploinsufficient_genes_curation_results.csv",
+    "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/metabolic_conditions_genes_curation_results.csv",
+    "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/gnomAD_addendum_curation_results.csv",
+    "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/AP4_curation_results.csv",
+    "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/FIG4_curation_results.csv",
+    "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/MCOLN1_curation_results.csv",
+    "https://storage.googleapis.com/gcp-public-data--gnomad/truth-sets/source/lof-curation/NSD1_curation_results.csv",
+]
+GNOMAD_V3_GENOMES = (
+    "gs://gcp-public-data--gnomad/release/3.1.1/ht/genomes/gnomad.genomes.v3.1.1.sites.ht"
+)
 
 
 def load_gnomad_v2_variants():
@@ -105,6 +111,21 @@ def load_gnomad_v3_variants():
     return ds
 
 
+def add_liftover_chain_to_reference(reference_genome):
+    if reference_genome == "GRCh37":
+        hl.get_reference(reference_genome).add_liftover(
+            "gs://hail-common/references/grch37_to_grch38.over.chain.gz",
+            "GRCh38",
+        )
+    elif reference_genome == "GRCh38":
+        hl.get_reference(reference_genome).add_liftover(
+            "gs://hail-common/references/grch38_to_grch37.over.chain.gz",
+            "GRCh37",
+        )
+    else:
+        raise Exception(f"Invalid reference genome {reference_genome}")
+
+
 def variant_id(locus, alleles):
     return (
         locus.contig.replace("^chr", "")
@@ -117,11 +138,21 @@ def variant_id(locus, alleles):
     )
 
 
+def variant_coordinate_id(locus):
+    return locus.contig.replace("^chr", "") + "-" + hl.str(locus.position)
+
+
 def add(a, b):
     return hl.or_else(a, 0) + hl.or_else(b, 0)
 
 
-def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=False, annotate_caf=False, flag_curated="ignore"):
+def get_gnomad_lof_variants(
+    gnomad_version,
+    gene_ids,
+    include_low_confidence=False,
+    annotate_caf=False,
+    flag_curated="ignore",
+):
     if gnomad_version not in (2, 3):
         raise Exception(f"Invalid gnomAD version {gnomad_version}")
 
@@ -131,21 +162,22 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         ds = load_gnomad_v3_variants()
 
     reference_genome = "GRCh37" if gnomad_version == 2 else "GRCh38"
+    add_liftover_chain_to_reference(reference_genome)
 
     # Work around rate limit of the gnomAD API for fetching gene intervals by
     # using the GENCODE table directly.
     # Would need to provide the correct GENCODE GTF here for gnomAD v3.
     assert gnomad_version == 2
 
-    if(args.id_type == 'symbol'):
+    if args.id_type == "symbol":
         gene_intervals = hl.experimental.get_gene_intervals(
             gene_symbols=gene_ids, reference_genome=reference_genome
         )
-    else:    
+    else:
         gene_intervals = hl.experimental.get_gene_intervals(
             gene_ids=gene_ids, reference_genome=reference_genome
         )
-    
+
     ds = hl.filter_intervals(ds, gene_intervals)
 
     gene_ids = hl.set(gene_ids)
@@ -169,7 +201,11 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
     ds = ds.select(
         reference_genome=reference_genome,
         variant_id=variant_id(ds.locus, ds.alleles),
-        liftover_variant_id=hl.missing(hl.tstr),
+        # Compute and store a chr:pos of liftover variant, since we don't need the
+        # allele info for the LoF curation portal.
+        liftover_variant_id=variant_coordinate_id(
+            hl.liftover(ds.locus, "GRCh38" if reference_genome == "GRCh37" else "GRCh37")
+        ),
         qc_filter=hl.delimit(
             hl.array(ds.exome.filters)
             .map(lambda f: f + " (exomes)")
@@ -203,49 +239,66 @@ def get_gnomad_lof_variants(gnomad_version, gene_ids, include_low_confidence=Fal
         constraint = hl.read_table(GNOMAD_V2_CONSTRAINT)
 
         # Filter to our genes of interest.
-        constraint = constraint.filter(gene_ids.contains(constraint.gene if args.id_type == "symbol" else constraint.gene_id))
+        constraint = constraint.filter(
+            gene_ids.contains(constraint.gene if args.id_type == "symbol" else constraint.gene_id)
+        )
         constraint = constraint.repartition(10)
 
         # Convert the constraint table to a lookup dictionary, so that map can handle it.
-        caf_max = constraint.aggregate(hl.agg.group_by(constraint.transcript,
-                                            hl.agg.max(constraint.classic_caf)))
-        lookup = hl.dict({k: caf_max[k] if caf_max[k] != None else hl.missing("float64") for k in caf_max.keys()})
+        caf_max = constraint.aggregate(
+            hl.agg.group_by(constraint.transcript, hl.agg.max(constraint.classic_caf))
+        )
+        lookup = hl.dict(
+            {k: caf_max[k] if caf_max[k] != None else hl.missing("float64") for k in caf_max.keys()}
+        )
 
         # Add the CAF information for each transcript to the annotations structs.
-        ds = ds.select('reference_genome',
-                       'variant_id',
-                       'liftover_variant_id',
-                       'qc_filter',
-                       'AC',
-                       'AN',
-                       'n_homozygotes',
-                       'AF',
-                        annotations = ds.annotations.map(
-                            lambda csq: csq.annotate(
-                                classic_caf= hl.if_else(lookup.contains(csq.transcript_id), lookup[csq.transcript_id], hl.missing('float64'))
-                            )
-                        )
+        ds = ds.select(
+            "reference_genome",
+            "variant_id",
+            "liftover_variant_id",
+            "qc_filter",
+            "AC",
+            "AN",
+            "n_homozygotes",
+            "AF",
+            annotations=ds.annotations.map(
+                lambda csq: csq.annotate(
+                    classic_caf=hl.if_else(
+                        lookup.contains(csq.transcript_id),
+                        lookup[csq.transcript_id],
+                        hl.missing("float64"),
+                    )
+                )
+            ),
         )
 
     # Optionally annotate with the results of the previous gnomAD v2 curation.
     if flag_curated != "ignore" and gnomad_version == 2:
-       # Loop through all the curation files and read them into pandas.
-        df_list = (pd.read_csv(file, usecols = ['Variant ID', 'Verdict']) for file in GNOMAD_V2_CURATION)
+        # Loop through all the curation files and read them into pandas.
+        df_list = (
+            pd.read_csv(file, usecols=["Variant ID", "Verdict"]) for file in GNOMAD_V2_CURATION
+        )
 
         # Combine, and convert to a hail table.
-        curation = hl.Table.from_pandas(pd.concat(df_list, ignore_index = True))
+        curation = hl.Table.from_pandas(pd.concat(df_list, ignore_index=True))
 
         # Key the curation results by the locus and alleles.
-        curation = curation.key_by(**hl.parse_variant(curation['Variant ID'].replace("-",":"), reference_genome="GRCh37"))
+        curation = curation.key_by(
+            **hl.parse_variant(curation["Variant ID"].replace("-", ":"), reference_genome="GRCh37")
+        )
 
         # Annotate already-curated variants with their verdict.
-        ds = ds.annotate(**curation[ds.locus, ds.alleles].select("Verdict")).rename({'Verdict' : 'curation_verdict'})
+        ds = ds.annotate(**curation[ds.locus, ds.alleles].select("Verdict")).rename(
+            {"Verdict": "curation_verdict"}
+        )
 
         # Optionally remove those variants that have already been curated.
         if flag_curated == "remove":
             ds = ds.filter(hl.is_missing(ds.curation_verdict))
 
     return ds
+
 
 def open_file(path, mode="r"):
     if path.startswith("gs://"):
@@ -261,7 +314,8 @@ if __name__ == "__main__":
         "--gene-ids",
         nargs="+",
         metavar="GENE",
-        help="The gene(s) to process, in the format specified by --id-type (defaults to Ensembl ID)")
+        help="The gene(s) to process, in the format specified by --id-type (defaults to Ensembl ID)",
+    )
     group.add_argument(
         "--genes-table",
         help="relative dataset path (analysis category) to a Hail table with a gene_id field containing Ensembl IDs",
@@ -272,9 +326,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--id-type",
-        choices=('ensembl','symbol'),
-        default='ensembl',
-        help="The type of gene ID provided; must be one of 'ensembl' or 'symbol'"
+        choices=("ensembl", "symbol"),
+        default="ensembl",
+        help="The type of gene ID provided; must be one of 'ensembl' or 'symbol'",
     )
     parser.add_argument(
         "--gnomad-version",
@@ -313,12 +367,12 @@ if __name__ == "__main__":
     if args.gene_ids:
         genes = args.gene_ids
     elif args.genes_file:
-        with AnyPath(args.genes_file).open('r') as f:
-            genes = [line.strip().split(',', 1)[0].split(None, 1)[0] for line in f if line.strip()]
+        with AnyPath(args.genes_file).open("r") as f:
+            genes = [line.strip().split(",", 1)[0].split(None, 1)[0] for line in f if line.strip()]
     else:
         genes_table = hl.read_table(dataset_path(args.genes_table, "analysis"))
         genes = list(set(genes_table.gene_id.collect()))
-        args.id_type='ensembl'
+        args.id_type = "ensembl"
 
     # Fetch the (optionally filtered and annotated) pLoF variants from the appropriate gnomAD dataset.
     variants = get_gnomad_lof_variants(
@@ -326,7 +380,7 @@ if __name__ == "__main__":
         genes,
         include_low_confidence=args.include_low_confidence,
         annotate_caf=args.annotate_caf,
-        flag_curated=args.flag_curated
+        flag_curated=args.flag_curated,
     )
 
     # Output the final dataset, as either:
