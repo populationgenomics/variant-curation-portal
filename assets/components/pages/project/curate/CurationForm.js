@@ -51,7 +51,7 @@ class CurationForm extends React.Component {
         "flag_mismapped_read",
         "flag_complex_event",
         "flag_stutter",
-        "flag_dubious_str_or_low_complexity",
+        "flag_repetitive_sequence",
         "flag_dubious_other",
       ],
     };
@@ -321,129 +321,144 @@ class CurationForm extends React.Component {
             }}
           />
           <div style={{ columns: 2 }}>
-            {/* Render Technical Flags */}
-            <Header sub style={{ marginBottom: "0.5rem" }}>
-              Technical
-            </Header>
-            {["flag_no_read_data", "flag_reference_error"].map(flag =>
-              this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
-            )}
-            {/* Render Mapping Error Flags */}
-            {["flag_mapping_error"].map(flag =>
-              this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
-            )}
-            <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
-              {["flag_self_chain", "flag_str_or_low_complexity", "flag_low_umap_m50"].map(flag =>
+            <div style={{ breakAfter: "column" }}>
+              {/* Render Technical Flags */}
+              <Header sub style={{ marginBottom: "0.5rem" }}>
+                Technical
+              </Header>
+              {["flag_no_read_data", "flag_reference_error"].map(flag =>
                 this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
               )}
-              {/* Render Dubious Read Alignment Flags */}
-              {["flag_dubious_read_alignment"].map(flag =>
+              {/* Render Mapping Error Flags */}
+              {["flag_mapping_error"].map(flag =>
                 this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
               )}
-              <div style={{ marginLeft: "2rem" }}>
+              <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
+                {["flag_self_chain", "flag_str_or_low_complexity", "flag_low_umap_m50"].map(flag =>
+                  this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
+                )}
+                {/* Render Dubious Read Alignment Flags */}
+                {["flag_dubious_read_alignment"].map(flag =>
+                  this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
+                )}
+                <div style={{ marginLeft: "2rem" }}>
+                  {[
+                    "flag_mismapped_read",
+                    "flag_complex_event",
+                    "flag_stutter",
+                    "flag_repetitive_sequence",
+                    "flag_dubious_other",
+                  ].map(flag =>
+                    this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
+                  )}
+                </div>
+              </div>
+              {/* Render Genotyping Error Flags */}
+              {["flag_genotyping_error"].map(flag =>
+                this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
+              )}
+              <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
                 {[
-                  "flag_mismapped_read",
-                  "flag_complex_event",
-                  "flag_stutter",
-                  "flag_dubious_str_or_low_complexity",
-                  "flag_dubious_other",
+                  "flag_low_genotype_quality",
+                  "flag_low_read_depth",
+                  "flag_allele_balance",
+                  "flag_gc_rich",
+                  "flag_homopolymer_or_str",
+                  "flag_strand_bias",
                 ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
               </div>
             </div>
-            {/* Render Genotyping Error Flags */}
-            {["flag_genotyping_error"].map(flag =>
-              this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
-            )}
-            <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
+
+            <div>
+              {/* Render Impact Flags */}
+              <Header sub style={{ marginBottom: "0.5rem", marginTop: 0 }}>
+                Impact
+              </Header>
+              {/* Render Inconsequential Transcript Flags */}
+              {["flag_inconsequential_transcript"].map(flag =>
+                this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
+              )}
+              <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
+                {[
+                  "flag_multiple_annotations",
+                  "flag_pext_less_than_half_max",
+                  "flag_uninformative_pext",
+                  "flag_minority_of_transcripts",
+                  "flag_minor_protein_isoform",
+                  "flag_weak_exon_conservation",
+                  "flag_untranslated_transcript",
+                ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+              </div>
+              {/* Render Rescue Flags */}
+              {["flag_rescue"].map(flag =>
+                this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
+              )}
+              <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
+                {[
+                  "flag_mnp",
+                  "flag_frame_restoring_indel",
+                  "flag_first_150_bp",
+                  "flag_in_frame_sai",
+                  "flag_methionine_resuce",
+                  "flag_escapes_nmd",
+                  "flag_low_truncated",
+                ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+              </div>
+              {/* Render comment flags */}
+              <Header sub style={{ marginBottom: "0.5rem" }}>
+                Comments
+              </Header>
               {[
-                "flag_low_genotype_quality",
-                "flag_low_read_depth",
-                "flag_allele_balance",
-                "flag_gc_rich",
-                "flag_homopolymer_or_str",
-                "flag_strand_bias",
+                "flag_complex_splicing",
+                "flag_complex_other",
+                "flag_flow_chart_overridden",
+                "flag_second_opinion_required",
+                "flag_sanger_confirmation_recommended",
               ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
             </div>
-            {/* Render Impact Flags */}
-            <Header sub style={{ marginBottom: "0.5rem" }}>
-              Impact
-            </Header>
-            {/* Render Inconsequential Transcript Flags */}
-            {["flag_inconsequential_transcript"].map(flag =>
-              this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
-            )}
-            <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
-              {[
-                "flag_multiple_annotations",
-                "flag_pext_less_than_half_max",
-                "flag_uninformative_pext",
-                "flag_minority_of_transcripts",
-                "flag_weak_exon_conservation",
-                "flag_untranslated_transcript",
-              ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
-            </div>
-            {/* Render Rescue Flags */}
-            {["flag_rescue"].map(flag =>
-              this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
-            )}
-            <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
-              {[
-                "flag_mnp",
-                "flag_frame_restoring_indel",
-                "flag_first_150_bp",
-                "flag_in_frame_sai",
-                "flag_methionine_resuce",
-                "flag_escapes_nmd",
-                "flag_low_truncated",
-              ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
-            </div>
-            {/* Render comment flags */}
-            <Header sub style={{ marginBottom: "0.5rem" }}>
-              Comments
-            </Header>
-            {[
-              "flag_complex_splicing",
-              "flag_complex_other",
-              "flag_flow_chart_overridden",
-              "flag_second_opinion_required",
-            ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
           </div>
 
-          {this.renderCustomFlags()}
-          {this.renderCustomFlagForm()}
+          <div style={{ margin: "2rem 0" }}>
+            {this.renderCustomFlags()}
+            {this.renderCustomFlagForm()}
+          </div>
 
-          <Header sub>Verdict</Header>
-          <Form.Group>
-            {verdicts.map((verdict, i) => (
-              <React.Fragment key={verdict}>
-                <Form.Field
-                  control={Radio}
-                  checked={value.verdict === verdict}
-                  label={{
-                    children: (
-                      <React.Fragment>
-                        {verdictLabels[verdict]}
-                        <KeyboardShortcutHint keys={`${i + 1}`} />
-                      </React.Fragment>
-                    ),
-                  }}
-                  name="verdict"
-                  value={verdict}
-                  onChange={(e, { value: selectedVerdict }) => {
-                    this.setResultField("verdict", selectedVerdict);
-                  }}
-                />
-                <KeyboardShortcut
-                  keys={`${i + 1}`}
-                  onShortcut={() => {
-                    this.setResultField("verdict", verdict);
-                  }}
-                />
-              </React.Fragment>
-            ))}
-          </Form.Group>
+          <div style={{ margin: "2rem 0" }}>
+            <Header sub>Verdict</Header>
+            <Form.Group>
+              {verdicts.map((verdict, i) => (
+                <React.Fragment key={verdict}>
+                  <Form.Field
+                    control={Radio}
+                    checked={value.verdict === verdict}
+                    label={{
+                      children: (
+                        <React.Fragment>
+                          {verdictLabels[verdict]}
+                          <KeyboardShortcutHint keys={`${i + 1}`} />
+                        </React.Fragment>
+                      ),
+                    }}
+                    name="verdict"
+                    value={verdict}
+                    onChange={(e, { value: selectedVerdict }) => {
+                      this.setResultField("verdict", selectedVerdict);
+                    }}
+                  />
+                  <KeyboardShortcut
+                    keys={`${i + 1}`}
+                    onShortcut={() => {
+                      this.setResultField("verdict", verdict);
+                    }}
+                  />
+                </React.Fragment>
+              ))}
+            </Form.Group>
+          </div>
+
           {errors && errors.verdict && <Message error>{errors.verdict}</Message>}
           <Divider />
+
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span>
               <Button

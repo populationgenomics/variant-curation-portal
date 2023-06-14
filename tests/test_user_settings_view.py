@@ -79,5 +79,5 @@ def test_update_settings_creates_settings(db_setup):
 
     response = client.get("/api/profile/settings/").json()
     assert response["ucsc_username"] == "user2"
-    assert response["ucsc_session_name_grch37"] == None
-    assert response["ucsc_session_name_grch38"] == None
+    assert response["ucsc_session_name_grch37"] is None
+    assert response["ucsc_session_name_grch38"] is None

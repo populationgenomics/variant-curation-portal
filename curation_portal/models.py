@@ -143,7 +143,7 @@ class CurationResult(models.Model):
     flag_mismapped_read = models.BooleanField(default=False)
     flag_complex_event = models.BooleanField(default=False)
     flag_stutter = models.BooleanField(default=False)
-    flag_dubious_str_or_low_complexity = models.BooleanField(default=False)
+    flag_repetitive_sequence = models.BooleanField(default=False)
     flag_dubious_other = models.BooleanField(default=False)
     ### Genotyping errors
     flag_genotyping_error = models.BooleanField(default=False)
@@ -161,6 +161,7 @@ class CurationResult(models.Model):
     flag_pext_less_than_half_max = models.BooleanField(default=False)
     flag_uninformative_pext = models.BooleanField(default=False)
     flag_minority_of_transcripts = models.BooleanField(default=False)
+    flag_minor_protein_isoform = models.BooleanField(default=False)
     flag_weak_exon_conservation = models.BooleanField(default=False)
     flag_untranslated_transcript = models.BooleanField(default=False)
     ### Rescue
@@ -178,6 +179,7 @@ class CurationResult(models.Model):
     flag_complex_other = models.BooleanField(default=False)
     flag_second_opinion_required = models.BooleanField(default=False)
     flag_flow_chart_overridden = models.BooleanField(default=False)
+    flag_sanger_confirmation_recommended = models.BooleanField(default=False)
 
     # Notes
     notes = models.TextField(null=True, blank=True)
@@ -210,7 +212,7 @@ def set_additional_flags(sender, instance, *args, **kwargs):  # pylint: disable=
                 "flag_mismapped_read",
                 "flag_complex_event",
                 "flag_stutter",
-                "flag_dubious_str_or_low_complexity",
+                "flag_repetitive_sequence",
                 "flag_dubious_other",
             ]
         )
@@ -302,7 +304,7 @@ FLAG_FIELDS = [
     "flag_mismapped_read",
     "flag_complex_event",
     "flag_stutter",
-    "flag_dubious_str_or_low_complexity",
+    "flag_repetitive_sequence",
     "flag_dubious_other",
     ### Genotyping errors
     "flag_genotyping_error",
@@ -319,6 +321,7 @@ FLAG_FIELDS = [
     "flag_pext_less_than_half_max",
     "flag_uninformative_pext",
     "flag_minority_of_transcripts",
+    "flag_minor_protein_isoform",
     "flag_weak_exon_conservation",
     "flag_untranslated_transcript",
     ### Rescue
@@ -335,6 +338,7 @@ FLAG_FIELDS = [
     "flag_complex_other",
     "flag_second_opinion_required",
     "flag_flow_chart_overridden",
+    "flag_sanger_confirmation_recommended",
 ]
 
 # FLAG_SHORTCUTS is so far only used to validate an incoming custom flag to make sure that we don't
@@ -351,7 +355,7 @@ FLAG_SHORTCUTS = {
     "flag_mismapped_read": "MM",
     "flag_complex_event": "CE",
     "flag_stutter": "TS",
-    "flag_dubious_str_or_low_complexity": "DC",
+    "flag_repetitive_sequence": "RS",
     "flag_dubious_other": "DO",
     ## Genotyping errors
     "flag_low_genotype_quality": "GQ",
@@ -366,6 +370,7 @@ FLAG_SHORTCUTS = {
     "flag_pext_less_than_half_max": "P5",
     "flag_uninformative_pext": "UP",
     "flag_minority_of_transcripts": "MI",
+    "flag_minor_protein_isoform": "MP",
     "flag_weak_exon_conservation": "WE",
     "flag_untranslated_transcript": "UT",
     ## Rescue
@@ -381,6 +386,7 @@ FLAG_SHORTCUTS = {
     "flag_complex_other": "CO",
     "flag_second_opinion_required": "OR",
     "flag_flow_chart_overridden": "FO",
+    "flag_sanger_confirmation_recommended": "CR",
 }
 
 
@@ -390,6 +396,7 @@ FLAG_LABELS = {
     "flag_pext_less_than_half_max": "Flag pext < 50% max",
     "flag_uninformative_pext": "Flag uninformative pext",
     "flag_minority_of_transcripts": "Flag minority of transcripts ≤ 50%",
+    "flag_minor_protein_isoform": "Minor protein isoform (MANE/APPRIS)",
     "flag_self_chain": "Flag self chain > 5",
     "flag_str_or_low_complexity": "Flag STR/Low complexity",
     "flag_low_umap_m50": "Flag Umap M50 < 0.5",

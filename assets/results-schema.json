@@ -65,8 +65,8 @@
         "description": "Stutter",
         "type": ["boolean", "null"]
       },     
-      "flag_dubious_str_or_low_complexity": {
-        "description": "Dubious read from STR/Low complexity",
+      "flag_repetitive_sequence": {
+        "description": "Repetivite sequence",
         "type": ["boolean", "null"]
       },
       "flag_dubious_other": {
@@ -105,6 +105,10 @@
         "description": "Inconsequential transcript",
         "type": ["boolean", "null"]
       }, 
+      "flag_minor_protein_isoform": {
+        "description": "Minor protein isoform (MANE/APPRIS)",
+        "type": ["boolean", "null"]
+      },
       "flag_multiple_annotations": {
         "description": "Multiple annotations",
         "type": ["boolean", "null"]
@@ -175,6 +179,10 @@
       },
       "flag_flow_chart_overridden": {
         "description": "Flow chart overridden",
+        "type": ["boolean", "null"]
+      },
+      "flag_sanger_confirmation_recommended": {
+        "description": "Sanger confirmation recommended",
         "type": ["boolean", "null"]
       },
       "custom_flags": {
