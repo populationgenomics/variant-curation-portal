@@ -1,6 +1,6 @@
 # pylint: disable=redefined-outer-name,unused-argument
 import csv
-import io
+import io  # pylint: disable=E0401
 
 import pytest
 from rest_framework.test import APIClient

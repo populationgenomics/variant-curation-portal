@@ -7,7 +7,7 @@ For more information on this file, see
 https://docs.djangoproject.com/en/2.2/howto/deployment/wsgi/
 """
 
-import os
+import os  # pylint: disable=E0401
 
 from django.core.wsgi import get_wsgi_application
 
