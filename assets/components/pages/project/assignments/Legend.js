@@ -57,7 +57,7 @@ class Legend extends React.PureComponent {
                   "flag_mismapped_read",
                   "flag_complex_event",
                   "flag_stutter",
-                  "flag_dubious_str_or_low_complexity",
+                  "flag_repetitive_sequence",
                   "flag_dubious_other",
                 ].map(flag => (
                   <List.Item key={flag}>
@@ -100,6 +100,7 @@ class Legend extends React.PureComponent {
                 "flag_pext_less_than_half_max",
                 "flag_uninformative_pext",
                 "flag_minority_of_transcripts",
+                "flag_minor_protein_isoform",
                 "flag_weak_exon_conservation",
                 "flag_untranslated_transcript",
               ].map(flag => (
@@ -139,6 +140,7 @@ class Legend extends React.PureComponent {
               "flag_complex_other",
               "flag_flow_chart_overridden",
               "flag_second_opinion_required",
+              "flag_sanger_confirmation_recommended",
             ].map(flag => (
               <List.Item key={flag}>
                 {FLAG_CODES[flag]} = {FLAG_LABELS[flag]}
