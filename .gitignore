@@ -34,3 +34,6 @@ venv
 
 # VS Code
 .vscode
+
+# nvmrc
+.nvmrc
