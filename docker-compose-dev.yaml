@@ -1,12 +1,12 @@
 version: '3.8'
 services:
   db:
-    image: postgres:14.1-alpine
+    image: postgres:14.8-bookworm
     restart: always
     environment:
-      - POSTGRES_USER=curator-prod
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=curator-prod
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
     ports:
       - '5432:5432'
     volumes: 
