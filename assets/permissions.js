@@ -28,6 +28,7 @@ export const can = (user, action, resourceType, resource) => {
   }
 };
 
+// eslint-disable-next-line react/prop-types
 export const PermissionRequired = ({ action, children, resource, resourceType, user }) => {
   if (!can(user, action, resourceType, resource)) {
     return (
@@ -44,7 +45,6 @@ export const PermissionRequired = ({ action, children, resource, resourceType, u
 PermissionRequired.propTypes = {
   action: PropTypes.string.isRequired,
   resource: PropTypes.any, // eslint-disable-line react/forbid-prop-types
-  children: PropTypes.any, // eslint-disable-line react/forbid-prop-types
   resourceType: PropTypes.string.isRequired,
   user: PropTypes.shape({
     username: PropTypes.string.isRequired,
