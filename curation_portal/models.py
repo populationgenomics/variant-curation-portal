@@ -56,6 +56,7 @@ class Variant(models.Model):
     AN = models.IntegerField(null=True, blank=True)
     AF = models.FloatField(null=True, blank=True)
     n_homozygotes = models.IntegerField(null=True, blank=True)
+    n_heterozygotes = models.IntegerField(null=True, blank=True)
 
     class Meta:
         db_table = "curation_variant"
@@ -79,6 +80,12 @@ class VariantAnnotation(models.Model):
     loftee = models.CharField(max_length=2, null=True, blank=True)
     loftee_filter = models.CharField(max_length=200, null=True, blank=True)
     loftee_flags = models.CharField(max_length=200, null=True, blank=True)
+
+    hgvsp = models.CharField(max_length=200, null=True, blank=True)
+    hgvsc = models.CharField(max_length=200, null=True, blank=True)
+    appris = models.CharField(max_length=200, null=True, blank=True)
+    mane_select = models.CharField(max_length=200, null=True, blank=True)
+    exon = models.CharField(max_length=200, null=True, blank=True)
 
     class Meta:
         db_table = "curation_variant_annotation"
