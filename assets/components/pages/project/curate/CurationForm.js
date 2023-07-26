@@ -435,7 +435,7 @@ class CurationForm extends React.Component {
                       children: (
                         <React.Fragment>
                           {verdictLabels[verdict]}
-                          <KeyboardShortcutHint keys={`${i + 1}`} />
+                          <KeyboardShortcutHint keys={(i + 1).toString()} />
                         </React.Fragment>
                       ),
                     }}
@@ -446,7 +446,7 @@ class CurationForm extends React.Component {
                     }}
                   />
                   <KeyboardShortcut
-                    keys={`${i + 1}`}
+                    keys={(i + 1).toString()}
                     onShortcut={() => {
                       this.setResultField("verdict", verdict);
                     }}

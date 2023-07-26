@@ -139,8 +139,8 @@ VariantData.propTypes = {
     AN: PropTypes.number,
     AF: PropTypes.number,
     n_homozygotes: PropTypes.number,
-    annotations: PropTypes.arrayOf(PropTypes.object).isRequired,
-    tags: PropTypes.arrayOf(PropTypes.object).isRequired,
+    annotations: PropTypes.arrayOf(PropTypes.object).isRequired, // eslint-disable-line react/forbid-prop-types
+    tags: PropTypes.arrayOf(PropTypes.object).isRequired, // eslint-disable-line react/forbid-prop-types
     reference_genome: PropTypes.oneOf(["GRCh37", "GRCh38"]).isRequired,
     liftover_variant_id: PropTypes.string,
   }).isRequired,

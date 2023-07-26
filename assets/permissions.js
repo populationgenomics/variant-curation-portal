@@ -28,6 +28,7 @@ export const can = (user, action, resourceType, resource) => {
   }
 };
 
+// eslint-disable-next-line react/prop-types
 export const PermissionRequired = ({ action, children, resource, resourceType, user }) => {
   if (!can(user, action, resourceType, resource)) {
     return (
