@@ -44,6 +44,7 @@ export const PermissionRequired = ({ action, children, resource, resourceType, u
 PermissionRequired.propTypes = {
   action: PropTypes.string.isRequired,
   resource: PropTypes.any, // eslint-disable-line react/forbid-prop-types
+  children: PropTypes.any, // eslint-disable-line react/forbid-prop-types
   resourceType: PropTypes.string.isRequired,
   user: PropTypes.shape({
     username: PropTypes.string.isRequired,
