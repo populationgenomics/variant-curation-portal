@@ -129,7 +129,7 @@ class VariantData extends React.Component {
       GT: PropTypes.arrayOf(PropTypes.string),
       DP: PropTypes.arrayOf(PropTypes.number),
       GQ: PropTypes.arrayOf(PropTypes.number),
-      sampleIDs: PropTypes.arrayOf(PropTypes.string),
+      sample_ids: PropTypes.arrayOf(PropTypes.string),
       n_homozygotes: PropTypes.number,
       n_heterozygotes: PropTypes.number,
       annotations: PropTypes.arrayOf(PropTypes.object).isRequired, // eslint-disable-line react/forbid-prop-types
@@ -171,7 +171,7 @@ class VariantData extends React.Component {
             <strong>Callset AN:</strong> {variant.AN}
           </List.Item>
           <List.Item>
-            <strong>Sample IDs:</strong> {(variant.sampleIDs ?? []).join(", ")}
+            <strong>Sample IDs:</strong> {(variant.sample_ids ?? []).join(", ")}
           </List.Item>
           <List.Item>
             <strong>Genotype Call:</strong> {(variant.GT ?? []).join(", ")}
