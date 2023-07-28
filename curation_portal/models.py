@@ -45,7 +45,7 @@ class Variant(models.Model):
         max_length=6, choices=[("GRCh37", "GRCh37"), ("GRCh38", "GRCh38")], default="GRCh37"
     )
     variant_id = models.CharField(max_length=1000)
-    sample_ids = ArrayField(models.CharField(max_length=1000, blank=True), null=True, blank=True)
+    sampleIDs = ArrayField(models.CharField(max_length=1000, blank=True), null=True, blank=True)
     liftover_variant_id = models.CharField(max_length=1000, null=True, blank=True)
     chrom = models.CharField(max_length=2)
     pos = models.IntegerField()
