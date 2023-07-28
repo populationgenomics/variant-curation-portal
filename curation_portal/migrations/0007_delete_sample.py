@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("curation_portal", "0006_usersettings")]
 
     operations = [migrations.DeleteModel(name="Sample")]

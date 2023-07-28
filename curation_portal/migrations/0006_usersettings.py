@@ -6,7 +6,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("curation_portal", "0005_prevent_blank_verdicts")]
 
     operations = [

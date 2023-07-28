@@ -13,7 +13,6 @@ def remove_blank_verdicts(apps, schema_editor):  # pylint: disable=unused-argume
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("curation_portal", "0003_add_variant_tags")]
 
     operations = [migrations.RunPython(remove_blank_verdicts)]

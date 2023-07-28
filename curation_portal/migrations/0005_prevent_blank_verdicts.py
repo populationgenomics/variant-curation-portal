@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("curation_portal", "0004_remove_blank_verdicts")]
 
     operations = [
