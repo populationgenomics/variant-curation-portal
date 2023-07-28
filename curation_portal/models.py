@@ -86,8 +86,8 @@ class VariantAnnotation(models.Model):
     loftee_filter = models.CharField(max_length=200, null=True, blank=True)
     loftee_flags = models.CharField(max_length=200, null=True, blank=True)
 
-    hgvsp = models.CharField(max_length=200, null=True, blank=True)
-    hgvsc = models.CharField(max_length=200, null=True, blank=True)
+    hgvsp = models.CharField(max_length=1000, null=True, blank=True)
+    hgvsc = models.CharField(max_length=1000, null=True, blank=True)
     appris = models.CharField(max_length=200, null=True, blank=True)
     mane_select = models.CharField(max_length=200, null=True, blank=True)
     exon = models.CharField(max_length=200, null=True, blank=True)
