@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("curation_portal", "0019_auto_20230728_0330"),
+        ("curation_portal", "0017_auto_20230726_0322"),
     ]
 
     operations = [
