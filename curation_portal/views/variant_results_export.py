@@ -58,7 +58,7 @@ class ExportVariantResultsView(APIView):
             )
         )
 
-        result_fields = ["notes", "should_revisit", "verdict", *FLAG_FIELDS]
+        result_fields = ["notes", "curator_comments", "should_revisit", "verdict", *FLAG_FIELDS]
 
         response = HttpResponse(content_type="text/csv")
         response[

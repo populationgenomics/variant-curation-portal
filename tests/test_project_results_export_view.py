@@ -72,7 +72,7 @@ def db_setup(django_db_setup, django_db_blocker, create_variant):
         CurationAssignment.objects.create(
             curator=user1,
             variant=variant2,
-            result=CurationResult.objects.create(verdict="lof", notes="LoF for sure"),
+            result=CurationResult.objects.create(verdict="lof", notes="probs Lof??", curator_comments="LoF for sure"),
         )
 
         CurationAssignment.objects.create(
