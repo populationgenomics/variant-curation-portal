@@ -67,14 +67,14 @@ class Variant(models.Model):
         models.CharField(max_length=1000, blank=True, null=False),
         null=True,
         blank=True,
-    ),
+    )
     DP = ArrayField(
-        models.IntegerField(null=True, blank=True, null=False),
+        models.IntegerField(blank=True, null=False),
         null=True,
         blank=True,
     )
     GQ = ArrayField(
-        models.IntegerField(null=True, blank=True, null=False),
+        models.IntegerField(blank=True, null=False),
         null=True,
         blank=True,
     )
