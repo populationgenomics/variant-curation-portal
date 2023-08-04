@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('curation_portal', '0016_auto_20230614_0004'),
+        ("curation_portal", "0016_auto_20230614_0004"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='curationresult',
-            name='curator_comments',
+            model_name="curationresult",
+            name="curator_comments",
             field=models.TextField(blank=True, null=True),
         ),
     ]

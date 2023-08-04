@@ -51,7 +51,7 @@ class CurationResultSerializer(ModelSerializer):
             *FLAG_FIELDS,
             "custom_flags",
             "notes",
-            "curator_comments"
+            "curator_comments",
             "should_revisit",
             "verdict",
             "variant",
