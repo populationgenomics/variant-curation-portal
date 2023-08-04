@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env: 
       DB_USER: curator-prod
-      DB_PASSWORD: 
+      DB_PASSWORD: password
       DB_HOST: localhost
       DB_PORT: 5432
       DB_DATABASE: curator-prod
