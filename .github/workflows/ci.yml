@@ -9,11 +9,11 @@ jobs:
     name: Backend checks
     runs-on: ubuntu-latest
     env: 
-      DB_USER: curator-prod
+      DB_USER: test
       DB_PASSWORD: password
       DB_HOST: localhost
       DB_PORT: 5432
-      DB_DATABASE: curator-prod
+      DB_DATABASE: test
       DB_ENGINE: django.db.backends.postgresql
     services:
       postgres:
