@@ -208,15 +208,17 @@ class VariantData extends React.Component {
                     })
                     .slice(0, showAll ? variant.annotations.length : 1)}
                 />
-                <Button
-                  basic
-                  size="small"
-                  onClick={() => {
-                    this.setState(state => ({ ...state, showAll: !state.showAll }));
-                  }}
-                >
-                  {showAll ? "Show MANE" : "Show All"}
-                </Button>
+                {variant.annotations.length > 1 && (
+                  <Button
+                    basic
+                    size="small"
+                    onClick={() => {
+                      this.setState(state => ({ ...state, showAll: !state.showAll }));
+                    }}
+                  >
+                    {showAll ? "Show MANE" : "Show All"}
+                  </Button>
+                )}
               </>
             ) : (
               <p>No annotations available for this variant</p>
