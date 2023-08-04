@@ -139,7 +139,11 @@ def test_curate_variant_stores_result(db_setup):
 
     response = client.post(
         f"/api/project/1/variant/{variant1.id}/curate/",
-        {"verdict": "lof", "notes": "LoF for sure", "curator_comments": "This is a Loss of Function variant"},
+        {
+            "verdict": "lof",
+            "notes": "LoF for sure",
+            "curator_comments": "This is a Loss of Function variant",
+        },
         format="json",
     )
 
