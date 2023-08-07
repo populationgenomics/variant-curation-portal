@@ -19,6 +19,7 @@ import { GnomadVariantView, GnomadGeneView } from "./gnomad";
 import { UCSCVariantView, UCSCGeneView } from "./UCSC";
 import VariantData from "./VariantData";
 import SpliceAILookupView from "./SpliceAILookupView";
+import IGViewerSection from "../../../igvViewer";
 
 const ResultVerdict = connect(state => ({
   verdict: getCurationResult(state).verdict,
@@ -63,6 +64,7 @@ class CurateVariantPage extends React.Component {
 
     return (
       <React.Fragment>
+        <IGViewerSection />
         <Fetch path={`/project/${project.id}/variant/${variantId}/curate/`} onLoad={onLoadResult}>
           {({
             data: {

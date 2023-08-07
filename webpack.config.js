@@ -32,6 +32,8 @@ const config = {
           loader: "babel-loader",
           options: {
             rootMode: "upward",
+            presets: ["@babel/react", "@babel/preset-env"],
+            plugins: ["@babel/plugin-proposal-class-properties"],
           },
         },
       },
