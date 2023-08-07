@@ -139,7 +139,11 @@ def test_curate_variant_stores_result(db_setup):
 
     response = client.post(
         f"/api/project/1/variant/{variant1.id}/curate/",
-        {"verdict": "lof", "notes": "LoF for sure"},
+        {
+            "verdict": "lof",
+            "notes": "LoF for sure",
+            "curator_comments": "This is a Loss of Function variant",
+        },
         format="json",
     )
 
@@ -152,6 +156,7 @@ def test_curate_variant_stores_result(db_setup):
     assert assignment.result
     assert assignment.result.verdict == "lof"
     assert assignment.result.notes == "LoF for sure"
+    assert assignment.result.curator_comments == "This is a Loss of Function variant"
 
 
 def test_curate_variant_stores_custom_flags(db_setup):

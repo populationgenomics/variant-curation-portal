@@ -285,3 +285,28 @@ def test_upload_results_sets_all_custom_flags_as_false_if_not_specified(db_setup
 
     custom_result = CustomFlagCurationResult.objects.get(result=result, flag=custom_flag)
     assert not custom_result.checked
+
+
+def test_upload_sets_notes_and_curator_comments_fields(db_setup):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    response = client.post(
+        "/api/project/1/results/",
+        [
+            {
+                "curator": "user1@example.com",
+                "variant_id": "1-100-A-G",
+                "notes": "foo",
+                "curator_comments": "bar",
+            }
+        ],
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert CurationResult.objects.filter(assignment__variant__variant_id="1-100-A-G").exists()
+
+    result = CurationResult.objects.get(assignment__variant__variant_id="1-100-A-G")
+    assert result.notes == "foo"
+    assert result.curator_comments == "bar"
