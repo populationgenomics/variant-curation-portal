@@ -4,6 +4,7 @@ import verdicts from "../constants/verdicts";
 
 export const CurationResultPropType = PropTypes.shape({
   notes: PropTypes.string,
+  curator_comments: PropTypes.string,
   verdict: PropTypes.oneOf(["", ...verdicts]),
 });
 

@@ -30,7 +30,9 @@ def db_setup(django_db_setup, django_db_blocker, create_variant):
         CurationAssignment.objects.create(
             curator=curator_1,
             variant=variant_2,
-            result=CurationResult.objects.create(verdict="lof", notes="LoF for sure"),
+            result=CurationResult.objects.create(
+                verdict="lof", notes="probs LoF??", curator_comments="LoF for sure"
+            ),
         )
 
         CurationAssignment.objects.create(

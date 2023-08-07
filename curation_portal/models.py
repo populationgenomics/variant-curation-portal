@@ -211,6 +211,7 @@ class CurationResult(models.Model):
 
     # Notes
     notes = models.TextField(null=True, blank=True)
+    curator_comments = models.TextField(null=True, blank=True)
     should_revisit = models.BooleanField(default=False)
 
     # Decision
