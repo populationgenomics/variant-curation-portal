@@ -39,6 +39,7 @@ const VariantResultsPage = ({ variantId }) => {
                   <Table.HeaderCell>Verdict</Table.HeaderCell>
                   <Table.HeaderCell>Flags</Table.HeaderCell>
                   <Table.HeaderCell>Notes</Table.HeaderCell>
+                  <Table.HeaderCell>Curator Comments</Table.HeaderCell>
                 </Table.Row>
               </Table.Header>
 
@@ -54,6 +55,7 @@ const VariantResultsPage = ({ variantId }) => {
                       <Flags result={result} />
                     </Table.Cell>
                     <Table.Cell>{result.notes}</Table.Cell>
+                    <Table.Cell>{result.curator_comments}</Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>

@@ -13,7 +13,7 @@ const config = {
     historyApiFallback: true,
     port: 3000,
     proxy: {
-      "/": "http://localhost:8000",
+      "/": "http://127.0.0.1:8000",
     },
     publicPath: "/static/bundles/",
     stats: "errors-only",

@@ -14,6 +14,8 @@ webpack-stats.json
 htmlcov
 .tox
 .pytest_cache
+.yarn
+.yarnrc.yml
 
 # pyenv
 .python-version
@@ -32,3 +34,6 @@ venv
 
 # VS Code
 .vscode
+
+# nvmrc
+.nvmrc

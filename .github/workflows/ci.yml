@@ -3,11 +3,33 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
 jobs:
   backend-checks:
     name: Backend checks
     runs-on: ubuntu-latest
+    env: 
+      DB_USER: test
+      DB_PASSWORD: password
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_DATABASE: test
+      DB_ENGINE: django.db.backends.postgresql
+    services:
+      postgres:
+        image: postgres:14.8
+        env:
+          POSTGRES_USER: ${{ env.DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+          POSTGRES_DB: ${{ env.DB_DATABASE }}
+        ports:
+          - 5432:5432
+        options: >-
+            --health-cmd pg_isready 
+            --health-interval 10s 
+            --health-timeout 5s 
+            --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -26,12 +48,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
+      - name: Setup database
+        run: python manage.py migrate
+      - name: Run tests
+        run: pytest
       - name: Check formatting
         run: black --check curation_portal tests
       - name: Run Pylint
         run: pylint --disable=R --disable=C --disable=fixme curation_portal tests/*
-      - name: Run tests
-        run: pytest
+  
   frontend-checks:
     name: Frontend checks
     runs-on: ubuntu-latest

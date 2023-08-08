@@ -299,11 +299,11 @@ class CurationForm extends React.Component {
         >
           <Form.Field
             control={TextArea}
-            id="notes"
+            id="notepad"
             label={{
               children: (
                 <React.Fragment>
-                  Notes
+                  Notepad
                   <KeyboardShortcutHint keys="n o" />
                 </React.Fragment>
               ),
@@ -316,7 +316,30 @@ class CurationForm extends React.Component {
           <KeyboardShortcut
             keys="n o"
             onShortcut={e => {
-              document.getElementById("notes").focus();
+              document.getElementById("notepad").focus();
+              e.preventDefault(); // Prevent shortcut from being typed into textarea
+            }}
+          />
+          <Form.Field
+            control={TextArea}
+            id="curator_comments"
+            label={{
+              children: (
+                <React.Fragment>
+                  Curator Comments
+                  <KeyboardShortcutHint keys="c c" />
+                </React.Fragment>
+              ),
+            }}
+            value={value.curator_comments}
+            onChange={e => {
+              this.setResultField("curator_comments", e.target.value);
+            }}
+          />
+          <KeyboardShortcut
+            keys="c c"
+            onShortcut={e => {
+              document.getElementById("curator_comments").focus();
               e.preventDefault(); // Prevent shortcut from being typed into textarea
             }}
           />
@@ -435,7 +458,7 @@ class CurationForm extends React.Component {
                       children: (
                         <React.Fragment>
                           {verdictLabels[verdict]}
-                          <KeyboardShortcutHint keys={`${i + 1}`} />
+                          <KeyboardShortcutHint keys={(i + 1).toString()} />
                         </React.Fragment>
                       ),
                     }}
@@ -446,7 +469,7 @@ class CurationForm extends React.Component {
                     }}
                   />
                   <KeyboardShortcut
-                    keys={`${i + 1}`}
+                    keys={(i + 1).toString()}
                     onShortcut={() => {
                       this.setResultField("verdict", verdict);
                     }}
