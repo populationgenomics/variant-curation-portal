@@ -38,7 +38,7 @@ const VariantResultsPage = ({ variantId }) => {
                   <Table.HeaderCell>Curator</Table.HeaderCell>
                   <Table.HeaderCell>Verdict</Table.HeaderCell>
                   <Table.HeaderCell>Flags</Table.HeaderCell>
-                  <Table.HeaderCell>Notepad</Table.HeaderCell>
+                  <Table.HeaderCell>Notes</Table.HeaderCell>
                   <Table.HeaderCell>Curator Comments</Table.HeaderCell>
                 </Table.Row>
               </Table.Header>
