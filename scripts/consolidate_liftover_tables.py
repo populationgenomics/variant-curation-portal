@@ -29,7 +29,6 @@ def load_liftover_mapping_sites_table(liftover_table_path):
 
 
 def main():
-    hl.init()
     init_batch()
 
     hg37_exome_liftover_table = load_liftover_mapping_sites_table(GNOMAD_V2_EXOME_LIFTOVER)
