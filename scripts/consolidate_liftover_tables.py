@@ -41,3 +41,7 @@ def main():
     hg37_genome_liftover_table.write(
         'gs://cpg-common-main/references/liftover/hg37_pruned/gnomad.genomes.r2.1.1.sites.liftover_grch37.ht'
     )
+
+
+if __name__ == '__main__':
+    main()
