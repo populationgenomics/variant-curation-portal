@@ -87,6 +87,12 @@ GNOMAD_V2_CURATION = [
 GNOMAD_V3_GENOMES = (
     "gs://gcp-public-data--gnomad/release/3.1.1/ht/genomes/gnomad.genomes.v3.1.1.sites.ht"
 )
+GNOMAD_V3_EXOME_LIFTOVER = (
+    'gs://cpg-common-main/references/liftover/gnomad.exomes.r2.1.1.sites.liftover_grch38.ht'
+)
+GNOMAD_V3_GENOME_LIFTOVER = (
+    'gs://cpg-common-main/references/liftover/gnomad.genomes.r2.1.1.sites.liftover_grch38.ht'
+)
 
 
 def load_gnomad_v2_variants():
@@ -113,44 +119,53 @@ def load_gnomad_v3_variants():
     return ds
 
 
-def add_liftover_chain_to_reference(reference_genome):
+def add_liftover_mapping(ds, reference_genome):
+    """
+    Load the gnomAD liftover Hail tables depending on the reference genome
+    Add a mapping from the hg37 sites to the hg38 sites to the dataset (or vice versa)
+    """
     if reference_genome == "GRCh37":
-        hl.get_reference(reference_genome).add_liftover(
-            "gs://hail-common/references/grch37_to_grch38.over.chain.gz",
-            "GRCh38",
+        exome_liftover_mapping = hl.read_table(GNOMAD_V2_EXOME_LIFTOVER)
+        genome_liftover_mapping = hl.read_table(GNOMAD_V2_GENOME_LIFTOVER)
+
+        # hg38 fields: ['locus', 'alleles']
+        ds_exome = ds.annotate(
+            liftover_locus=exome_liftover_mapping[ds.locus, ds.alleles].locus,
+            liftover_alleles=exome_liftover_mapping[ds.locus, ds.alleles].alleles,
         )
+        ds_genome = ds.annotate(
+            liftover_locus=genome_liftover_mapping[ds.locus, ds.alleles].locus,
+            liftover_alleles=genome_liftover_mapping[ds.locus, ds.alleles].alleles,
+        )
+
     elif reference_genome == "GRCh38":
-        hl.get_reference(reference_genome).add_liftover(
-            "gs://hail-common/references/grch38_to_grch37.over.chain.gz",
-            "GRCh37",
+        exome_liftover_mapping = hl.read_table(GNOMAD_V3_EXOME_LIFTOVER)
+        genome_liftover_mapping = hl.read_table(GNOMAD_V3_GENOME_LIFTOVER)
+
+        # hg37 fields to liftover: ['original_locus', 'original_alleles']
+        ds_exome = ds.annotate(
+            liftover_locus=exome_liftover_mapping[ds.locus, ds.alleles].original_locus,
+            liftover_alleles=exome_liftover_mapping[ds.locus, ds.alleles].original_alleles,
         )
+        ds_genome = ds.annotate(
+            liftover_locus=genome_liftover_mapping[ds.locus, ds.alleles].original_locus,
+            liftover_alleles=genome_liftover_mapping[ds.locus, ds.alleles].original_alleles,
+        )
+
     else:
         raise Exception(f"Invalid reference genome {reference_genome}")
 
-
-def add_liftover_mapping(ds):
-    """Load the gnomAD liftover Hail tables and add a mapping from the hg37 sites to the hg38 sites"""
-    exome_liftover_mapping = hl.read_table(GNOMAD_V2_EXOME_LIFTOVER)
-    genome_liftover_mapping = hl.read_table(GNOMAD_V2_GENOME_LIFTOVER)
-
-    ds_exome = ds.annotate(
-        hg38_locus=exome_liftover_mapping[ds.locus, ds.alleles].locus,
-        hg38_alleles=exome_liftover_mapping[ds.locus, ds.alleles].alleles,
-    )
-    ds_genome = ds.annotate(
-        hg38_locus=genome_liftover_mapping[ds.locus, ds.alleles].locus,
-        hg38_alleles=genome_liftover_mapping[ds.locus, ds.alleles].alleles,
-    )
-
     ds = ds.annotate(
-        hg38_locus=hl.or_else(ds_exome.hg38_locus, ds_genome.hg38_locus),
-        hg38_alleles=hl.or_else(ds_exome.hg38_alleles, ds_genome.hg38_alleles),
+        liftover_locus=hl.or_else(ds_exome.liftover_locus, ds_genome.liftover_locus),
+        liftover_alleles=hl.or_else(ds_exome.liftover_alleles, ds_genome.liftover_alleles),
     )
 
     return ds
 
 
 def variant_id(locus, alleles):
+    if not locus or not alleles:
+        return hl.missing(hl.tstr)
     return (
         locus.contig.replace("^chr", "")
         + "-"
@@ -160,10 +175,6 @@ def variant_id(locus, alleles):
         + "-"
         + alleles[1]
     )
-
-
-def variant_coordinate_id(locus):
-    return locus.contig.replace("^chr", "") + "-" + hl.str(locus.position)
 
 
 def add(a, b):
@@ -186,7 +197,6 @@ def get_gnomad_lof_variants(
         ds = load_gnomad_v3_variants()
 
     reference_genome = "GRCh37" if gnomad_version == 2 else "GRCh38"
-    add_liftover_chain_to_reference(reference_genome)
 
     # Work around rate limit of the gnomAD API for fetching gene intervals by
     # using the GENCODE table directly.
@@ -221,7 +231,7 @@ def get_gnomad_lof_variants(
     # Filter to variants that passed QC filters in at least one of exomes/genomes
     ds = ds.filter((hl.len(ds.exome.filters) == 0) | (hl.len(ds.genome.filters) == 0))
 
-    # Add the liftover mapping to hg38 from the gnomAD liftover tables
+    # Add the liftover mapping to hg37 or hg38 from the gnomAD liftover tables
     ds = add_liftover_mapping(ds)
 
     # Format for the LoF curation portal.
@@ -230,11 +240,7 @@ def get_gnomad_lof_variants(
         variant_id=variant_id(ds.locus, ds.alleles),
         # Compute and store a chr:pos of liftover variant, since we don't need the
         # allele info for the LoF curation portal.
-        liftover_variant_id=variant_coordinate_id(
-            hl.liftover(ds.locus, "GRCh38" if reference_genome == "GRCh37" else "GRCh37")
-        ),
-        hg38_locus=ds.hg38_locus,
-        hg38_alleles=ds.hg38_alleles,
+        liftover_variant_id=variant_id(ds.liftover_locus, ds.liftover_alleles),
         qc_filter=hl.delimit(
             hl.array(ds.exome.filters)
             .map(lambda f: f + " (exomes)")
