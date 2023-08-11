@@ -142,7 +142,7 @@ def add_liftover_mapping(ds, reference_genome):
         exome_liftover_mapping = hl.read_table(GNOMAD_V3_EXOME_LIFTOVER)
         genome_liftover_mapping = hl.read_table(GNOMAD_V3_GENOME_LIFTOVER)
 
-        # hg37 fields to liftover: ['original_locus', 'original_alleles']
+        # hg37 fields: ['original_locus', 'original_alleles']
         ds_exome = ds.annotate(
             liftover_locus=exome_liftover_mapping[ds.locus, ds.alleles].original_locus,
             liftover_alleles=exome_liftover_mapping[ds.locus, ds.alleles].original_alleles,
