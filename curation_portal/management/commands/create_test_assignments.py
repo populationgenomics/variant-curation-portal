@@ -1,4 +1,5 @@
 from django.core.management import BaseCommand
+from django.contrib.auth.models import Permission
 
 from curation_portal.models import User, Variant, Project, CurationAssignment, VariantAnnotation
 
@@ -69,6 +70,8 @@ class Command(BaseCommand):
         project, _ = Project.objects.get_or_create(name=options["project"])
 
         project.owners.add(user)
+        user.user_permissions.add(Permission.objects.get(codename="add_project"))
+        user.user_permissions.add(Permission.objects.get(codename="add_variant"))
 
         for variant_props in VARIANTS:
             # Pop annotations key before creating variant
