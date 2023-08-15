@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
             model_name="variant",
             name="DP",
             field=django.contrib.postgres.fields.ArrayField(
-                base_field=models.IntegerField(blank=True, null=False),
+                base_field=models.IntegerField(blank=False, null=False),
                 blank=True,
                 null=True,
                 size=None,
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
             model_name="variant",
             name="GQ",
             field=django.contrib.postgres.fields.ArrayField(
-                base_field=models.IntegerField(blank=True, null=False),
+                base_field=models.IntegerField(blank=False, null=False),
                 blank=True,
                 null=True,
                 size=None,
@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
             model_name="variant",
             name="GT",
             field=django.contrib.postgres.fields.ArrayField(
-                base_field=models.CharField(blank=True, max_length=1000, null=False),
+                base_field=models.CharField(max_length=1000, blank=False, null=False),
                 blank=True,
                 null=True,
                 size=None,
@@ -49,7 +49,7 @@ class Migration(migrations.Migration):
             model_name="variant",
             name="sample_ids",
             field=django.contrib.postgres.fields.ArrayField(
-                base_field=models.CharField(blank=True, max_length=1000, null=False),
+                base_field=models.CharField(max_length=1000, blank=False, null=False),
                 blank=True,
                 null=True,
                 size=None,

@@ -46,7 +46,7 @@ class Variant(models.Model):
     )
     variant_id = models.CharField(max_length=1000)
     sample_ids = ArrayField(
-        models.CharField(max_length=1000, blank=True, null=False),
+        models.CharField(max_length=1000, blank=False, null=False),
         null=True,
         blank=True,
     )
@@ -64,17 +64,17 @@ class Variant(models.Model):
     n_homozygotes = models.IntegerField(null=True, blank=True)
     n_heterozygotes = models.IntegerField(null=True, blank=True)
     GT = ArrayField(
-        models.CharField(max_length=1000, blank=True, null=False),
+        models.CharField(max_length=1000, blank=False, null=False),
         null=True,
         blank=True,
     )
     DP = ArrayField(
-        models.IntegerField(blank=True, null=False),
+        models.IntegerField(blank=False, null=False),
         null=True,
         blank=True,
     )
     GQ = ArrayField(
-        models.IntegerField(blank=True, null=False),
+        models.IntegerField(blank=False, null=False),
         null=True,
         blank=True,
     )
