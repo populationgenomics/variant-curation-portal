@@ -4,11 +4,9 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('curation_portal', '0017_auto_20230726_0322'),
-        ('curation_portal', '0017_curationresult_curator_comments'),
+        ("curation_portal", "0017_auto_20230726_0322"),
+        ("curation_portal", "0017_curationresult_curator_comments"),
     ]
 
-    operations = [
-    ]
+    operations = []
