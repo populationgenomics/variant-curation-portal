@@ -35,7 +35,7 @@ VARIANTS = [
         "reference_genome": "GRCh37",
         "variant_id": "1-949643-AC-A",
         "liftover_variant_id": None,
-        "chrom": "2",
+        "chrom": "1",
         "pos": 949643,
         "xpos": 1000949643,
         "ref": "AC",
