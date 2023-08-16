@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ["airbnb", "prettier", "prettier/react"],
+  extends: ["airbnb", "prettier"],
   env: {
     browser: true,
   },
@@ -11,7 +11,7 @@ module.exports = {
       },
     },
   ],
-  parser: "babel-eslint",
+  parser: "@babel/eslint-parser",
   plugins: ["prettier"],
   rules: {
     "prettier/prettier": "error",
@@ -20,6 +20,7 @@ module.exports = {
     "react/jsx-props-no-spreading": "off",
     "react/state-in-constructor": "off",
     "react/static-property-placement": "off",
+    "react/function-component-definition": "off",
   },
   parserOptions: {
     ecmaVersion: "2018",
