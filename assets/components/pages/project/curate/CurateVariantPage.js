@@ -19,13 +19,13 @@ import { GnomadVariantView, GnomadGeneView } from "./gnomad";
 import { UCSCVariantView, UCSCGeneView } from "./UCSC";
 import VariantData from "./VariantData";
 import SpliceAILookupView from "./SpliceAILookupView";
-import IGViewerSection from "../../../igvViewer";
+import IGVComponent from "../../../IGVComponent";
 
-const ResultVerdict = connect(state => ({
+const ResultVerdict = connect((state) => ({
   verdict: getCurationResult(state).verdict,
 }))(({ verdict }) => (verdict ? <Verdict verdict={verdict} /> : <span>No verdict</span>));
 
-const ResultFlags = connect(state => ({ result: getCurationResult(state) }))(Flags);
+const ResultFlags = connect((state) => ({ result: getCurationResult(state) }))(Flags);
 
 class CurateVariantPage extends React.Component {
   static propTypes = {
@@ -64,7 +64,6 @@ class CurateVariantPage extends React.Component {
 
     return (
       <React.Fragment>
-        <IGViewerSection />
         <Fetch path={`/project/${project.id}/variant/${variantId}/curate/`} onLoad={onLoadResult}>
           {({
             data: {
@@ -89,7 +88,7 @@ class CurateVariantPage extends React.Component {
                 reference_genome: liftoverReference,
                 chrom,
                 pos: parseInt(pos, 10),
-                annotations: variant.annotations.map(a => ({
+                annotations: variant.annotations.map((a) => ({
                   gene_symbol: a.gene_symbol,
                   transcript_id: a.transcript_id,
                 })),
@@ -117,7 +116,7 @@ class CurateVariantPage extends React.Component {
                           {previousVariant ? (
                             <React.Fragment>
                               <Link
-                                onClick={e => {
+                                onClick={(e) => {
                                   e.preventDefault();
                                   this.goToVariant(previousVariant.id);
                                 }}
@@ -140,7 +139,7 @@ class CurateVariantPage extends React.Component {
                           {nextVariant ? (
                             <React.Fragment>
                               <Link
-                                onClick={e => {
+                                onClick={(e) => {
                                   e.preventDefault();
                                   this.goToVariant(nextVariant.id);
                                 }}
@@ -174,6 +173,9 @@ class CurateVariantPage extends React.Component {
                         <List horizontal style={{ marginLeft: "0.5rem", marginRight: "3rem" }}>
                           <List.Item>
                             <a href="#top">top</a>
+                          </List.Item>
+                          <List.Item>
+                            <a href="#igv-viewer">IGV</a>
                           </List.Item>
                           <List.Item>
                             <a href="#gnomad-variant">
@@ -257,7 +259,7 @@ class CurateVariantPage extends React.Component {
                             basic
                             size="small"
                             onClick={() => {
-                              this.setState(state => ({ ...state, showForm: !state.showForm }));
+                              this.setState((state) => ({ ...state, showForm: !state.showForm }));
                             }}
                           >
                             {showForm ? "Hide" : "Show"} form{" "}
@@ -266,7 +268,7 @@ class CurateVariantPage extends React.Component {
                           <KeyboardShortcut
                             keys="f f"
                             onShortcut={() => {
-                              this.setState(state => ({ ...state, showForm: !state.showForm }));
+                              this.setState((state) => ({ ...state, showForm: !state.showForm }));
                             }}
                           />
                         </List.Item>
@@ -315,6 +317,9 @@ class CurateVariantPage extends React.Component {
                   <a id="top" /> {/* eslint-disable-line */}
                   <VariantData variant={variant} />
                   <hr style={{ margin: "30px 0" }} />
+                  <div id="igv-viewer">
+                    <IGVComponent variant={variant} />
+                  </div>
                   <div id="gnomad-variant">
                     <GnomadVariantView
                       gnomadVersion={variant.reference_genome === "GRCh37" ? "2" : "3"}
@@ -369,7 +374,7 @@ class CurateVariantPage extends React.Component {
 }
 
 const ConnectedCurateVariantPage = connect(null, (dispatch, ownProps) => ({
-  onLoadResult: data => {
+  onLoadResult: (data) => {
     dispatch(setResult(data.result, true));
   },
   saveCurrentResult: () =>
