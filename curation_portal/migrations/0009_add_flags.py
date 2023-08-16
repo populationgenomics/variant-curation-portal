@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("curation_portal", "0008_add_flags")]
 
     operations = [

@@ -19,6 +19,11 @@ const CurationResult = ({ result }) => (
         <strong>note:</strong> {result.notes}
       </span>
     )}
+    {result.curator_comments && (
+      <span>
+        <strong>curator_comments:</strong> {result.curator_comments}
+      </span>
+    )}
     {result.should_revisit && <div style={{ color: "red" }}>Revisit this variant</div>}
   </React.Fragment>
 );

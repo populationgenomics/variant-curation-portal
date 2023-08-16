@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("curation_portal", "0010_rename_ab_flag")]
 
     operations = [

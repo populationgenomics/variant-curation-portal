@@ -51,7 +51,14 @@ class CurationResultSerializer(ModelSerializer):
 
     class Meta:
         model = CurationResult
-        fields = (*FLAG_FIELDS, "custom_flags", "notes", "should_revisit", "verdict")
+        fields = (
+            *FLAG_FIELDS,
+            "custom_flags",
+            "notes",
+            "curator_comments",
+            "should_revisit",
+            "verdict",
+        )
 
     def create(self, validated_data):
         # Pop before calling super's update so we can handle the saving of custom flags manually.
