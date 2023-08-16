@@ -38,7 +38,7 @@ class ExportProjectResultsView(APIView):
     def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
         project = self.get_project()
 
-        result_fields = ["notes", "should_revisit", "verdict", *FLAG_FIELDS]
+        result_fields = ["notes", "curator_comments", "should_revisit", "verdict", *FLAG_FIELDS]
 
         completed_assignments = (
             CurationAssignment.objects.filter(

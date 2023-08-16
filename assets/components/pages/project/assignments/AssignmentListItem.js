@@ -16,11 +16,13 @@ const CurationResult = ({ result }) => (
     </span>{" "}
     {result.notes && (
       <span>
-        <strong>note:</strong> {result.notes}
+        <br />
+        <strong>notes:</strong> {result.notes}
       </span>
-    )}
+    )}{" "}
     {result.curator_comments && (
       <span>
+        <br />
         <strong>curator_comments:</strong> {result.curator_comments}
       </span>
     )}
