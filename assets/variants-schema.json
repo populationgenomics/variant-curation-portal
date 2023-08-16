@@ -13,6 +13,11 @@
         "type": "string",
         "pattern": "^(\\d+|X|Y)[-:]([0-9]+)[-:]([ACGT]+)[-:]([ACGT]+)$"
       },
+      "sample_ids": {
+        "description": "List of sample_ids",
+        "type": ["array", "null"],
+        "items": { "type": "string" }
+      },
       "liftover_variant_id": {
         "description": "Variant ID lifted over to the other reference genome",
         "type": ["string", "null"],
@@ -41,6 +46,26 @@
         "description": "Number of homozygotes",
         "type": ["integer", "null"],
         "minimum": 0
+      },
+      "n_heterozygotes": {
+        "description": "Number of heterozygotes",
+        "type": ["integer", "null"],
+        "minimum": 0
+      },
+      "GT": {
+        "description": "List of Genotype calls",
+        "type": ["array", "null"],
+        "items": { "type": "string" }
+      },
+      "DP": {
+        "description": "List of genotype depths",
+        "type": ["array", "null"],
+        "items": { "type": "integer" }
+      },
+      "GQ": {
+        "description": "List of genotype quality",
+        "type": ["array", "null"],
+        "items": { "type": "integer" }
       },
       "annotations": {
         "description": "VEP annotations",
@@ -76,6 +101,26 @@
             },
             "loftee_flags": {
               "description": "LOFTEE flags",
+              "type": ["string", "null"]
+            },
+            "hgvsp": {
+              "description": "HGVS Protein Sequence",
+              "type": ["string", "null"]
+            },
+            "hgvsc": {
+              "description": "HGVS Coding Sequence",
+              "type": ["string", "null"]
+            },
+            "appris": {
+              "description": "Splice Isoform Annotations",
+              "type": ["string", "null"]
+            },
+            "mane_select": {
+              "description": "Identifier for MANE select transcript",
+              "type": ["string", "null"]
+            },
+            "exon": {
+              "description": "Exon identifier",
               "type": ["string", "null"]
             }
           },

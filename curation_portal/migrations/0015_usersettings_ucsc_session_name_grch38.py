@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("curation_portal", "0014_auto_20230427_0324"),
     ]

@@ -5,7 +5,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("curation_portal", "0002_alter_variant_xpos_size")]
 
     operations = [
