@@ -7,13 +7,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('curation_portal', '0018_merge_20230815_0043'),
+        ("curation_portal", "0018_merge_20230815_0043"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='variant',
-            name='reads',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=2000), blank=True, null=True, size=None),
+            model_name="variant",
+            name="reads",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(max_length=2000), blank=True, null=True, size=None
+            ),
         ),
     ]
