@@ -1,63 +1,63 @@
 import React, { useRef, useEffect } from "react";
 import PropTypes from "prop-types";
+
 import { Segment, List } from "semantic-ui-react";
 import igv from "igv/dist/igv.esm";
 
-// name: PropTypes.string.isRequired,
-// url: PropTypes.string.isRequired,
-// indexURL: PropTypes.string.isRequired,
-// format: PropTypes.oneOf(["bam", "cram"]).isRequired,
-const DEFAULT_TRACKS = [
-  {
-    name: "HG00103",
-    url: "https://s3.amazonaws.com/1000genomes/data/HG00103/alignment/HG00103.alt_bwamem_GRCh38DH.20150718.GBR.low_coverage.cram",
-    indexURL:
-      "https://s3.amazonaws.com/1000genomes/data/HG00103/alignment/HG00103.alt_bwamem_GRCh38DH.20150718.GBR.low_coverage.cram.crai",
-    format: "cram",
-  },
-];
+const parseGCSPath = (gcsPath) => {
+  const [_, ...path] = gcsPath.replace("gs://", "").split("/");
+
+  const [filename, ext] = path[path.length - 1].split(".");
+  const [chrom, pos, ref, alt, gt, sampleId, suffix] = filename.split("_");
+
+  return { chrom, pos, ref, alt, gt, sampleId, suffix, ext };
+};
+
+const createTracks = ({ reads, endpoint }) => {
+  if (!reads) {
+    return [];
+  }
+
+  return reads.map((read) => {
+    const { sampleId, ext } = parseGCSPath(read);
+
+    let indexURL = null;
+    if (ext === "cram") {
+      indexURL = read + ".crai";
+    } else if (ext === "bam") {
+      indexURL = read + ".bai";
+    } else {
+      console.error(`Unknown read file format: '${read}'. Expected bam or cram.`);
+    }
+
+    return {
+      name: sampleId,
+      sourceType: "file",
+      url: `${endpoint}/?file=${encodeURIComponent(read)}`.replace("//", "/"),
+      indexURL: `${endpoint}/?file=${encodeURIComponent(indexURL)}`.replace("//", "/"),
+      format: ext,
+    };
+  });
+};
 
 const baseStyle = {
   fontFamily: "open sans,helveticaneue,helvetica neue,Helvetica,Arial,sans-serif",
   margin: "5px",
 };
 
-const createTracks = ({ reads }) => {
-  if (!reads) {
-    return DEFAULT_TRACKS;
-  }
-
-  return reads.map((read) => {
-    const sampleId = read.split("_")[4];
-
-    let format = null;
-    let indexURL = null;
-    if (read.endsWith(".cram" || read.endsWith(".cram.gz"))) {
-      format = "cram";
-      indexURL = read.replace(".cram", ".cram.crai");
-    } else if (read.endsWith(".bam" || read.endsWith(".bam.gz"))) {
-      format = "bam";
-      indexURL = read.replace(".bam", ".bam.bai");
-    } else {
-      console.error(`Unknown read file format: '${read}'. Expected bam or cram.`);
-    }
-
-    return { name: sampleId, url: read, indexURL, format };
-  });
-};
-
-const IGVComponent = ({ variant, style }) => {
+const IGVComponent = ({ chrom, pos, reads, referenceGenome, endpoint, style }) => {
   const container = useRef();
 
-  const { reference_genome: referenceGenome, chrom, pos, reads } = variant;
-  const genome = referenceGenome === "GRCh37" ? "hg38" : "hg38";
-  const locusId = `${chrom}:${pos + 10}-${pos + 10}`;
-  const tracks = createTracks({ reads });
+  const genome = referenceGenome === "GRCh37" ? "hg19" : "hg38";
+  const locusId = `${chrom}:${pos - 100}-${pos + 100}`;
+  const tracks = createTracks({ reads, endpoint });
 
   if (process.env.NODE_ENV === "development") {
     return (
       <Segment placeholder textAlign="center">
-        <p>IGV tracks:</p>
+        <p>
+          IGV tracks for locus <b>{locusId}</b> relative to <b>{genome}</b>
+        </p>
         {tracks.map((track) => (
           <>
             <List>
@@ -81,16 +81,15 @@ const IGVComponent = ({ variant, style }) => {
     igv.createBrowser(container.current, igvOptions);
   }, []);
 
-  return <div ref={container} style={{ ...baseStyle, ...style }} />;
+  return <div id="igv-viewer" ref={container} style={{ ...baseStyle, ...style }} />;
 };
 
 IGVComponent.propTypes = {
-  variant: PropTypes.shape({
-    reference_genome: PropTypes.oneOf(["GRCh37", "GRCh38"]).isRequired,
-    chrom: PropTypes.string.isRequired,
-    pos: PropTypes.number.isRequired,
-    reads: PropTypes.arrayOf(PropTypes.string),
-  }).isRequired,
+  chrom: PropTypes.string.isRequired,
+  pos: PropTypes.number.isRequired,
+  reads: PropTypes.arrayOf(PropTypes.string).isRequired,
+  referenceGenome: PropTypes.oneOf(["GRCh37", "GRCh38"]).isRequired,
+  endpoint: PropTypes.string.isRequired,
   style: PropTypes.object, // eslint-disable-line react/forbid-prop-types
 };
 

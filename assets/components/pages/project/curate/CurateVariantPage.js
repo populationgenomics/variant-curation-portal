@@ -175,7 +175,7 @@ class CurateVariantPage extends React.Component {
                             <a href="#top">top</a>
                           </List.Item>
                           <List.Item>
-                            <a href="#igv-viewer">IGV</a>
+                            <a href="#igv-viewer-container">IGV</a>
                           </List.Item>
                           <List.Item>
                             <a href="#gnomad-variant">
@@ -317,8 +317,14 @@ class CurateVariantPage extends React.Component {
                   <a id="top" /> {/* eslint-disable-line */}
                   <VariantData variant={variant} />
                   <hr style={{ margin: "30px 0" }} />
-                  <div id="igv-viewer">
-                    <IGVComponent variant={variant} />
+                  <div id="igv-viewer-container">
+                    <IGVComponent
+                      chrom={variant.chrom}
+                      pos={variant.pos}
+                      referenceGenome={variant.reference_genome}
+                      reads={variant.reads}
+                      endpoint={`/api/project/${project.id}/variant/${variantId}/reads/`}
+                    />
                   </div>
                   <div id="gnomad-variant">
                     <GnomadVariantView
