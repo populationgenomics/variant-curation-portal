@@ -6,7 +6,8 @@ from django.core.management import BaseCommand
 from django.db import transaction
 from django.conf import settings
 
-from curation_portal.models import CurationAssignment, Project, User, Variant, VariantAnnotation
+from curation_portal.models import CurationAssignment, Project, User
+from curation_portal.serializers import VariantSerializer
 
 
 DATA_DIR = Path(settings.BASE_DIR) / "data"
@@ -46,16 +47,27 @@ class Command(BaseCommand):
             user.user_permissions.add(Permission.objects.get(codename="add_project"))
             user.user_permissions.add(Permission.objects.get(codename="add_variant"))
 
+            with file.open("r") as f:
+                data = json.load(f)
+
+                # Replace {data} template with the path to the data directory in this repo
+                for record in data:
+                    record["reads"] = [
+                        r.replace("{data}", str(DATA_DIR)) if "{data}" in r else r
+                        for r in record.get("reads", [])
+                    ]
+
+                serializer = VariantSerializer(data=data, context={"project": project}, many=True)
+                serializer.is_valid(raise_exception=True)
+                variants = serializer.save()
+                for variant in variants:
+                    CurationAssignment.objects.update_or_create(curator=user, variant=variant)
+
             for variant_props in json.load(file.open("r")):
+                VariantSerializer()
                 # Pop annotations key before creating variant
                 annotations = variant_props.pop("annotations", [])
                 variant_props["reads"] = [
                     r.replace("{data}", str(DATA_DIR)) if "{data}" in r else r
                     for r in variant_props.get("reads", [])
                 ]
-                variant, _ = Variant.objects.update_or_create(**variant_props, project=project)
-
-                for annotation_kwargs in annotations:
-                    VariantAnnotation.objects.update_or_create(variant=variant, **annotation_kwargs)
-
-                CurationAssignment.objects.update_or_create(curator=user, variant=variant)
