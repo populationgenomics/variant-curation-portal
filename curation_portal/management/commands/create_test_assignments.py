@@ -4,17 +4,19 @@ from pathlib import Path
 from django.contrib.auth.models import Permission
 from django.core.management import BaseCommand
 from django.db import transaction
-from django.conf import settings
 
 from curation_portal.models import CurationAssignment, Project, User
 from curation_portal.serializers import VariantSerializer
 
 
-DATA_DIR = Path(settings.BASE_DIR) / "data"
-
-
 class Command(BaseCommand):
     def add_arguments(self, parser):
+        parser.add_argument(
+            "--variants",
+            type=Path,
+            required=True,
+            help="Path to JSON file containing variants.",
+        )
         parser.add_argument(
             "--username",
             type=str,
@@ -26,12 +28,6 @@ class Command(BaseCommand):
             type=str,
             default="test-project",
             help="Name of project to add variants to",
-        )
-        parser.add_argument(
-            "--variants",
-            type=Path,
-            default=DATA_DIR / "variants.json",
-            help="Path to JSON file containing variants.",
         )
 
     def handle(self, *args, **options):
@@ -50,24 +46,9 @@ class Command(BaseCommand):
             with file.open("r") as f:
                 data = json.load(f)
 
-                # Replace {data} template with the path to the data directory in this repo
-                for record in data:
-                    record["reads"] = [
-                        r.replace("{data}", str(DATA_DIR)) if "{data}" in r else r
-                        for r in record.get("reads", [])
-                    ]
-
                 serializer = VariantSerializer(data=data, context={"project": project}, many=True)
                 serializer.is_valid(raise_exception=True)
                 variants = serializer.save()
+
                 for variant in variants:
                     CurationAssignment.objects.update_or_create(curator=user, variant=variant)
-
-            for variant_props in json.load(file.open("r")):
-                VariantSerializer()
-                # Pop annotations key before creating variant
-                annotations = variant_props.pop("annotations", [])
-                variant_props["reads"] = [
-                    r.replace("{data}", str(DATA_DIR)) if "{data}" in r else r
-                    for r in variant_props.get("reads", [])
-                ]
