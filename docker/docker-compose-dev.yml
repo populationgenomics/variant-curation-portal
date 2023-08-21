@@ -5,12 +5,13 @@ services:
     image: postgres:9.6-alpine
     restart: always
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USER:-curator-dev}
+      - POSTGRES_DB=${DB_DATABASE:-curator-dev}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
 volumes:
   postgres_data:
