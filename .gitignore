@@ -37,3 +37,6 @@ venv
 
 # nvmrc
 .nvmrc
+
+# Dummy data
+data/
