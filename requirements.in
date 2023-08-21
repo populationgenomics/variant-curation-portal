@@ -4,3 +4,4 @@ django-webpack-loader
 djangorestframework
 rules
 whitenoise
+cloudpathlib[gs]
