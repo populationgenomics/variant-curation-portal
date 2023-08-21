@@ -26,6 +26,7 @@ from curation_portal.models import (
     FLAG_FIELDS,
     FLAG_SHORTCUTS,
 )
+from curation_portal.constants import RANKED_CONSEQUENCE_TERMS
 
 
 VARIANT_ID_REGEX = r"^(\d+|X|Y)[-:]([0-9]+)[-:]([ACGT]+)[-:]([ACGT]+)$"
@@ -98,6 +99,16 @@ class VariantAnnotationSerializer(ModelSerializer):
     class Meta:
         model = VariantAnnotation
         exclude = ("id", "variant")
+
+    def validate_consequence(self, value):
+        if value not in RANKED_CONSEQUENCE_TERMS:
+            raise ValidationError(
+                f"Unsupported VEP consequence term '{value}'. Update this application to support "
+                + "the latest VEP consequence terms and their ranking relative to other terms. "
+                + "A restriction has been placed on this field to ensure that the major "
+                + "consequence of a variant can be reported to curators via the UI accurately."
+            )
+        return value
 
 
 class VariantTagSerializer(ModelSerializer):
