@@ -78,6 +78,11 @@ class Variant(models.Model):
         null=True,
         blank=True,
     )
+    reads = ArrayField(
+        models.CharField(max_length=2000, blank=False, null=False),
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         db_table = "curation_variant"
