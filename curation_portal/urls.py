@@ -9,7 +9,7 @@ from django.urls import path, register_converter
 from django.views.generic import TemplateView
 
 from curation_portal.views.app_settings import ApplicationSettingsView
-from curation_portal.views.curate_variant import CurateVariantView
+from curation_portal.views.curate_variant import CurateVariantView, ReadsFileView
 from curation_portal.views.projects import AssignedProjectsView, OwnedProjectsView
 from curation_portal.views.project import ProjectView
 from curation_portal.views.project_assignments import ProjectAssignmentsView
@@ -86,6 +86,11 @@ urlpatterns = [
         "api/project/<int:project_id>/variant/<int:variant_id>/curate/",
         CurateVariantView.as_view(),
         name="api-curate-variant",
+    ),
+    path(
+        "api/project/<int:project_id>/variant/<int:variant_id>/reads/",
+        ReadsFileView.as_view(),
+        name="api-curate-variant-view-reads",
     ),
     path(
         "api/project/<int:project_id>/results/",
