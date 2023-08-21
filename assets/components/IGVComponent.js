@@ -49,31 +49,31 @@ const IGVComponent = ({ chrom, pos, reads, referenceGenome, endpoint, style }) =
   const container = useRef();
 
   const genome = referenceGenome === "GRCh37" ? "hg19" : "hg38";
-  const locusId = `${chrom}:${pos - 100}-${pos + 100}`;
+  const locusId = `${chrom}:${pos - 10}-${pos + 10}`;
   const tracks = createTracks({ reads, endpoint });
 
-  if (process.env.NODE_ENV === "development") {
-    return (
-      <Segment placeholder textAlign="center">
-        <p>
-          IGV tracks for locus <b>{locusId}</b> relative to <b>{genome}</b>
-        </p>
-        {tracks.map((track) => (
-          <>
-            <List>
-              <List.Item key={track.name}>{track.name}</List.Item>
-              <List.Item key={`${track.name}-url`}>
-                <a href={track.url}>{track.url}</a>
-              </List.Item>
-              <List.Item key={`${track.name}-index-url`}>
-                <a href={track.indexURL}>{track.indexURL}</a>
-              </List.Item>
-            </List>
-          </>
-        ))}
-      </Segment>
-    );
-  }
+  // if (process.env.NODE_ENV === "development") {
+  //   return (
+  //     <Segment placeholder textAlign="center">
+  //       <p>
+  //         IGV tracks for locus <b>{locusId}</b> relative to <b>{genome}</b>
+  //       </p>
+  //       {tracks.map((track) => (
+  //         <>
+  //           <List>
+  //             <List.Item key={track.name}>{track.name}</List.Item>
+  //             <List.Item key={`${track.name}-url`}>
+  //               <a href={track.url}>{track.url}</a>
+  //             </List.Item>
+  //             <List.Item key={`${track.name}-index-url`}>
+  //               <a href={track.indexURL}>{track.indexURL}</a>
+  //             </List.Item>
+  //           </List>
+  //         </>
+  //       ))}
+  //     </Segment>
+  //   );
+  // }
 
   // Empty deps is qquivalent to componentDidMount
   useEffect(() => {
