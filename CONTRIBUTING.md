@@ -31,7 +31,6 @@ To develop locally you will need Python 3.6 or higher, docker, nodejs and yarn.
   export DB_PORT=5432
   export DB_USER=curator-dev
   export DB_DATABASE=curator-dev
-  export DB_ENGINE=django.db.backends.postgresql
   ```
 
   You can generate a secret key using the following command
@@ -56,11 +55,14 @@ To develop locally you will need Python 3.6 or higher, docker, nodejs and yarn.
   ```
 
   In a new terminal, migrate your database and set it up with some dummy data
-  
+
   ```sh
   python manage.py migrate
-  python manage.py create_test_assignments someuser test-proj
+  python manage.py create_test_assignments --variants=/path/to/variants/json/file
   ```
+
+  Ask a member of the software team for this file. This files may contain sensitive information
+  so please refrain from adding them to version control.
 
 - Start Django and webpack development servers
 
