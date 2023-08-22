@@ -6,7 +6,7 @@ fi
 
 cd $(dirname "${BASH_SOURCE}")
 
-export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-"curation_portal.settings.development"}
+export DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-"curation_portal.settings.local"}
 export NODE_ENV=${NODE_ENV:-"development"}
 
 ./manage.py runserver &
