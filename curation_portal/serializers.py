@@ -101,13 +101,16 @@ class VariantAnnotationSerializer(ModelSerializer):
         exclude = ("id", "variant")
 
     def validate_consequence(self, value):
-        if value not in RANKED_CONSEQUENCE_TERMS:
-            raise ValidationError(
-                f"Unsupported VEP consequence term '{value}'. Update this application to support "
-                + "the latest VEP consequence terms and their ranking relative to other terms. "
-                + "A restriction has been placed on this field to ensure that the major "
-                + "consequence of a variant can be reported to curators via the UI accurately."
-            )
+        for csq in value.split("&"):
+            if csq not in set(RANKED_CONSEQUENCE_TERMS):
+                raise ValidationError(
+                    f"Unsupported VEP consequence term '{csq}'. Update this application to "
+                    + "support the latest VEP consequence terms and their ranking relative to "
+                    + "other terms. A restriction has been placed on this field to ensure that "
+                    + "the major consequence of a variant can be reported to curators via the UI "
+                    + "accurately."
+                )
+
         return value
 
 
