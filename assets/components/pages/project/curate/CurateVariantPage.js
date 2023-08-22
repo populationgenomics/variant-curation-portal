@@ -313,7 +313,7 @@ class CurateVariantPage extends React.Component {
                   padding: "0 1.5rem 1.5rem",
                 }}
               >
-                  <a id="top" /> {/* eslint-disable-line */}
+                <a id="top" /> {/* eslint-disable-line */}
                 <VariantData variant={variant} />
                 <hr style={{ margin: "30px 0" }} />
                 <div id="igv-viewer-container">
@@ -324,6 +324,7 @@ class CurateVariantPage extends React.Component {
                     reads={variant.reads}
                     endpoint={`/api/project/${project.id}/variant/${variantId}/reads/`}
                   />
+                  <br />
                 </div>
                 <div id="gnomad-variant">
                   <GnomadVariantView
