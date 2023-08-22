@@ -17,7 +17,7 @@ const config = {
     },
     static: {
       directory: path.join(__dirname, "static/bundles"),
-      publicPath: "/static/bundles/"
+      publicPath: "/static/bundles/",
     },
     client: {
       logging: "error",
@@ -62,11 +62,8 @@ const config = {
     new webpack.EnvironmentPlugin({ NODE_ENV: "production" }),
     new BundleTracker({ path: path.resolve(__dirname), filename: "webpack-stats.json" }),
     new CleanWebpackPlugin(),
-    new CopyPlugin({ 
-      patterns: [
-        "assets/results-schema.json",
-        "assets/variants-schema.json",
-      ]
+    new CopyPlugin({
+      patterns: ["assets/results-schema.json", "assets/variants-schema.json"],
     }),
     new MiniCssExtractPlugin({
       filename: isDev ? "[name].css" : "[name]-[hash].css",
