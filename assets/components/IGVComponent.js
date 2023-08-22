@@ -61,8 +61,8 @@ const IGVComponent = ({ chrom, pos, reads, referenceGenome, endpoint, style }) =
           IGV tracks for locus <b>{locusId}</b> relative to <b>{genome}</b>
         </p>
         {tracks.map((track) => (
-          <List>
-            <List.Item key={track.name}>{track.name}</List.Item>
+          <List key={track.name}>
+            <List.Item key={`${track.name}-name`}>{track.name}</List.Item>
             <List.Item key={`${track.name}-url`}>
               <a href={track.url}>{track.url}</a>
             </List.Item>
