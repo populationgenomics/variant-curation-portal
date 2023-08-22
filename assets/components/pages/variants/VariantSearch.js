@@ -36,12 +36,12 @@ VariantIdForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
 };
 
-const fetchVariantIdFromClingenRegistry = canonicalAlleleId =>
+const fetchVariantIdFromClingenRegistry = (canonicalAlleleId) =>
   fetch(`https://reg.clinicalgenome.org/allele/${canonicalAlleleId.toUpperCase()}`)
     .then(null, () => {
       throw new Error("Error querying ClinGen Allele Registry");
     })
-    .then(response => {
+    .then((response) => {
       if (response.ok) {
         return response.json();
       }
@@ -52,7 +52,7 @@ const fetchVariantIdFromClingenRegistry = canonicalAlleleId =>
         throw new Error("Error querying ClinGen Allele Registry");
       }
     })
-    .then(response => {
+    .then((response) => {
       const record = response.externalRecords.gnomAD || response.externalRecords.ExAC;
       if (!record) {
         throw new Error("No variant ID found for this allele");
@@ -77,11 +77,11 @@ const ClingenAlleleIdForm = ({ onMatch }) => {
         setIsFetching(true);
         setErrorMessage(null);
         fetchVariantIdFromClingenRegistry(caId).then(
-          variantId => {
+          (variantId) => {
             setIsFetching(false);
             onMatch(variantId);
           },
-          err => {
+          (err) => {
             setIsFetching(false);
             setErrorMessage(err.message);
           }
@@ -142,10 +142,10 @@ const VariantSearch = withRouter(({ history }) => {
       </Form>
 
       {searchType === "VariantID" && (
-        <VariantIdForm onSubmit={variantId => history.push(`/variant/${variantId}/`)} />
+        <VariantIdForm onSubmit={(variantId) => history.push(`/variant/${variantId}/`)} />
       )}
       {searchType === "CAID" && (
-        <ClingenAlleleIdForm onMatch={variantId => history.push(`/variant/${variantId}/`)} />
+        <ClingenAlleleIdForm onMatch={(variantId) => history.push(`/variant/${variantId}/`)} />
       )}
     </Segment>
   );

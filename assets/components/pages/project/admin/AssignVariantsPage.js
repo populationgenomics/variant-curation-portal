@@ -8,10 +8,10 @@ import { PermissionRequired } from "../../../../permissions";
 import DocumentTitle from "../../../DocumentTitle";
 import Page from "../../Page";
 
-const downloadTemplateCSV = project => {
-  return api.get(`/project/${project.id}/variants/`).then(response => {
-    const templateData = response.variants.map(variant => ["CURATOR", variant.variant_id]);
-    const csv = `${templateData.map(row => row.join(",")).join("\r\n")}\r\n`;
+const downloadTemplateCSV = (project) =>
+  api.get(`/project/${project.id}/variants/`).then((response) => {
+    const templateData = response.variants.map((variant) => ["CURATOR", variant.variant_id]);
+    const csv = `${templateData.map((row) => row.join(",")).join("\r\n")}\r\n`;
     const filename = `${project.name}_assignments_template.csv`;
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -26,7 +26,6 @@ const downloadTemplateCSV = project => {
     document.body.appendChild(link);
     link.click();
   });
-};
 
 class AssignVariantsPage extends Component {
   static propTypes = {
@@ -47,6 +46,7 @@ class AssignVariantsPage extends Component {
     user: null,
   };
 
+  // eslint-disable-next-line react/no-unused-class-component-methods
   variantData = null;
 
   state = {
@@ -70,20 +70,20 @@ class AssignVariantsPage extends Component {
         refreshProject();
         history.push(`/project/${project.id}/admin/`);
       })
-      .catch(error => {
+      .catch((error) => {
         this.setState({ isSaving: false, saveError: error });
       });
   };
 
-  onSelectFile = file => {
+  onSelectFile = (file) => {
     if (!file) {
       return;
     }
 
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = (e) => {
       const lines = e.target.result.split("\n");
-      const assignments = lines.filter(Boolean).map(line => {
+      const assignments = lines.filter(Boolean).map((line) => {
         const [curator, variantId] = line.split(",");
         return { curator, variant_id: variantId };
       });
@@ -138,7 +138,7 @@ class AssignVariantsPage extends Component {
                 disabled={!(assignmentCurator && assignmentVariant)}
                 type="button"
                 onClick={() => {
-                  this.setState(state => ({
+                  this.setState((state) => ({
                     assignments: [
                       ...state.assignments,
                       { curator: state.assignmentCurator, variant_id: state.assignmentVariant },
@@ -162,7 +162,7 @@ class AssignVariantsPage extends Component {
                   hidden
                   id="assignments-file"
                   type="file"
-                  onChange={e => this.onSelectFile(e.target.files[0])}
+                  onChange={(e) => this.onSelectFile(e.target.files[0])}
                 />
               </Button>
 

@@ -5,11 +5,11 @@ import getCookie from "./utilities/getCookie";
 class ApiClient {
   // eslint-disable-next-line class-methods-use-this
   request(path, options) {
-    return fetch(`/api${path}`, options).then(response => {
+    return fetch(`/api${path}`, options).then((response) => {
       const isOk = response.ok;
       if (response.status === 204) return {};
       return response.json().then(
-        data => {
+        (data) => {
           if (isOk) {
             return data;
           }

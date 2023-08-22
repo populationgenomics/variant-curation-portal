@@ -7,25 +7,23 @@ import withParamsAsProps from "../withParamsAsProps";
 import VariantProjectsPage from "./VariantProjectsPage";
 import VariantResultsPage from "./VariantResultsPage";
 
-const VariantPage = ({ match, variantId, user }) => {
-  return (
-    <Switch>
-      <Route
-        exact
-        path={match.path}
-        render={props => <VariantProjectsPage {...props} user={user} variantId={variantId} />}
-      />
+const VariantPage = ({ match, variantId, user }) => (
+  <Switch>
+    <Route
+      exact
+      path={match.path}
+      render={(props) => <VariantProjectsPage {...props} user={user} variantId={variantId} />}
+    />
 
-      <Route
-        exact
-        path={`${match.path}results/`}
-        render={props => <VariantResultsPage {...props} user={user} variantId={variantId} />}
-      />
+    <Route
+      exact
+      path={`${match.path}results/`}
+      render={(props) => <VariantResultsPage {...props} user={user} variantId={variantId} />}
+    />
 
-      <Route component={PageNotFoundPage} />
-    </Switch>
-  );
-};
+    <Route component={PageNotFoundPage} />
+  </Switch>
+);
 
 VariantPage.propTypes = {
   match: PropTypes.shape({

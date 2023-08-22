@@ -54,7 +54,7 @@ class BaseFetch extends Component {
 
     this.currentRequest = makeCancelable(api.get(path));
     this.currentRequest.then(
-      data => {
+      (data) => {
         onLoad(data);
         this.setState({
           data,
@@ -62,7 +62,7 @@ class BaseFetch extends Component {
           isFetching: false,
         });
       },
-      error => {
+      (error) => {
         this.setState({
           data: null,
           error,

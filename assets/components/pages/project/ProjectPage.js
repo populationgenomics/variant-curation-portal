@@ -17,97 +17,80 @@ import CurateVariantPage from "./curate/CurateVariantPage";
 
 const ProjectPage = ({ match, projectId, user }) => (
   <Fetch path={`/project/${projectId}/`}>
-    {({ data: project, refresh }) => {
-      return (
-        <Switch>
-          <Route
-            exact
-            path={match.path}
-            render={props => <ProjectAssignmentsPage {...props} project={project} />}
-          />
+    {({ data: project, refresh }) => (
+      <Switch>
+        <Route
+          exact
+          path={match.path}
+          render={(props) => <ProjectAssignmentsPage {...props} project={project} />}
+        />
 
-          <Route
-            exact
-            path={`${match.path}admin/`}
-            render={props => <ProjectAdminPage {...props} project={project} user={user} />}
-          />
+        <Route
+          exact
+          path={`${match.path}admin/`}
+          render={(props) => <ProjectAdminPage {...props} project={project} user={user} />}
+        />
 
-          <Route
-            exact
-            path={`${match.path}edit/`}
-            render={props => (
-              <EditProjectPage {...props} project={project} refreshProject={refresh} user={user} />
-            )}
-          />
+        <Route
+          exact
+          path={`${match.path}edit/`}
+          render={(props) => (
+            <EditProjectPage {...props} project={project} refreshProject={refresh} user={user} />
+          )}
+        />
 
-          <Route
-            exact
-            path={`${match.path}owners/`}
-            render={props => (
-              <EditProjectOwnersPage
-                {...props}
-                project={project}
-                refreshProject={refresh}
-                user={user}
-              />
-            )}
-          />
+        <Route
+          exact
+          path={`${match.path}owners/`}
+          render={(props) => (
+            <EditProjectOwnersPage
+              {...props}
+              project={project}
+              refreshProject={refresh}
+              user={user}
+            />
+          )}
+        />
 
-          <Route
-            exact
-            path={`${match.path}assign/`}
-            render={props => (
-              <AssignVariantsPage
-                {...props}
-                project={project}
-                user={user}
-                refreshProject={refresh}
-              />
-            )}
-          />
+        <Route
+          exact
+          path={`${match.path}assign/`}
+          render={(props) => (
+            <AssignVariantsPage {...props} project={project} user={user} refreshProject={refresh} />
+          )}
+        />
 
-          <Route
-            exact
-            path={`${match.path}variants/`}
-            render={props => (
-              <UploadVariantsPage
-                {...props}
-                project={project}
-                refreshProject={refresh}
-                user={user}
-              />
-            )}
-          />
+        <Route
+          exact
+          path={`${match.path}variants/`}
+          render={(props) => (
+            <UploadVariantsPage {...props} project={project} refreshProject={refresh} user={user} />
+          )}
+        />
 
-          <Route
-            exact
-            path={`${match.path}results/`}
-            render={props => <ProjectResultsPage {...props} project={project} user={user} />}
-          />
+        <Route
+          exact
+          path={`${match.path}results/`}
+          render={(props) => <ProjectResultsPage {...props} project={project} user={user} />}
+        />
 
-          <Route
-            exact
-            path={`${match.path}results/import/`}
-            render={props => (
-              <ImportResultsPage
-                {...props}
-                project={project}
-                refreshProject={refresh}
-                user={user}
-              />
-            )}
-          />
+        <Route
+          exact
+          path={`${match.path}results/import/`}
+          render={(props) => (
+            <ImportResultsPage {...props} project={project} refreshProject={refresh} user={user} />
+          )}
+        />
 
-          <Route
-            exact
-            path={`${match.path}variant/:variantId/curate/`}
-            render={props => <CurateVariantPage {...props} project={project} user={user} />}
-          />
+        <Route
+          exact
+          path={`${match.path}variant/:variantId/curate/`}
+          render={(props) => <CurateVariantPage {...props} project={project} user={user} />}
+        />
 
-          <Route component={PageNotFoundPage} />
-        </Switch>
-      );
-    }}
+        <Route component={PageNotFoundPage} />
+      </Switch>
+    )}
   </Fetch>
 );
 

@@ -5,6 +5,7 @@ import { Segment, List } from "semantic-ui-react";
 import igv from "igv/dist/igv.esm";
 
 const parseGCSPath = (gcsPath) => {
+  // eslint-disable-next-line no-unused-vars
   const [_, ...path] = gcsPath.replace("gs://", "").split("/");
 
   const [filename, ext] = path[path.length - 1].split(".");
@@ -23,10 +24,11 @@ const createTracks = ({ reads, endpoint }) => {
 
     let indexURL = null;
     if (ext === "cram") {
-      indexURL = read + ".crai";
+      indexURL = `${read}.crai`;
     } else if (ext === "bam") {
-      indexURL = read + ".bai";
+      indexURL = `${read}.bai`;
     } else {
+      // eslint-disable-next-line no-console
       console.error(`Unknown read file format: '${read}'. Expected bam or cram.`);
     }
 
@@ -52,28 +54,26 @@ const IGVComponent = ({ chrom, pos, reads, referenceGenome, endpoint, style }) =
   const locusId = `${chrom}:${pos - 10}-${pos + 10}`;
   const tracks = createTracks({ reads, endpoint });
 
-  // if (process.env.NODE_ENV === "development") {
-  //   return (
-  //     <Segment placeholder textAlign="center">
-  //       <p>
-  //         IGV tracks for locus <b>{locusId}</b> relative to <b>{genome}</b>
-  //       </p>
-  //       {tracks.map((track) => (
-  //         <>
-  //           <List>
-  //             <List.Item key={track.name}>{track.name}</List.Item>
-  //             <List.Item key={`${track.name}-url`}>
-  //               <a href={track.url}>{track.url}</a>
-  //             </List.Item>
-  //             <List.Item key={`${track.name}-index-url`}>
-  //               <a href={track.indexURL}>{track.indexURL}</a>
-  //             </List.Item>
-  //           </List>
-  //         </>
-  //       ))}
-  //     </Segment>
-  //   );
-  // }
+  if (process.env.NODE_ENV === "development") {
+    return (
+      <Segment placeholder textAlign="center">
+        <p>
+          IGV tracks for locus <b>{locusId}</b> relative to <b>{genome}</b>
+        </p>
+        {tracks.map((track) => (
+          <List>
+            <List.Item key={track.name}>{track.name}</List.Item>
+            <List.Item key={`${track.name}-url`}>
+              <a href={track.url}>{track.url}</a>
+            </List.Item>
+            <List.Item key={`${track.name}-index-url`}>
+              <a href={track.indexURL}>{track.indexURL}</a>
+            </List.Item>
+          </List>
+        ))}
+      </Segment>
+    );
+  }
 
   // Empty deps is qquivalent to componentDidMount
   useEffect(() => {

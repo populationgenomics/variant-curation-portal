@@ -27,7 +27,7 @@ class Legend extends React.PureComponent {
         <Header>Technical Flags</Header>
         <List.Item>
           <List horizontal>
-            {["flag_no_read_data", "flag_reference_error"].map(flag => (
+            {["flag_no_read_data", "flag_reference_error"].map((flag) => (
               <List.Item key={flag}>
                 {FLAG_CODES[flag]} = {FLAG_LABELS[flag]}
               </List.Item>
@@ -40,11 +40,13 @@ class Legend extends React.PureComponent {
           </Header>
           <List.Item>
             <List horizontal>
-              {["flag_self_chain", "flag_str_or_low_complexity", "flag_low_umap_m50"].map(flag => (
-                <List.Item key={flag}>
-                  {FLAG_CODES[flag]} = {FLAG_LABELS[flag]}
-                </List.Item>
-              ))}
+              {["flag_self_chain", "flag_str_or_low_complexity", "flag_low_umap_m50"].map(
+                (flag) => (
+                  <List.Item key={flag}>
+                    {FLAG_CODES[flag]} = {FLAG_LABELS[flag]}
+                  </List.Item>
+                )
+              )}
             </List>
           </List.Item>
           <div style={{ marginLeft: "1rem" }}>
@@ -59,7 +61,7 @@ class Legend extends React.PureComponent {
                   "flag_stutter",
                   "flag_repetitive_sequence",
                   "flag_dubious_other",
-                ].map(flag => (
+                ].map((flag) => (
                   <List.Item key={flag}>
                     {FLAG_CODES[flag]} = {FLAG_LABELS[flag]}
                   </List.Item>
@@ -79,7 +81,7 @@ class Legend extends React.PureComponent {
                 "flag_gc_rich",
                 "flag_homopolymer_or_str",
                 "flag_strand_bias",
-              ].map(flag => (
+              ].map((flag) => (
                 <List.Item key={flag}>
                   {FLAG_CODES[flag]} = {FLAG_LABELS[flag]}
                 </List.Item>
@@ -103,7 +105,7 @@ class Legend extends React.PureComponent {
                 "flag_minor_protein_isoform",
                 "flag_weak_exon_conservation",
                 "flag_untranslated_transcript",
-              ].map(flag => (
+              ].map((flag) => (
                 <List.Item key={flag}>
                   {FLAG_CODES[flag]} = {FLAG_LABELS[flag]}
                 </List.Item>
@@ -123,7 +125,7 @@ class Legend extends React.PureComponent {
                 "flag_methionine_resuce",
                 "flag_escapes_nmd",
                 "flag_low_truncated",
-              ].map(flag => (
+              ].map((flag) => (
                 <List.Item key={flag}>
                   {FLAG_CODES[flag]} = {FLAG_LABELS[flag]}
                 </List.Item>
@@ -141,7 +143,7 @@ class Legend extends React.PureComponent {
               "flag_flow_chart_overridden",
               "flag_second_opinion_required",
               "flag_sanger_confirmation_recommended",
-            ].map(flag => (
+            ].map((flag) => (
               <List.Item key={flag}>
                 {FLAG_CODES[flag]} = {FLAG_LABELS[flag]}
               </List.Item>
@@ -154,7 +156,7 @@ class Legend extends React.PureComponent {
             <Header style={{ marginTop: "0.5rem" }}>Custom Flags</Header>
             <List.Item>
               <List horizontal>
-                {customFlags.map(flag => (
+                {customFlags.map((flag) => (
                   <List.Item key={flag.key}>
                     {flag.shortcut} = {flag.label}
                   </List.Item>
@@ -169,7 +171,7 @@ class Legend extends React.PureComponent {
         </Header>
         <List.Item>
           <List horizontal>
-            {verdicts.map(verdict => (
+            {verdicts.map((verdict) => (
               <List.Item key={verdict}>
                 <span style={{ color: verdictColors[verdict] }}>
                   {verdictSymbols[verdict]} {verdictLabels[verdict]}
@@ -183,7 +185,7 @@ class Legend extends React.PureComponent {
   }
 }
 
-const ConnectedLegend = connect(state => ({
+const ConnectedLegend = connect((state) => ({
   customFlags: getCustomFlags(state),
 }))(Legend);
 

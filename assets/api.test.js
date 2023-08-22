@@ -98,7 +98,7 @@ describe("ApiClient", () => {
     });
   });
 
-  ["post", "patch"].forEach(method => {
+  ["post", "patch"].forEach((method) => {
     describe(`${method} request`, () => {
       beforeEach(() => {
         global.fetch = jest.fn().mockImplementation(() =>

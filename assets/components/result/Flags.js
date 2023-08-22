@@ -8,8 +8,10 @@ import { CurationResultPropType, CustomFlagPropType } from "../propTypes";
 
 const Flags = ({ result, customFlags }) => (
   <span style={{ fontFamily: "monospace" }}>
-    {FLAGS.map(flag => (result[flag.key] ? flag.shortcut || "" : "")).join(" ")}
-    {customFlags.map(flag => (result.custom_flags[flag.key] ? flag.shortcut || "" : "")).join(" ")}
+    {FLAGS.map((flag) => (result[flag.key] ? flag.shortcut || "" : "")).join(" ")}
+    {customFlags
+      .map((flag) => (result.custom_flags[flag.key] ? flag.shortcut || "" : ""))
+      .join(" ")}
   </span>
 );
 
@@ -20,7 +22,7 @@ Flags.propTypes = {
 
 Flags.defaultProps = { customFlags: [] };
 
-const ConnectedFlags = connect(state => ({
+const ConnectedFlags = connect((state) => ({
   customFlags: getCustomFlags(state),
 }))(Flags);
 

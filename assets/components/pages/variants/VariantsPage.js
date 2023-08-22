@@ -8,45 +8,40 @@ import VariantId from "../../VariantId";
 import Page from "../Page";
 import VariantSearch from "./VariantSearch";
 
-const VariantsPage = () => {
-  return (
-    <Page>
-      <DocumentTitle title="Variants" />
-      <Header as="h1" dividing>
-        Variants
-      </Header>
+const VariantsPage = () => (
+  <Page>
+    <DocumentTitle title="Variants" />
+    <Header as="h1" dividing>
+      Variants
+    </Header>
 
-      <VariantSearch />
+    <VariantSearch />
 
-      <Fetch path="/variants/">
-        {({ data: { variants } }) => {
-          return (
-            <React.Fragment>
-              {variants.length > 0 ? (
-                <React.Fragment>
-                  <Item.Group>
-                    {variants.map(variant => (
-                      <Item key={variant.variant_id}>
-                        <Item.Content>
-                          <Item.Header>
-                            <Link to={`/variant/${variant.variant_id}/`}>
-                              <VariantId variantId={variant.variant_id} />
-                            </Link>
-                          </Item.Header>
-                        </Item.Content>
-                      </Item>
-                    ))}
-                  </Item.Group>
-                </React.Fragment>
-              ) : (
-                <p>No variants.</p>
-              )}
-            </React.Fragment>
-          );
-        }}
-      </Fetch>
-    </Page>
-  );
-};
+    <Fetch path="/variants/">
+      {({ data: { variants } }) => (
+        // eslint-disable-next-line react/jsx-no-useless-fragment
+        <React.Fragment>
+          {variants.length > 0 ? (
+            <Item.Group>
+              {variants.map((variant) => (
+                <Item key={variant.variant_id}>
+                  <Item.Content>
+                    <Item.Header>
+                      <Link to={`/variant/${variant.variant_id}/`}>
+                        <VariantId variantId={variant.variant_id} />
+                      </Link>
+                    </Item.Header>
+                  </Item.Content>
+                </Item>
+              ))}
+            </Item.Group>
+          ) : (
+            <p>No variants.</p>
+          )}
+        </React.Fragment>
+      )}
+    </Fetch>
+  </Page>
+);
 
 export default VariantsPage;

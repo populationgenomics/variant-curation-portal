@@ -21,7 +21,7 @@ class Notifications extends Component {
 
   componentWillUnmount() {
     notificationService.unsubscribe(this.addNotification);
-    this.removeTimeouts.forEach(timeout => {
+    this.removeTimeouts.forEach((timeout) => {
       clearTimeout(timeout);
     });
   }
@@ -34,7 +34,7 @@ class Notifications extends Component {
       message,
       status,
     };
-    this.setState(state => ({ notifications: [notification, ...state.notifications] }));
+    this.setState((state) => ({ notifications: [notification, ...state.notifications] }));
 
     this.removeTimeouts.set(
       id,
@@ -45,7 +45,7 @@ class Notifications extends Component {
   };
 
   removeNotification(id) {
-    this.setState(state => ({ notifications: state.notifications.filter(n => n.id !== id) }));
+    this.setState((state) => ({ notifications: state.notifications.filter((n) => n.id !== id) }));
     this.removeTimeouts.delete(id);
   }
 
@@ -59,7 +59,7 @@ class Notifications extends Component {
     return (
       <div style={{ position: "relative" }}>
         <div style={{ position: "absolute", right: "1.5rem", bottom: "1.5rem", zIndex: 2 }}>
-          {notifications.map(notification => {
+          {notifications.map((notification) => {
             const { id, title, message, status } = notification;
             return (
               <Message

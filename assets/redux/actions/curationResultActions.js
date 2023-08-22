@@ -11,15 +11,15 @@ export const setResult = (result, reset = false) => ({
   reset,
 });
 
-export const saveResult = (result, projectId, variantId) => dispatch => {
-  return api.post(`/project/${projectId}/variant/${variantId}/curate/`, result).then(
+export const saveResult = (result, projectId, variantId) => (dispatch) =>
+  api.post(`/project/${projectId}/variant/${variantId}/curate/`, result).then(
     () => {
       dispatch({
         type: actionTypes.SET_RESULT,
         result,
       });
     },
-    error => {
+    (error) => {
       dispatch({
         type: actionTypes.SET_RESULT_ERRORS,
         errors: error.data,
@@ -28,4 +28,3 @@ export const saveResult = (result, projectId, variantId) => dispatch => {
       throw error;
     }
   );
-};
