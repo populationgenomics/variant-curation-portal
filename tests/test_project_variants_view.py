@@ -137,8 +137,7 @@ def test_upload_variants_saves_annotations(db_setup):
 
     variant = Variant.objects.get(project=1, variant_id="2-100-A-T")
 
-    annotations = list(variant.annotations.all())
-
+    annotations = sorted(list(variant.annotations.all()), key=lambda a: a.gene_id)
     assert len(annotations) == 2
 
     assert annotations[0].consequence == "frameshift_variant"
@@ -175,7 +174,7 @@ def test_upload_variants_saves_tags(db_setup):
 
     variant = Variant.objects.get(project=1, variant_id="2-200-C-G")
 
-    tags = list(variant.tags.all())
+    tags = sorted(list(variant.tags.all()), key=lambda t: t.label)
 
     assert len(tags) == 2
 
