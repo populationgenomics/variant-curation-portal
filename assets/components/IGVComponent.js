@@ -75,7 +75,7 @@ const IGVComponent = ({ chrom, pos, reads, referenceGenome, endpoint, style }) =
     );
   }
 
-  // Empty deps is qquivalent to componentDidMount
+  // Empty deps is equivalent to componentDidMount
   useEffect(() => {
     const igvOptions = { genome, locus: locusId, tracks };
     igv.createBrowser(container.current, igvOptions);
