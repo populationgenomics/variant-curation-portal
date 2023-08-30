@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("curation_portal", "0018_merge_20230815_0043"),
     ]
