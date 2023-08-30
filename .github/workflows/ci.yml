@@ -16,7 +16,6 @@ jobs:
       DB_PORT: 5432
       DB_DATABASE: test
       DB_ENGINE: django.db.backends.postgresql
-      DJANGO_SETTINGS_MODULE: curation_portal.settings.base
     services:
       postgres:
         image: postgres:9.6-alpine
