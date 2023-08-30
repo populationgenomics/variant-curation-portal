@@ -57,7 +57,7 @@ def test_get_variants_requires_authentication(db_setup):
 def test_get_variants_returns_variants_user_can_access(db_setup, username, expected_variants):
     client = APIClient()
     client.force_authenticate(User.objects.get(username=username))
-    response = client.get(f"/api/variants/")
+    response = client.get("/api/variants/")
     assert response.status_code == 200
     response = response.json()
     variants = [variant["variant_id"] for variant in response["variants"]]

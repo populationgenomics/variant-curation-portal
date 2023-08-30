@@ -22,85 +22,83 @@ import VariantsPage from "./pages/variants/VariantsPage";
 import VariantPage from "./pages/variant/VariantPage";
 import { loadCustomFLags } from "../redux/actions/customFlagActions";
 
-const App = ({ settings, user }) => {
-  return (
-    <div style={{ height: "100%", padding: "45px 0 0" }}>
-      <Menu fixed="top">
-        <Container fluid>
-          <Menu.Item header>
-            <Link to="/">Variant Curation</Link>
-          </Menu.Item>
-          <Menu.Item>
-            <Link to="/assignments/">Assignments</Link>
-          </Menu.Item>
-          <Menu.Item>
-            <Link to="/projects/">Projects</Link>
-          </Menu.Item>
-          <Menu.Item>
-            <Link to="/variants/">Variants</Link>
-          </Menu.Item>
-          <Menu.Menu position="right">
-            <Dropdown item text={user.username}>
-              <Dropdown.Menu>
-                <Dropdown.Item as={Link} to="/settings/">
-                  Settings
+const App = ({ settings, user }) => (
+  <div style={{ height: "100%", padding: "45px 0 0" }}>
+    <Menu fixed="top">
+      <Container fluid>
+        <Menu.Item header>
+          <Link to="/">Variant Curation</Link>
+        </Menu.Item>
+        <Menu.Item>
+          <Link to="/assignments/">Assignments</Link>
+        </Menu.Item>
+        <Menu.Item>
+          <Link to="/projects/">Projects</Link>
+        </Menu.Item>
+        <Menu.Item>
+          <Link to="/variants/">Variants</Link>
+        </Menu.Item>
+        <Menu.Menu position="right">
+          <Dropdown item text={user.username}>
+            <Dropdown.Menu>
+              <Dropdown.Item as={Link} to="/settings/">
+                Settings
+              </Dropdown.Item>
+              {settings.sign_out_url && (
+                <Dropdown.Item as="a" href={settings.sign_out_url}>
+                  Sign out
                 </Dropdown.Item>
-                {settings.sign_out_url && (
-                  <Dropdown.Item as="a" href={settings.sign_out_url}>
-                    Sign out
-                  </Dropdown.Item>
-                )}
-              </Dropdown.Menu>
-            </Dropdown>
-          </Menu.Menu>
-        </Container>
-      </Menu>
+              )}
+            </Dropdown.Menu>
+          </Dropdown>
+        </Menu.Menu>
+      </Container>
+    </Menu>
 
-      <div style={{ height: "100%", overflow: "auto" }}>
-        <Switch>
-          <Route
-            exact
-            path="/"
-            render={props => (user ? <Redirect to="/assignments/" /> : <HomePage {...props} />)}
-          />
-          <Route
-            exact
-            path="/assignments/"
-            render={props => <AssignedProjectsPage {...props} user={user} />}
-          />
-          <Route
-            exact
-            path="/projects/"
-            render={props => <ProjectsPage {...props} user={user} />}
-          />
-          <Route
-            exact
-            path="/projects/create/"
-            render={props => <CreateProjectPage {...props} user={user} />}
-          />
+    <div style={{ height: "100%", overflow: "auto" }}>
+      <Switch>
+        <Route
+          exact
+          path="/"
+          render={(props) => (user ? <Redirect to="/assignments/" /> : <HomePage {...props} />)}
+        />
+        <Route
+          exact
+          path="/assignments/"
+          render={(props) => <AssignedProjectsPage {...props} user={user} />}
+        />
+        <Route
+          exact
+          path="/projects/"
+          render={(props) => <ProjectsPage {...props} user={user} />}
+        />
+        <Route
+          exact
+          path="/projects/create/"
+          render={(props) => <CreateProjectPage {...props} user={user} />}
+        />
 
-          <Route
-            path="/project/:projectId/"
-            render={props => <ProjectPage {...props} user={user} />}
-          />
+        <Route
+          path="/project/:projectId/"
+          render={(props) => <ProjectPage {...props} user={user} />}
+        />
 
-          <Route path="/settings/" render={props => <SettingsPage {...props} user={user} />} />
+        <Route path="/settings/" render={(props) => <SettingsPage {...props} user={user} />} />
 
-          <Route path="/variants/" render={props => <VariantsPage {...props} user={user} />} />
+        <Route path="/variants/" render={(props) => <VariantsPage {...props} user={user} />} />
 
-          <Route
-            path="/variant/:variantId/"
-            render={props => <VariantPage {...props} user={user} />}
-          />
+        <Route
+          path="/variant/:variantId/"
+          render={(props) => <VariantPage {...props} user={user} />}
+        />
 
-          <Route component={PageNotFoundPage} />
-        </Switch>
-      </div>
-
-      <Notifications />
+        <Route component={PageNotFoundPage} />
+      </Switch>
     </div>
-  );
-};
+
+    <Notifications />
+  </div>
+);
 
 App.propTypes = {
   settings: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
@@ -110,11 +108,11 @@ App.propTypes = {
 };
 
 const ConnectedApp = connect(
-  state => ({
+  (state) => ({
     settings: getAppSettings(state),
     user: getUser(state),
   }),
-  dispatch => ({
+  (dispatch) => ({
     initializeApp: () =>
       Promise.all([dispatch(loadAppSettings()), dispatch(loadUser()), dispatch(loadCustomFLags())]),
   })
@@ -138,12 +136,10 @@ const ConnectedApp = connect(
   return <App {...otherProps} />;
 });
 
-export default () => {
-  return (
-    <Provider store={store}>
-      <Router>
-        <ConnectedApp />
-      </Router>
-    </Provider>
-  );
-};
+export default () => (
+  <Provider store={store}>
+    <Router>
+      <ConnectedApp />
+    </Router>
+  </Provider>
+);

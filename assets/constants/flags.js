@@ -57,22 +57,14 @@ export const FLAGS = [
   },
 ];
 
-export const FLAG_CODES = Object.fromEntries(FLAGS.map(f => [f.key, f.shortcut]));
-export const FLAG_LABELS = Object.fromEntries(FLAGS.map(f => [f.key, f.label]));
+export const FLAG_CODES = Object.fromEntries(FLAGS.map((f) => [f.key, f.shortcut]));
+export const FLAG_LABELS = Object.fromEntries(FLAGS.map((f) => [f.key, f.label]));
 export const FLAG_SHORTCUTS = Object.fromEntries(
-  FLAGS.map(f => [
-    f.key,
-    f.shortcut
-      ? f.shortcut
-          .toLowerCase()
-          .split("")
-          .join(" ")
-      : f.shortcut,
-  ])
+  FLAGS.map((f) => [f.key, f.shortcut ? f.shortcut.toLowerCase().split("").join(" ") : f.shortcut])
 );
 
 if (process.env.NODE_ENV === "development") {
-  const flagCodes = Object.values(FLAG_CODES).filter(v => v != null);
+  const flagCodes = Object.values(FLAG_CODES).filter((v) => v != null);
 
   const duplicateCodes = new Set(flagCodes.filter((s, i, a) => i !== a.indexOf(s)));
   if (duplicateCodes.size > 0) {

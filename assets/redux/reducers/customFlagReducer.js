@@ -9,9 +9,9 @@ const customFlagActions = (state, action) => {
     case actionTypes.SET_CUSTOM_FLAGS:
       return action.flags;
     case actionTypes.SET_CUSTOM_FlAG:
-      return [...state.filter(f => f.id !== action.flag.id), action.flag];
+      return [...state.filter((f) => f.id !== action.flag.id), action.flag];
     case actionTypes.UNSET_CUSTOM_FLAG:
-      return state.filter(f => f.id !== action.flag.id);
+      return state.filter((f) => f.id !== action.flag.id);
     default:
       return state;
   }

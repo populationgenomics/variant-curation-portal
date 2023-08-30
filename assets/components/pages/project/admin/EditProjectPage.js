@@ -50,7 +50,7 @@ class EditProjectPage extends Component {
         refreshProject();
         history.push(`/project/${project.id}/admin/`);
       })
-      .catch(error => {
+      .catch((error) => {
         this.setState({ isSaving: false, saveError: error });
       });
   };
@@ -84,7 +84,7 @@ class EditProjectPage extends Component {
                   id="project-name"
                   type="text"
                   value={projectName}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({ projectName: e.target.value });
                   }}
                 />

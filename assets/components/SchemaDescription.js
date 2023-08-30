@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { Label, List } from "semantic-ui-react";
 
-const renderType = schema => {
+const renderType = (schema) => {
   if (schema.type === "array") {
     return `array (${renderType(schema.items)})`;
   }
@@ -16,7 +16,7 @@ const renderType = schema => {
   }
 
   if (schema.enum) {
-    return `enum (${schema.enum.map(value => `"${value}"`).join(", ")})`;
+    return `enum (${schema.enum.map((value) => `"${value}"`).join(", ")})`;
   }
 
   return schema.type;
@@ -31,7 +31,7 @@ const SchemaDescription = ({ schema }) => {
   if (type === "object") {
     return (
       <List bulleted>
-        {Object.keys(schema.properties).map(propertyName => {
+        {Object.keys(schema.properties).map((propertyName) => {
           const propertySchema = schema.properties[propertyName];
           return (
             <List.Item key={propertyName}>

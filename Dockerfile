@@ -1,7 +1,7 @@
 #########################
 # Build front end       #
 #########################
-FROM node:16-alpine
+FROM node:18-alpine
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ RUN yarn run build
 #########################
 # App image             #
 #########################
-FROM python:3.6-alpine
+FROM python:3.10-alpine
 
 # Create app user and group
 RUN addgroup -S app && adduser -S app -G app
@@ -35,7 +35,7 @@ RUN apk add --virtual build-deps gcc musl-dev python3-dev \
   && pip install --no-cache-dir psycopg2 \
   && apk del build-deps
 
-RUN pip install --no-cache-dir gunicorn==19.9.0
+RUN pip install --no-cache-dir gunicorn==21.2.0
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

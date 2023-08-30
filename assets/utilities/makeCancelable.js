@@ -1,13 +1,13 @@
-const makeCancelable = promise => {
+const makeCancelable = (promise) => {
   let isCanceled = false;
   const wrapper = new Promise((resolve, reject) => {
     promise.then(
-      value => {
+      (value) => {
         if (!isCanceled) {
           resolve(value);
         }
       },
-      error => {
+      (error) => {
         if (!isCanceled) {
           reject(error);
         }

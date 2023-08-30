@@ -9,7 +9,7 @@ jobs:
   backend-checks:
     name: Backend checks
     runs-on: ubuntu-latest
-    env: 
+    env:
       DB_USER: test
       DB_PASSWORD: password
       DB_HOST: localhost
@@ -18,7 +18,7 @@ jobs:
       DB_ENGINE: django.db.backends.postgresql
     services:
       postgres:
-        image: postgres:14.8
+        image: postgres:9.6-alpine
         env:
           POSTGRES_USER: ${{ env.DB_USER }}
           POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
@@ -26,10 +26,10 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-            --health-cmd pg_isready 
-            --health-interval 10s 
-            --health-timeout 5s 
-            --health-retries 5
+          --health-cmd pg_isready 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -56,7 +56,7 @@ jobs:
         run: black --check curation_portal tests
       - name: Run Pylint
         run: pylint --disable=R --disable=C --disable=fixme curation_portal tests/*
-  
+
   frontend-checks:
     name: Frontend checks
     runs-on: ubuntu-latest
@@ -66,7 +66,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v1
         with:
-          node-version: 12.x
+          node-version: 18.x
       - name: Get yarn cache
         id: yarn-cache
         run: echo "::set-output name=dir::$(yarn cache dir)"

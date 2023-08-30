@@ -6,11 +6,11 @@ class PubSub {
   }
 
   unsubscribe(callback) {
-    this.callbacks = this.callbacks.filter(cb => cb !== callback);
+    this.callbacks = this.callbacks.filter((cb) => cb !== callback);
   }
 
   publish(obj) {
-    this.callbacks.forEach(cb => {
+    this.callbacks.forEach((cb) => {
       cb(obj);
     });
   }

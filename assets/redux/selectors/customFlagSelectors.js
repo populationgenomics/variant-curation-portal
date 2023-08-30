@@ -1,2 +1,2 @@
 // eslint-disable-next-line import/prefer-default-export
-export const getCustomFlags = state => state.customFlags;
+export const getCustomFlags = (state) => state.customFlags;

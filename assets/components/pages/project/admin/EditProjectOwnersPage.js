@@ -46,7 +46,7 @@ class EditProjectOwnersPage extends Component {
   onSubmit = () => {
     const { history, project, refreshProject } = this.props;
     const { currentOwners, newOwners, removedOwners } = this.state;
-    const owners = currentOwners.filter(u => !removedOwners.includes(u)).concat(newOwners);
+    const owners = currentOwners.filter((u) => !removedOwners.includes(u)).concat(newOwners);
 
     this.setState({ isSaving: true, saveError: null });
     api
@@ -55,29 +55,23 @@ class EditProjectOwnersPage extends Component {
         refreshProject();
         history.push(`/project/${project.id}/admin/`);
       })
-      .catch(error => {
+      .catch((error) => {
         this.setState({ isSaving: false, saveError: error });
       });
   };
 
   render() {
     const { project, user } = this.props;
-    const {
-      inputUsername,
-      isSaving,
-      currentOwners,
-      newOwners,
-      removedOwners,
-      saveError,
-    } = this.state;
+    const { inputUsername, isSaving, currentOwners, newOwners, removedOwners, saveError } =
+      this.state;
 
     const allOwners = [
-      ...currentOwners.map(username => ({
+      ...currentOwners.map((username) => ({
         username,
         isNew: false,
         isRemoved: removedOwners.includes(username),
       })),
-      ...newOwners.map(username => ({ username, isNew: true, isRemoved: false })),
+      ...newOwners.map((username) => ({ username, isNew: true, isRemoved: false })),
     ].sort((owner1, owner2) => owner1.username.localeCompare(owner2.username));
 
     return (
@@ -101,7 +95,7 @@ class EditProjectOwnersPage extends Component {
             <Segment attached>
               <Header as="h4">Project owners</Header>
               <List bulleted divided selection>
-                {allOwners.map(owner => (
+                {allOwners.map((owner) => (
                   <List.Item key={owner.username}>
                     <List.Content floated="left">
                       <List.Header>
@@ -128,11 +122,11 @@ class EditProjectOwnersPage extends Component {
                         type="button"
                         onClick={() => {
                           if (owner.isNew) {
-                            this.setState(state => ({
-                              newOwners: state.newOwners.filter(u => u !== owner.username),
+                            this.setState((state) => ({
+                              newOwners: state.newOwners.filter((u) => u !== owner.username),
                             }));
                           } else {
-                            this.setState(state => ({
+                            this.setState((state) => ({
                               removedOwners: [...state.removedOwners, owner.username],
                             }));
                           }
@@ -148,11 +142,11 @@ class EditProjectOwnersPage extends Component {
                     disabled={!inputUsername}
                     type="button"
                     onClick={() => {
-                      this.setState(state => {
+                      this.setState((state) => {
                         if (state.removedOwners.includes(inputUsername)) {
                           return {
                             inputUsername: "",
-                            removedOwners: state.removedOwners.filter(u => u !== inputUsername),
+                            removedOwners: state.removedOwners.filter((u) => u !== inputUsername),
                           };
                         }
                         return {

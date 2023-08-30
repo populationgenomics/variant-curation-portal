@@ -51,12 +51,12 @@ class UploadVariantsPage extends Component {
         refreshProject();
         history.push(`/project/${project.id}/admin/`);
       })
-      .catch(error => {
+      .catch((error) => {
         this.setState({ isSaving: false, saveError: error });
       });
   };
 
-  onSelectFile = file => {
+  onSelectFile = (file) => {
     this.variantData = null;
 
     if (!file) {
@@ -69,7 +69,7 @@ class UploadVariantsPage extends Component {
     }
 
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = (e) => {
       try {
         this.variantData = JSON.parse(e.target.result);
         this.setState({ hasFileData: true, isReadingFile: false });
@@ -134,7 +134,7 @@ class UploadVariantsPage extends Component {
                   hidden
                   id="variant-file"
                   type="file"
-                  onChange={e => this.onSelectFile(e.target.files[0])}
+                  onChange={(e) => this.onSelectFile(e.target.files[0])}
                 />
               </Button>
               {fileReadError && <Message error header="Failed to read file" />}
@@ -155,7 +155,7 @@ class UploadVariantsPage extends Component {
             </p>
             <Button
               type="button"
-              onClick={e => {
+              onClick={(e) => {
                 this.setState({ isSchemaModalOpen: true });
                 e.preventDefault();
               }}

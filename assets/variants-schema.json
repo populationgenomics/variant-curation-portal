@@ -67,6 +67,11 @@
         "type": ["array", "null"],
         "items": { "type": "integer" }
       },
+      "reads": {
+        "description": "List of reads file locations (cram or bam) on GCS storage",
+        "type": ["array", "null"],
+        "items": { "type": "string" }
+      },
       "annotations": {
         "description": "VEP annotations",
         "type": "array",

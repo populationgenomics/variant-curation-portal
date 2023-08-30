@@ -1,23 +1,25 @@
 # pylint: disable=too-many-locals
 
+from cloudpathlib.anypath import to_anypath
+from django.http.response import FileResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ParseError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import ChoiceField, ModelSerializer
 from rest_framework.views import APIView
 
 from curation_portal.filters import AssignmentFilter
-from curation_portal.serializers import CustomFlagCurationResultSerializer
 from curation_portal.models import (
+    FLAG_FIELDS,
     CurationAssignment,
     CurationResult,
     Variant,
     VariantAnnotation,
     VariantTag,
-    FLAG_FIELDS,
 )
+from curation_portal.serializers import CustomFlagCurationResultSerializer
 
 
 class VariantAnnotationSerializer(ModelSerializer):
@@ -86,6 +88,40 @@ def serialize_adjacent_variant(variant_values):
     return {"id": variant_values["variant"], "variant_id": variant_values["variant__variant_id"]}
 
 
+class ReadsFileView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get_assignment(self):
+        try:
+            assignment = self.request.user.curation_assignments.select_related("variant").get(
+                variant=self.kwargs["variant_id"], variant__project=self.kwargs["project_id"]
+            )
+            return assignment
+        except CurationAssignment.DoesNotExist as error:
+            raise NotFound from error
+
+    @method_decorator(ensure_csrf_cookie)
+    def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
+        self.get_assignment()  # 404 if assignment doesn't exist for a curator
+
+        file = request.GET.get("file")
+        if not file:
+            raise ParseError
+
+        path = to_anypath(file)
+        if not path.exists():
+            raise NotFound
+
+        def stream_contents():
+            # Using buffer_size to stream in manageable chunks.
+            buffer_size = 8192
+            with path.open(mode="rb", buffering=buffer_size) as handle:
+                for chunk in handle:
+                    yield chunk
+
+        return FileResponse(stream_contents(), as_attachment=False)
+
+
 class CurateVariantView(APIView):
     permission_classes = (IsAuthenticated,)
 
@@ -98,8 +134,8 @@ class CurateVariantView(APIView):
             )
 
             return assignment
-        except CurationAssignment.DoesNotExist:
-            raise NotFound
+        except CurationAssignment.DoesNotExist as error:
+            raise NotFound from error
 
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument

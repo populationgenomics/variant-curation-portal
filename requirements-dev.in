@@ -1,0 +1,11 @@
+-c requirements.txt
+black
+pip-tools
+pydocstyle
+pylint
+pylint-django
+pytest
+pytest-cov
+pytest-django
+tox
+psycopg2-binary

@@ -14,6 +14,8 @@ webpack-stats.json
 htmlcov
 .tox
 .pytest_cache
+.mypy_cache
+.idea
 .yarn
 .yarnrc.yml
 
@@ -37,3 +39,6 @@ venv
 
 # nvmrc
 .nvmrc
+
+# Dummy data
+data/

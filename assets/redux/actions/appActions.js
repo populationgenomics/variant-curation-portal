@@ -4,8 +4,8 @@ export const actionTypes = {
   SET_APP_SETTINGS: "SET_APP_SETTINGS",
 };
 
-export const loadAppSettings = () => dispatch => {
-  return api.get("/settings/").then(response => {
+export const loadAppSettings = () => (dispatch) =>
+  api.get("/settings/").then((response) => {
     const { settings } = response;
     dispatch({
       type: actionTypes.SET_APP_SETTINGS,
@@ -13,4 +13,3 @@ export const loadAppSettings = () => dispatch => {
     });
     return settings;
   });
-};

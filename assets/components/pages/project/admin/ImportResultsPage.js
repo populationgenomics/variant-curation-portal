@@ -51,12 +51,12 @@ class ImportResultsPage extends Component {
         refreshProject();
         history.push(`/project/${project.id}/admin/`);
       })
-      .catch(error => {
+      .catch((error) => {
         this.setState({ isSaving: false, saveError: error });
       });
   };
 
-  onSelectFile = file => {
+  onSelectFile = (file) => {
     this.resultsData = null;
 
     if (!file) {
@@ -69,7 +69,7 @@ class ImportResultsPage extends Component {
     }
 
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = (e) => {
       try {
         this.resultsData = JSON.parse(e.target.result);
         this.setState({ hasFileData: true, isReadingFile: false });
@@ -129,7 +129,7 @@ class ImportResultsPage extends Component {
                   hidden
                   id="results-file"
                   type="file"
-                  onChange={e => this.onSelectFile(e.target.files[0])}
+                  onChange={(e) => this.onSelectFile(e.target.files[0])}
                 />
               </Button>
               {fileReadError && <Message error header="Failed to read file" />}
@@ -151,7 +151,7 @@ class ImportResultsPage extends Component {
             </p>
             <Button
               type="button"
-              onClick={e => {
+              onClick={(e) => {
                 this.setState({ isSchemaModalOpen: true });
                 e.preventDefault();
               }}

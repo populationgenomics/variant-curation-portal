@@ -29,7 +29,7 @@ class MousetrapWrapper {
   }
 
   onKeys = (e, keys) => {
-    this.callbacks[keys].forEach(cb => {
+    this.callbacks[keys].forEach((cb) => {
       cb(e, keys);
     });
   };
@@ -45,7 +45,7 @@ class MousetrapWrapper {
 
   unbind(keys, callback) {
     if (callback) {
-      this.callbacks[keys] = this.callbacks[keys].filter(cb => cb !== callback);
+      this.callbacks[keys] = this.callbacks[keys].filter((cb) => cb !== callback);
     } else {
       this.callbacks[keys] = [];
     }

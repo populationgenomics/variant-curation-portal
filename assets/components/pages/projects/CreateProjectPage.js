@@ -33,7 +33,7 @@ class CreateProjectPage extends Component {
     this.setState({ isSaving: true, lastSaveDidFail: false });
     api
       .post("/projects/create/", { name: projectName })
-      .then(project => {
+      .then((project) => {
         this.setState({ isSaving: false });
         history.push(`/project/${project.id}/admin/`);
       })
@@ -59,7 +59,7 @@ class CreateProjectPage extends Component {
               label="Project Name"
               required
               value={projectName}
-              onChange={e => {
+              onChange={(e) => {
                 this.setState({ projectName: e.target.value });
               }}
             />
