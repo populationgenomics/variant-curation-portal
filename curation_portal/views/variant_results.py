@@ -67,7 +67,6 @@ class VariantResultsView(APIView):
         variants = (
             Variant.objects.filter(
                 Q(variant_id=kwargs["variant_id"])
-                & Q(reference_genome="GRCh37")  # TODO: Handle different reference genomes
                 & (
                     Q(project__owners__id__contains=request.user.id)
                     | Q(curation_assignment__curator=request.user)
@@ -83,9 +82,6 @@ class VariantResultsView(APIView):
         results = (
             CurationResult.objects.filter(
                 Q(assignment__variant__variant_id=kwargs["variant_id"])
-                & Q(
-                    assignment__variant__reference_genome="GRCh37"
-                )  # TODO: Handle different reference genomes
                 & (
                     Q(assignment__variant__project__owners__id__contains=request.user.id)
                     | Q(assignment__curator=request.user)
