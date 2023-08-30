@@ -97,8 +97,8 @@ class ReadsFileView(APIView):
                 variant=self.kwargs["variant_id"], variant__project=self.kwargs["project_id"]
             )
             return assignment
-        except CurationAssignment.DoesNotExist:
-            raise NotFound
+        except CurationAssignment.DoesNotExist as error:
+            raise NotFound from error
 
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
@@ -134,8 +134,8 @@ class CurateVariantView(APIView):
             )
 
             return assignment
-        except CurationAssignment.DoesNotExist:
-            raise NotFound
+        except CurationAssignment.DoesNotExist as error:
+            raise NotFound from error
 
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
