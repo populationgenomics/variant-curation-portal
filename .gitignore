@@ -42,3 +42,4 @@ venv
 
 # Dummy data
 data/
+static/reads
