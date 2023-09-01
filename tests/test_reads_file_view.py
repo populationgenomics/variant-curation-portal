@@ -8,7 +8,7 @@ pytestmark = pytest.mark.django_db  # pylint: disable=invalid-name
 
 
 @pytest.fixture(scope="module", autouse=True)
-def db_setup(django_db_setup, django_db_blocker, create_variant):
+def db_setup(django_db_setup, django_db_blocker, create_variant):  # pylint: disable=unused-argument
     with django_db_blocker.unblock():
         project = Project.objects.create(id=1, name="Test Project")
         variant = create_variant(project, "1-100-A-G")
