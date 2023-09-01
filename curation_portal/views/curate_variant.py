@@ -1,6 +1,7 @@
 # pylint: disable=too-many-locals
 
 from cloudpathlib.anypath import to_anypath
+from django.conf import settings
 from django.http.response import FileResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -102,15 +103,25 @@ class ReadsFileView(APIView):
 
     @method_decorator(ensure_csrf_cookie)
     def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
-        self.get_assignment()  # 404 if assignment doesn't exist for a curator
+        assignment = self.get_assignment()  # 404 if assignment doesn't exist for a curator
 
         file = request.GET.get("file")
         if not file:
             raise ParseError
 
+        # Validate file path, and ensure it is from an allowed directory.
         path = to_anypath(file)
+        allowed_dirs = settings.ALLOWED_FILE_DIRECTORIES
+
+        if not any(str(path.parent) == allowed for allowed in allowed_dirs):
+            raise NotFound("Directory does not exist.")
+
+        reads = assignment.variant.reads or []
+        if str(path) not in reads:
+            raise NotFound("File not listed in variant.")
+
         if not path.exists():
-            raise NotFound
+            raise NotFound("File for variant does not exist.")
 
         def stream_contents():
             # Using buffer_size to stream in manageable chunks.
