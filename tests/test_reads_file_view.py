@@ -56,7 +56,7 @@ def test_reads_file_view_can_only_be_viewed_by_variant_curators(
     variant.reads = [reads_file]
     variant.save()
 
-    settings.ALLOWED_FILE_DIRECTORIES = [str(tmp_path)]
+    settings.ALLOWED_DIRECTORIES = [str(tmp_path)]
     response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={reads_file}")
     assert response.status_code == expected_status_code
 
@@ -73,7 +73,7 @@ def test_reads_file_view_can_only_access_allowed_directories(tmp_path, paths):
     variant.reads = [reads_file]
     variant.save()
 
-    settings.ALLOWED_FILE_DIRECTORIES = [str(tmp_path)]
+    settings.ALLOWED_DIRECTORIES = [str(tmp_path)]
 
     attempted_path = tmp_path / paths / "reads.bam" if paths.startswith(".") else paths
     response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={attempted_path}")
@@ -81,7 +81,7 @@ def test_reads_file_view_can_only_access_allowed_directories(tmp_path, paths):
     assert response.json() == {"detail": "Directory does not exist."}
 
 
-def reads_file_view_can_only_access_existing_files(tmp_path):
+def test_reads_file_view_can_only_access_existing_files(tmp_path):
     client = APIClient()
     client.force_authenticate(User.objects.get(username="user1@example.com"))
 
@@ -91,14 +91,14 @@ def reads_file_view_can_only_access_existing_files(tmp_path):
     variant.reads = [reads_file]
     variant.save()
 
-    settings.ALLOWED_FILE_DIRECTORIES = [str(tmp_path)]
+    settings.ALLOWED_DIRECTORIES = [str(tmp_path)]
 
     response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={reads_file}")
     assert response.status_code == 404
     assert response.json() == {"detail": "File for variant does not exist."}
 
 
-def reads_file_view_can_only_access_file_listed_in_variant_reads_attribute(tmp_path):
+def test_reads_file_view_can_only_access_file_listed_in_variant_reads_attribute(tmp_path):
     client = APIClient()
     client.force_authenticate(User.objects.get(username="user1@example.com"))
 
@@ -108,9 +108,28 @@ def reads_file_view_can_only_access_file_listed_in_variant_reads_attribute(tmp_p
     variant.reads = [reads_file]
     variant.save()
 
-    settings.ALLOWED_FILE_DIRECTORIES = [str(tmp_path)]
+    settings.ALLOWED_DIRECTORIES = [str(tmp_path)]
 
     different = tmp_path / "reads2.bam"
     response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={different}")
     assert response.status_code == 404
     assert response.json() == {"detail": "File not listed in variant."}
+
+
+def test_reads_file_view_file_cannot_be_a_directory(tmp_path):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    variant = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    reads_file = tmp_path / "directory"
+    reads_file.mkdir()
+
+    variant.reads = [reads_file]
+    variant.save()
+
+    settings.ALLOWED_DIRECTORIES = [str(tmp_path)]
+
+    response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={reads_file}")
+    assert response.status_code == 400
+    assert response.json() == {"detail": "'file' must be a file, not a directory."}
