@@ -111,7 +111,7 @@ class ReadsFileView(APIView):
 
         # Validate file path, and ensure it is from an allowed directory.
         path = to_anypath(file)
-        allowed_dirs = settings.ALLOWED_FILE_DIRECTORIES
+        allowed_dirs = settings.ALLOWED_DIRECTORIES
 
         if not any(str(path.parent) == allowed for allowed in allowed_dirs):
             raise NotFound("Directory does not exist.")
@@ -122,6 +122,9 @@ class ReadsFileView(APIView):
 
         if not path.exists():
             raise NotFound("File for variant does not exist.")
+
+        if not path.is_file():
+            raise ParseError("'file' must be a file, not a directory.")
 
         def stream_contents():
             # Using buffer_size to stream in manageable chunks.
