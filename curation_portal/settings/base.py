@@ -158,6 +158,5 @@ CURATION_PORTAL_AUTH_HEADER = os.getenv("CURATION_PORTAL_AUTH_HEADER", "REMOTE_U
 
 CURATION_PORTAL_SIGN_OUT_URL = os.getenv("CURATION_PORTAL_SIGN_OUT_URL", None)
 
-# Reads file security
-
-ALLOWED_FILE_DIRECTORIES = os.getenv("ALLOWED_FILE_DIRECTORIES", "").split(",")
+# Reads file security. Restrict access to files to those in the the list below
+ALLOWED_DIRECTORIES = os.getenv("ALLOWED_DIRECTORIES", "").split(",")
