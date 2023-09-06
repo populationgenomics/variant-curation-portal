@@ -112,6 +112,10 @@ class ReadsFileView(APIView):
 
         # Validate file path, and ensure it is from an allowed directory.
         path = to_anypath(file)
+        allowed_directories = [
+            f"{allowed}/" if not allowed.endswith("/") else allowed
+            for allowed in settings.ALLOWED_DIRECTORIES
+        ]
 
         # Clip off the gs:// prefix and replace with / to get the real path since os.path.realpath
         # will try to express the path as a local path and mangle the gs prefix thinking it's a
@@ -123,8 +127,7 @@ class ReadsFileView(APIView):
             real_path = f"gs:/{real_path}"
 
         path_is_allowed = any(
-            os.path.commonprefix([real_path, allowed]) == allowed
-            for allowed in settings.ALLOWED_DIRECTORIES
+            os.path.commonprefix([real_path, allowed]) == allowed for allowed in allowed_directories
         )
         if not path_is_allowed:
             raise NotFound("Directory does not exist.")
