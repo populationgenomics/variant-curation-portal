@@ -61,8 +61,42 @@ def test_reads_file_view_can_only_be_viewed_by_variant_curators(
     assert response.status_code == expected_status_code
 
 
-@pytest.mark.parametrize("paths", ["..", "../..", "/usr/bin/"])
-def test_reads_file_view_can_only_access_allowed_directories(tmp_path, paths):
+def test_can_access_files_relative_to_allowed_directory(tmp_path):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    variant = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    reads_file = tmp_path / "subfolder" / "reads.bam"
+    reads_file.parent.mkdir()
+    reads_file.touch()
+
+    variant.reads = [reads_file]
+    variant.save()
+
+    settings.ALLOWED_DIRECTORIES = [str(tmp_path)]
+    response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={reads_file}")
+    assert response.status_code == 200
+
+
+def test_cannot_access_files_outside_allowed_directory(tmp_path):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    variant = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    reads_file = "/home/usr/reads.bam"
+    variant.reads = [reads_file]
+    variant.save()
+
+    settings.ALLOWED_DIRECTORIES = [str(tmp_path)]
+    response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={reads_file}")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Directory does not exist."}
+
+
+@pytest.mark.parametrize("paths", ["..", "./..", "../..", "../../.."])
+def test_reads_file_view_cannot_access_parents_of_allowed_directory(tmp_path, paths):
     client = APIClient()
     client.force_authenticate(User.objects.get(username="user1@example.com"))
 
@@ -70,12 +104,34 @@ def test_reads_file_view_can_only_access_allowed_directories(tmp_path, paths):
 
     reads_file = tmp_path / "reads.bam"
     reads_file.touch()
+
     variant.reads = [reads_file]
     variant.save()
 
     settings.ALLOWED_DIRECTORIES = [str(tmp_path)]
 
-    attempted_path = tmp_path / paths / "reads.bam" if paths.startswith(".") else paths
+    attempted_path = tmp_path / paths / "reads.bam"
+    response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={attempted_path}")
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Directory does not exist."}
+
+
+@pytest.mark.parametrize("paths", ["..", "./..", "../../protected-bams", "../project-2"])
+def test_reads_file_view_cannot_access_parents_of_allowed__gcsdirectory(paths):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    variant = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    base_path = "gs://my-bucket/these-bams-only/project-1/"
+    reads_file = base_path + "reads.bam"
+
+    variant.reads = [reads_file]
+    variant.save()
+
+    settings.ALLOWED_DIRECTORIES = [base_path]
+
+    attempted_path = base_path + paths + "/reads.bam"
     response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={attempted_path}")
     assert response.status_code == 404
     assert response.json() == {"detail": "Directory does not exist."}
