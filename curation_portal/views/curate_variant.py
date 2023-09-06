@@ -1,4 +1,5 @@
 # pylint: disable=too-many-locals
+import os
 
 from cloudpathlib.anypath import to_anypath
 from django.conf import settings
@@ -111,9 +112,21 @@ class ReadsFileView(APIView):
 
         # Validate file path, and ensure it is from an allowed directory.
         path = to_anypath(file)
-        allowed_dirs = settings.ALLOWED_DIRECTORIES
 
-        if not any(str(path.parent) == allowed for allowed in allowed_dirs):
+        # Clip off the gs:// prefix and replace with / to get the real path since os.path.realpath
+        # will try to express the path as a local path and mangle the gs prefix thinking it's a
+        # drive letter.
+        real_path = os.path.realpath(str(path).replace("gs://", "/"))
+        if str(path).startswith("gs://"):
+            # If the path starts with gs://, then we need to add it back, but we only need to add
+            # one slash back since one slash is retained by os.path.realpath
+            real_path = f"gs:/{real_path}"
+
+        path_is_allowed = any(
+            os.path.commonprefix([real_path, allowed]) == allowed
+            for allowed in settings.ALLOWED_DIRECTORIES
+        )
+        if not path_is_allowed:
             raise NotFound("Directory does not exist.")
 
         reads = assignment.variant.reads or []
