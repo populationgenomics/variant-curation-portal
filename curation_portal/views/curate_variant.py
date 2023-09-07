@@ -126,10 +126,13 @@ class ReadsFileView(APIView):
             # one slash back since one slash is retained by os.path.realpath
             real_path = f"gs:/{real_path}"
 
-        path_is_allowed = any(
-            os.path.commonprefix([real_path, allowed]) == allowed for allowed in allowed_directories
-        )
-        if not path_is_allowed:
+            # File path is valid if it is relative to the allowed directory once directory
+            # traversal has been resolved.
+            if os.path.commonprefix([real_path, allowed]) == allowed:
+                secure_path = to_anypath(allowed) / os.path.relpath(real_path, start=allowed)
+                break
+
+        if not secure_path:
             raise NotFound("Directory does not exist.")
 
         secured_path = to_anypath(real_path)
