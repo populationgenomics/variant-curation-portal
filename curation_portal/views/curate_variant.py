@@ -2,7 +2,6 @@
 import os
 
 from cloudpathlib.anypath import to_anypath
-from django.conf import settings
 from django.http.response import FileResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -106,54 +105,33 @@ class ReadsFileView(APIView):
     def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
         assignment = self.get_assignment()  # 404 if assignment doesn't exist for a curator
 
-        insecure_path = request.GET.get("file")
-        if not insecure_path:
-            raise ParseError
+        file = request.GET.get("file")
+        if not file:
+            raise ParseError("Missing required query parameter 'file'.")
 
-        # Add trailing slash into allowed directories if it doesn't exist.
-        allowed_directories = [
-            f"{allowed}/" if not allowed.endswith("/") else allowed
-            for allowed in settings.ALLOWED_DIRECTORIES
-        ]
+        # Trim index extention since reads array only stored path to bam/cram
+        reads_file = file.replace(".bai", "").replace(".crai", "")
 
-        # Validate file path, and ensure it is from an allowed directory.
-        secure_path = None
-        for allowed in allowed_directories:
-            # Clip the 'gs://' replacing it with '/' to get the real path since os.path.realpath
-            # will try to express the path as a local path.
-            path_to_validate = insecure_path
-            if "gs://" in path_to_validate:
-                path_to_validate = path_to_validate.replace("gs://", "/")
-
-            # Real path will resolve symlinks and relative paths to prevent directory traversal.
-            real_path = os.path.realpath(path_to_validate)
-            if "gs://" in insecure_path:
-                real_path = "gs:/" + real_path
-
-            # File path is valid if it is relative to the allowed directory once directory
-            # traversal has been resolved.
-            if os.path.commonprefix([real_path, allowed]) == allowed:
-                secure_path = to_anypath(allowed) / os.path.relpath(real_path, start=allowed)
-                break
-
-        if not secure_path:
-            raise NotFound("Directory does not exist.")
-
+        # Check requested file is a valid file for the variant
         reads = assignment.variant.reads or []
-        if str(secure_path) not in reads:
+        if reads_file not in reads:
             raise NotFound("File not listed in variant.")
 
-        secure_path = to_anypath(secure_path)
-        if not secure_path.exists():
-            raise NotFound("File for variant does not exist.")
+        # Get the full path to the file and replace the index extension if needed
+        file_to_read = reads[reads.index(reads_file)]
+        if ".bai" in file:
+            file_to_read = file_to_read + ".bai"
+        elif ".crai" in file:
+            file_to_read = file_to_read + ".crai"
 
-        if not secure_path.is_file():
-            raise ParseError("'file' must be a file, not a directory.")
+        file_to_read = to_anypath(file_to_read)
+        if not file_to_read.exists():
+            raise NotFound("File for variant does not exist.")
 
         def stream_contents():
             # Using buffer_size to stream in manageable chunks.
             buffer_size = 8192
-            with secure_path.open(mode="rb", buffering=buffer_size) as handle:
+            with file_to_read.open(mode="rb", buffering=buffer_size) as handle:
                 for chunk in handle:
                     yield chunk
 
