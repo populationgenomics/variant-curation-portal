@@ -106,25 +106,29 @@ class ReadsFileView(APIView):
     def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
         assignment = self.get_assignment()  # 404 if assignment doesn't exist for a curator
 
-        file = request.GET.get("file")
-        if not file:
+        insecure_path = request.GET.get("file")
+        if not insecure_path:
             raise ParseError
 
-        # Validate file path, and ensure it is from an allowed directory.
-        dangerous_path = to_anypath(file)
+        # Add trailing slash into allowed directories if it doesn't exist.
         allowed_directories = [
             f"{allowed}/" if not allowed.endswith("/") else allowed
             for allowed in settings.ALLOWED_DIRECTORIES
         ]
 
-        # Clip off the gs:// prefix and replace with / to get the real path since os.path.realpath
-        # will try to express the path as a local path and mangle the gs prefix thinking it's a
-        # drive letter. Real path will resolve symlinks and relative paths.
-        real_path = os.path.realpath(str(dangerous_path).replace("gs://", "/"))
-        if str(dangerous_path).startswith("gs://"):
-            # If the path starts with gs://, then we need to add it back, but we only need to add
-            # one slash back since one slash is retained by os.path.realpath
-            real_path = f"gs:/{real_path}"
+        # Validate file path, and ensure it is from an allowed directory.
+        secure_path = None
+        for allowed in allowed_directories:
+            # Clip the 'gs://' replacing it with '/' to get the real path since os.path.realpath
+            # will try to express the path as a local path.
+            path_to_validate = insecure_path
+            if "gs://" in path_to_validate:
+                path_to_validate = path_to_validate.replace("gs://", "/")
+
+            # Real path will resolve symlinks and relative paths to prevent directory traversal.
+            real_path = os.path.realpath(path_to_validate)
+            if "gs://" in insecure_path:
+                real_path = "gs:/" + real_path
 
             # File path is valid if it is relative to the allowed directory once directory
             # traversal has been resolved.
@@ -135,21 +139,21 @@ class ReadsFileView(APIView):
         if not secure_path:
             raise NotFound("Directory does not exist.")
 
-        secured_path = to_anypath(real_path)
         reads = assignment.variant.reads or []
-        if str(secured_path) not in reads:
+        if str(secure_path) not in reads:
             raise NotFound("File not listed in variant.")
 
-        if not secured_path.exists():
+        secure_path = to_anypath(secure_path)
+        if not secure_path.exists():
             raise NotFound("File for variant does not exist.")
 
-        if not secured_path.is_file():
+        if not secure_path.is_file():
             raise ParseError("'file' must be a file, not a directory.")
 
         def stream_contents():
             # Using buffer_size to stream in manageable chunks.
             buffer_size = 8192
-            with secured_path.open(mode="rb", buffering=buffer_size) as handle:
+            with secure_path.open(mode="rb", buffering=buffer_size) as handle:
                 for chunk in handle:
                     yield chunk
 
