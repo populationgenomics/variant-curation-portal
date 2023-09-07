@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os  # pylint: disable=E0401
+from typing import List
 
 from django.core.management.utils import get_random_secret_key
 
@@ -157,6 +158,3 @@ REST_FRAMEWORK = {"DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.Dja
 CURATION_PORTAL_AUTH_HEADER = os.getenv("CURATION_PORTAL_AUTH_HEADER", "REMOTE_USER")
 
 CURATION_PORTAL_SIGN_OUT_URL = os.getenv("CURATION_PORTAL_SIGN_OUT_URL", None)
-
-# Reads file security. Restrict access to files to those in the the list below
-ALLOWED_DIRECTORIES = os.getenv("ALLOWED_DIRECTORIES", "").split(",")

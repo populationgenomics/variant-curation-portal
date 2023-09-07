@@ -1,5 +1,4 @@
 # pylint: disable=too-many-locals
-import os
 
 from cloudpathlib.anypath import to_anypath
 from django.http.response import FileResponse
