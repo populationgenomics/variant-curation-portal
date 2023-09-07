@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os  # pylint: disable=E0401
-from typing import List
 
 from django.core.management.utils import get_random_secret_key
 
