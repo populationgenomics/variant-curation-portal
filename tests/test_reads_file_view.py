@@ -32,7 +32,7 @@ def test_reads_file_view_requires_authentication():
     variant = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
 
     response = client.get(f"/api/project/1/variant/{variant.id}/reads/")
-    assert response.status_code == 403
+    assert response.status_code == 403, response.json()
 
 
 @pytest.mark.parametrize(
@@ -58,7 +58,7 @@ def test_reads_file_view_can_only_be_viewed_by_variant_curators(
 
     settings.ALLOWED_DIRECTORIES = [str(tmp_path)]
     response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={reads_file}")
-    assert response.status_code == expected_status_code
+    assert response.status_code == expected_status_code, response.json()
 
 
 def test_can_access_files_relative_to_allowed_directory(tmp_path):
@@ -76,7 +76,7 @@ def test_can_access_files_relative_to_allowed_directory(tmp_path):
 
     settings.ALLOWED_DIRECTORIES = [str(tmp_path)]
     response = client.get(f"/api/project/1/variant/{variant.id}/reads/?file={reads_file}")
-    assert response.status_code == 200
+    assert response.status_code == 200, response.json()
 
 
 def test_cannot_access_files_outside_allowed_directory(tmp_path):
