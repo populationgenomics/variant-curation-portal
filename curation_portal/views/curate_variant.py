@@ -111,7 +111,7 @@ class ReadsFileView(APIView):
             raise ParseError
 
         # Validate file path, and ensure it is from an allowed directory.
-        path = to_anypath(file)
+        dangerous_path = to_anypath(file)
         allowed_directories = [
             f"{allowed}/" if not allowed.endswith("/") else allowed
             for allowed in settings.ALLOWED_DIRECTORIES
@@ -119,9 +119,9 @@ class ReadsFileView(APIView):
 
         # Clip off the gs:// prefix and replace with / to get the real path since os.path.realpath
         # will try to express the path as a local path and mangle the gs prefix thinking it's a
-        # drive letter.
-        real_path = os.path.realpath(str(path).replace("gs://", "/"))
-        if str(path).startswith("gs://"):
+        # drive letter. Real path will resolve symlinks and relative paths.
+        real_path = os.path.realpath(str(dangerous_path).replace("gs://", "/"))
+        if str(dangerous_path).startswith("gs://"):
             # If the path starts with gs://, then we need to add it back, but we only need to add
             # one slash back since one slash is retained by os.path.realpath
             real_path = f"gs:/{real_path}"
@@ -132,20 +132,21 @@ class ReadsFileView(APIView):
         if not path_is_allowed:
             raise NotFound("Directory does not exist.")
 
+        secured_path = to_anypath(real_path)
         reads = assignment.variant.reads or []
-        if str(path) not in reads:
+        if str(secured_path) not in reads:
             raise NotFound("File not listed in variant.")
 
-        if not path.exists():
+        if not secured_path.exists():
             raise NotFound("File for variant does not exist.")
 
-        if not path.is_file():
+        if not secured_path.is_file():
             raise ParseError("'file' must be a file, not a directory.")
 
         def stream_contents():
             # Using buffer_size to stream in manageable chunks.
             buffer_size = 8192
-            with path.open(mode="rb", buffering=buffer_size) as handle:
+            with secured_path.open(mode="rb", buffering=buffer_size) as handle:
                 for chunk in handle:
                     yield chunk
 
