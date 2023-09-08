@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models.signals import post_delete, pre_save, post_save
 from django.dispatch.dispatcher import receiver
@@ -44,6 +45,11 @@ class Variant(models.Model):
         max_length=6, choices=[("GRCh37", "GRCh37"), ("GRCh38", "GRCh38")], default="GRCh37"
     )
     variant_id = models.CharField(max_length=1000)
+    sample_ids = ArrayField(
+        models.CharField(max_length=1000, blank=False, null=False),
+        null=True,
+        blank=True,
+    )
     liftover_variant_id = models.CharField(max_length=1000, null=True, blank=True)
     chrom = models.CharField(max_length=2)
     pos = models.IntegerField()
@@ -56,6 +62,27 @@ class Variant(models.Model):
     AN = models.IntegerField(null=True, blank=True)
     AF = models.FloatField(null=True, blank=True)
     n_homozygotes = models.IntegerField(null=True, blank=True)
+    n_heterozygotes = models.IntegerField(null=True, blank=True)
+    GT = ArrayField(
+        models.CharField(max_length=1000, blank=False, null=False),
+        null=True,
+        blank=True,
+    )
+    DP = ArrayField(
+        models.IntegerField(blank=False, null=False),
+        null=True,
+        blank=True,
+    )
+    GQ = ArrayField(
+        models.IntegerField(blank=False, null=False),
+        null=True,
+        blank=True,
+    )
+    reads = ArrayField(
+        models.CharField(max_length=2000, blank=False, null=False),
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         db_table = "curation_variant"
@@ -79,6 +106,12 @@ class VariantAnnotation(models.Model):
     loftee = models.CharField(max_length=2, null=True, blank=True)
     loftee_filter = models.CharField(max_length=200, null=True, blank=True)
     loftee_flags = models.CharField(max_length=200, null=True, blank=True)
+
+    hgvsp = models.CharField(max_length=1000, null=True, blank=True)
+    hgvsc = models.CharField(max_length=1000, null=True, blank=True)
+    appris = models.CharField(max_length=200, null=True, blank=True)
+    mane_select = models.CharField(max_length=200, null=True, blank=True)
+    exon = models.CharField(max_length=200, null=True, blank=True)
 
     class Meta:
         db_table = "curation_variant_annotation"

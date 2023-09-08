@@ -28,7 +28,7 @@ const SettingsPage = ({ user, saveSettings }) => {
             .then(() => {
               setIsSaving(false);
             })
-            .catch(error => {
+            .catch((error) => {
               setIsSaving(false);
               setSaveError(error);
             });
@@ -53,7 +53,7 @@ const SettingsPage = ({ user, saveSettings }) => {
               id="ucsc_username"
               type="text"
               value={settingsValues.ucsc_username || ""}
-              onChange={e => {
+              onChange={(e) => {
                 setSettingsValues({ ...settingsValues, ucsc_username: e.target.value });
               }}
             />
@@ -66,7 +66,7 @@ const SettingsPage = ({ user, saveSettings }) => {
               id="ucsc_session_name_grch37"
               type="text"
               value={settingsValues.ucsc_session_name_grch37 || ""}
-              onChange={e => {
+              onChange={(e) => {
                 setSettingsValues({ ...settingsValues, ucsc_session_name_grch37: e.target.value });
               }}
             />
@@ -79,7 +79,7 @@ const SettingsPage = ({ user, saveSettings }) => {
               id="ucsc_session_name_grch38"
               type="text"
               value={settingsValues.ucsc_session_name_grch38 || ""}
-              onChange={e => {
+              onChange={(e) => {
                 setSettingsValues({ ...settingsValues, ucsc_session_name_grch38: e.target.value });
               }}
             />
@@ -106,6 +106,6 @@ SettingsPage.propTypes = {
   }).isRequired,
 };
 
-export default connect(null, dispatch => ({
+export default connect(null, (dispatch) => ({
   saveSettings: (...args) => dispatch(updateUserSettings(...args)),
 }))(SettingsPage);

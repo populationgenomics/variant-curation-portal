@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import React from "react";
-import { List } from "semantic-ui-react";
+import { Button, List } from "semantic-ui-react";
 
 const AnnotationsList = ({ annotations }) => {
   const annotationsGroupedByGene = annotations.reduce(
@@ -13,11 +13,11 @@ const AnnotationsList = ({ annotations }) => {
 
   return (
     <List>
-      {Object.keys(annotationsGroupedByGene).map(geneId => (
+      {Object.keys(annotationsGroupedByGene).map((geneId) => (
         <List.Item key={geneId}>
           <List.Header>{annotationsGroupedByGene[geneId][0].gene_symbol}</List.Header>
           <List.List>
-            {annotationsGroupedByGene[geneId].map(annotation => (
+            {annotationsGroupedByGene[geneId].map((annotation) => (
               <List.Item key={annotation.transcript_id}>
                 <List.Content>
                   <List.Header>{annotation.transcript_id}</List.Header>
@@ -34,6 +34,36 @@ const AnnotationsList = ({ annotations }) => {
                       <React.Fragment>
                         <br />
                         LOFTEE Flags: {annotation.loftee_flags}
+                      </React.Fragment>
+                    )}
+                    {annotation.hgvsp && (
+                      <React.Fragment>
+                        <br />
+                        HGVSP: {annotation.hgvsp}
+                      </React.Fragment>
+                    )}
+                    {annotation.hgvsc && (
+                      <React.Fragment>
+                        <br />
+                        HGVSC: {annotation.hgvsc}
+                      </React.Fragment>
+                    )}
+                    {annotation.appris && (
+                      <React.Fragment>
+                        <br />
+                        appris: {annotation.appris}
+                      </React.Fragment>
+                    )}
+                    {annotation.mane_select && (
+                      <React.Fragment>
+                        <br />
+                        MANE SELECT: {annotation.mane_select}
+                      </React.Fragment>
+                    )}
+                    {annotation.exon && (
+                      <React.Fragment>
+                        <br />
+                        Exon: {annotation.exon}
                       </React.Fragment>
                     )}
                   </List.Description>
@@ -57,6 +87,11 @@ AnnotationsList.propTypes = {
       loftee: PropTypes.string,
       loftee_filter: PropTypes.string,
       loftee_flags: PropTypes.string,
+      hgvsp: PropTypes.string,
+      hgvsc: PropTypes.string,
+      appris: PropTypes.string,
+      mane_select: PropTypes.string,
+      exon: PropTypes.string,
     })
   ).isRequired,
 };
@@ -84,9 +119,35 @@ TagsList.propTypes = {
   ).isRequired,
 };
 
-const VariantData = ({ variant }) => {
-  return (
-    <React.Fragment>
+class VariantData extends React.Component {
+  static propTypes = {
+    variant: PropTypes.shape({
+      qc_filter: PropTypes.string,
+      AC: PropTypes.number,
+      AN: PropTypes.number,
+      AF: PropTypes.number,
+      GT: PropTypes.arrayOf(PropTypes.string),
+      DP: PropTypes.arrayOf(PropTypes.number),
+      GQ: PropTypes.arrayOf(PropTypes.number),
+      sample_ids: PropTypes.arrayOf(PropTypes.string),
+      n_homozygotes: PropTypes.number,
+      n_heterozygotes: PropTypes.number,
+      annotations: PropTypes.arrayOf(PropTypes.object).isRequired, // eslint-disable-line react/forbid-prop-types
+      tags: PropTypes.arrayOf(PropTypes.object).isRequired, // eslint-disable-line react/forbid-prop-types
+      reference_genome: PropTypes.oneOf(["GRCh37", "GRCh38"]).isRequired,
+      liftover_variant_id: PropTypes.string,
+    }).isRequired,
+  };
+
+  state = {
+    showAll: false,
+  };
+
+  render() {
+    const { variant } = this.props;
+    const { showAll } = this.state;
+
+    return (
       <List>
         <List.Item>
           <strong>Reference genome:</strong> {variant.reference_genome}
@@ -109,12 +170,55 @@ const VariantData = ({ variant }) => {
           <strong>Callset AN:</strong> {variant.AN}
         </List.Item>
         <List.Item>
+          <strong>Sample IDs:</strong> {(variant.sample_ids ?? []).join(", ")}
+        </List.Item>
+        <List.Item>
+          <strong>Genotype Call:</strong> {(variant.GT ?? []).join(", ")}
+        </List.Item>
+        <List.Item>
+          <strong>Genotype Depth:</strong> {(variant.DP ?? []).join(", ")}
+        </List.Item>
+        <List.Item>
+          <strong>Genotype Quality:</strong> {(variant.GQ ?? []).join(", ")}
+        </List.Item>
+        <List.Item>
           <strong>Number of homozygotes:</strong> {variant.n_homozygotes}
+        </List.Item>
+        <List.Item>
+          <strong>Number of heterozygotes:</strong> {variant.n_heterozygotes}
         </List.Item>
         <List.Item>
           <strong>Annotations:</strong>
           {variant.annotations.length > 0 ? (
-            <AnnotationsList annotations={variant.annotations} />
+            <>
+              <AnnotationsList
+                annotations={variant.annotations
+                  .sort((a, b) => {
+                    if (a.mane_select === b.mane_select) {
+                      return 0;
+                    }
+                    if (a.mane_select === null) {
+                      return 1;
+                    }
+                    if (b.mane_select === null) {
+                      return -1;
+                    }
+                    return a < b ? 1 : -1;
+                  })
+                  .slice(0, showAll ? variant.annotations.length : 1)}
+              />
+              {variant.annotations.length > 1 && (
+                <Button
+                  basic
+                  size="small"
+                  onClick={() => {
+                    this.setState((state) => ({ ...state, showAll: !state.showAll }));
+                  }}
+                >
+                  {showAll ? "Show MANE" : "Show All"}
+                </Button>
+              )}
+            </>
           ) : (
             <p>No annotations available for this variant</p>
           )}
@@ -128,22 +232,8 @@ const VariantData = ({ variant }) => {
           )}
         </List.Item>
       </List>
-    </React.Fragment>
-  );
-};
-
-VariantData.propTypes = {
-  variant: PropTypes.shape({
-    qc_filter: PropTypes.string,
-    AC: PropTypes.number,
-    AN: PropTypes.number,
-    AF: PropTypes.number,
-    n_homozygotes: PropTypes.number,
-    annotations: PropTypes.arrayOf(PropTypes.object).isRequired, // eslint-disable-line react/forbid-prop-types
-    tags: PropTypes.arrayOf(PropTypes.object).isRequired, // eslint-disable-line react/forbid-prop-types
-    reference_genome: PropTypes.oneOf(["GRCh37", "GRCh38"]).isRequired,
-    liftover_variant_id: PropTypes.string,
-  }).isRequired,
-};
+    );
+  }
+}
 
 export default VariantData;

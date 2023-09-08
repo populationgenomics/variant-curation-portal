@@ -25,7 +25,7 @@ const ProjectAdminPage = ({ project, user }) => {
         </p>
         <Header as="h2">Owners</Header>
         <List bulleted>
-          {(project.owners || []).map(username => (
+          {(project.owners || []).map((username) => (
             <List.Item key={username}>{username}</List.Item>
           ))}
         </List>
@@ -43,7 +43,7 @@ const ProjectAdminPage = ({ project, user }) => {
         <Header as="h2">Curators</Header>
         {curators.length ? (
           <Item.Group>
-            {curators.map(curator => {
+            {curators.map((curator) => {
               const { total, completed } = project.assignments[curator];
               return (
                 <Item key={curator}>

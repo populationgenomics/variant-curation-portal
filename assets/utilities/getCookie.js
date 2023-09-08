@@ -1,4 +1,4 @@
-const getCookie = name => {
+const getCookie = (name) => {
   if (!document.cookie || document.cookie === "") {
     return null;
   }

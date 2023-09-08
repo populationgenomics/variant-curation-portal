@@ -1,6 +1,17 @@
 version: "3"
+
 services:
-  app:
-    command: ./manage.py runserver app:8000
+  database:
+    image: postgres:9.6-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USER:-curator-dev}
+      - POSTGRES_DB=${DB_DATABASE:-curator-dev}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+    ports:
+      - '5432:5432'
     volumes:
-      - ../curation_portal:/app/curation_portal
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

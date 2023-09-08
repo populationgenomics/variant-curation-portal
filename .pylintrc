@@ -1,6 +1,6 @@
 [MASTER]
 ignore=curation_portal/migrations
-
+django-settings-module=curation_portal.settings.base
 load-plugins=pylint_django
 
 [MESSAGES_CONTROL]

@@ -160,9 +160,9 @@ class CurationForm extends React.Component {
                 {shortcut != null ? <KeyboardShortcutHint keys={shortcut} /> : null}
                 {isCustomFlag ? (
                   <Button
-                    onClick={e => {
+                    onClick={(e) => {
                       e.preventDefault();
-                      this.setState({ flagToUpdate: customFlags.find(f => f.key === field) });
+                      this.setState({ flagToUpdate: customFlags.find((f) => f.key === field) });
                     }}
                     style={{
                       borderColor: "rgba(0,0,0,0.55)",
@@ -181,7 +181,7 @@ class CurationForm extends React.Component {
               </React.Fragment>
             ),
           }}
-          onChange={e => {
+          onChange={(e) => {
             if (disabledFields.includes(field)) return null;
             if (isCustomFlag) return this.setCustomFlagField(field, e.target.checked);
             return this.setResultField(field, e.target.checked);
@@ -206,14 +206,11 @@ class CurationForm extends React.Component {
 
     let customFlagContent = <p>Click the &apos;+&apos; button above to add a new custom flag</p>;
     if (customFlags?.length) {
-      customFlagContent = sortBy(customFlags, ["key"]).map(flag =>
+      customFlagContent = sortBy(customFlags, ["key"]).map((flag) =>
         this.renderFlagInput(
           flag.key,
           flag.label,
-          flag.shortcut
-            .toLowerCase()
-            .split("")
-            .join(" "),
+          flag.shortcut.toLowerCase().split("").join(" "),
           false,
           true
         )
@@ -227,7 +224,7 @@ class CurationForm extends React.Component {
             Custom Flags
           </Header>
           <Button
-            onClick={e => {
+            onClick={(e) => {
               e.preventDefault();
               this.setState({ showCreateFlagForm: true });
             }}
@@ -291,7 +288,7 @@ class CurationForm extends React.Component {
       <Ref innerRef={this.formElement}>
         <Form
           id="curationForm"
-          onSubmit={e => {
+          onSubmit={(e) => {
             e.preventDefault();
             this.saveResult();
           }}
@@ -309,13 +306,13 @@ class CurationForm extends React.Component {
               ),
             }}
             value={value.notes}
-            onChange={e => {
+            onChange={(e) => {
               this.setResultField("notes", e.target.value);
             }}
           />
           <KeyboardShortcut
             keys="n o"
-            onShortcut={e => {
+            onShortcut={(e) => {
               document.getElementById("notepad").focus();
               e.preventDefault(); // Prevent shortcut from being typed into textarea
             }}
@@ -332,13 +329,13 @@ class CurationForm extends React.Component {
               ),
             }}
             value={value.curator_comments}
-            onChange={e => {
+            onChange={(e) => {
               this.setResultField("curator_comments", e.target.value);
             }}
           />
           <KeyboardShortcut
             keys="c c"
-            onShortcut={e => {
+            onShortcut={(e) => {
               document.getElementById("curator_comments").focus();
               e.preventDefault(); // Prevent shortcut from being typed into textarea
             }}
@@ -349,19 +346,19 @@ class CurationForm extends React.Component {
               <Header sub style={{ marginBottom: "0.5rem" }}>
                 Technical
               </Header>
-              {["flag_no_read_data", "flag_reference_error"].map(flag =>
+              {["flag_no_read_data", "flag_reference_error"].map((flag) =>
                 this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
               )}
               {/* Render Mapping Error Flags */}
-              {["flag_mapping_error"].map(flag =>
+              {["flag_mapping_error"].map((flag) =>
                 this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
               )}
               <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
-                {["flag_self_chain", "flag_str_or_low_complexity", "flag_low_umap_m50"].map(flag =>
-                  this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
+                {["flag_self_chain", "flag_str_or_low_complexity", "flag_low_umap_m50"].map(
+                  (flag) => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
                 )}
                 {/* Render Dubious Read Alignment Flags */}
-                {["flag_dubious_read_alignment"].map(flag =>
+                {["flag_dubious_read_alignment"].map((flag) =>
                   this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
                 )}
                 <div style={{ marginLeft: "2rem" }}>
@@ -371,13 +368,13 @@ class CurationForm extends React.Component {
                     "flag_stutter",
                     "flag_repetitive_sequence",
                     "flag_dubious_other",
-                  ].map(flag =>
+                  ].map((flag) =>
                     this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
                   )}
                 </div>
               </div>
               {/* Render Genotyping Error Flags */}
-              {["flag_genotyping_error"].map(flag =>
+              {["flag_genotyping_error"].map((flag) =>
                 this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
               )}
               <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
@@ -388,7 +385,9 @@ class CurationForm extends React.Component {
                   "flag_gc_rich",
                   "flag_homopolymer_or_str",
                   "flag_strand_bias",
-                ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+                ].map((flag) =>
+                  this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
+                )}
               </div>
             </div>
 
@@ -398,7 +397,7 @@ class CurationForm extends React.Component {
                 Impact
               </Header>
               {/* Render Inconsequential Transcript Flags */}
-              {["flag_inconsequential_transcript"].map(flag =>
+              {["flag_inconsequential_transcript"].map((flag) =>
                 this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
               )}
               <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
@@ -410,10 +409,12 @@ class CurationForm extends React.Component {
                   "flag_minor_protein_isoform",
                   "flag_weak_exon_conservation",
                   "flag_untranslated_transcript",
-                ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+                ].map((flag) =>
+                  this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
+                )}
               </div>
               {/* Render Rescue Flags */}
-              {["flag_rescue"].map(flag =>
+              {["flag_rescue"].map((flag) =>
                 this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag], true)
               )}
               <div style={{ marginLeft: "1rem", marginBottom: "1rem" }}>
@@ -425,7 +426,9 @@ class CurationForm extends React.Component {
                   "flag_methionine_resuce",
                   "flag_escapes_nmd",
                   "flag_low_truncated",
-                ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+                ].map((flag) =>
+                  this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag])
+                )}
               </div>
               {/* Render comment flags */}
               <Header sub style={{ marginBottom: "0.5rem" }}>
@@ -437,7 +440,7 @@ class CurationForm extends React.Component {
                 "flag_flow_chart_overridden",
                 "flag_second_opinion_required",
                 "flag_sanger_confirmation_recommended",
-              ].map(flag => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
+              ].map((flag) => this.renderFlagInput(flag, FLAG_LABELS[flag], FLAG_SHORTCUTS[flag]))}
             </div>
           </div>
 
@@ -510,14 +513,14 @@ class CurationForm extends React.Component {
 }
 
 const ConnectedCurationForm = connect(
-  state => ({
+  (state) => ({
     errors: getCurationResultErrors(state),
     value: getCurationResult(state),
     customFlags: getCustomFlags(state),
   }),
   (dispatch, ownProps) => ({
-    onChange: result => dispatch(setResult(result)),
-    onSubmit: result => dispatch(saveResult(result, ownProps.projectId, ownProps.variantId)),
+    onChange: (result) => dispatch(setResult(result)),
+    onSubmit: (result) => dispatch(saveResult(result, ownProps.projectId, ownProps.variantId)),
   })
 )(CurationForm);
 

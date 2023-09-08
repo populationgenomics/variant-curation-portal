@@ -11,7 +11,7 @@ services:
   app:
     build: ..
     environment:
-      - DJANGO_SETTINGS_MODULE=curation_portal.settings.development
+      - DJANGO_SETTINGS_MODULE=curation_portal.settings.local
       - SECRET_KEY
       - DB_ENGINE=django.db.backends.postgresql
       - DB_HOST=database

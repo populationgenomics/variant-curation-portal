@@ -1,3 +1,5 @@
+# pylint: disable=unsupported-binary-operation
+
 import rules
 
 from curation_portal.models import CurationAssignment

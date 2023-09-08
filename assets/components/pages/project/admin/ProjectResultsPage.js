@@ -11,60 +11,56 @@ import DocumentTitle from "../../../DocumentTitle";
 import VariantId from "../../../VariantId";
 import Page from "../../Page";
 
-const ProjectResultsPage = ({ project, user }) => {
-  return (
-    <Page>
-      <DocumentTitle title={project.name} />
-      <Header as="h1" dividing>
-        {project.name}
-      </Header>
-      <div>
-        <Link to={`/project/${project.id}/admin/`}>Return to project</Link>
-      </div>
-      <br />
+const ProjectResultsPage = ({ project, user }) => (
+  <Page>
+    <DocumentTitle title={project.name} />
+    <Header as="h1" dividing>
+      {project.name}
+    </Header>
+    <div>
+      <Link to={`/project/${project.id}/admin/`}>Return to project</Link>
+    </div>
+    <br />
 
-      <PermissionRequired user={user} action="edit" resourceType="project" resource={project}>
-        <Fetch path={`/project/${project.id}/results/`}>
-          {({ data: { results } }) => {
-            return (
-              <Table>
-                <Table.Header>
-                  <Table.Row>
-                    <Table.HeaderCell>Variant ID</Table.HeaderCell>
-                    <Table.HeaderCell>Curator</Table.HeaderCell>
-                    <Table.HeaderCell>Verdict</Table.HeaderCell>
-                    <Table.HeaderCell>Flags</Table.HeaderCell>
-                    <Table.HeaderCell>Notes</Table.HeaderCell>
-                    <Table.HeaderCell>Curator Comments</Table.HeaderCell>
-                  </Table.Row>
-                </Table.Header>
+    <PermissionRequired user={user} action="edit" resourceType="project" resource={project}>
+      <Fetch path={`/project/${project.id}/results/`}>
+        {({ data: { results } }) => (
+          <Table>
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Variant ID</Table.HeaderCell>
+                <Table.HeaderCell>Curator</Table.HeaderCell>
+                <Table.HeaderCell>Verdict</Table.HeaderCell>
+                <Table.HeaderCell>Flags</Table.HeaderCell>
+                <Table.HeaderCell>Notes</Table.HeaderCell>
+                <Table.HeaderCell>Curator Comments</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
 
-                <Table.Body>
-                  {results.map(result => (
-                    <Table.Row key={`${result.variant.variant_id}-${result.curator}`}>
-                      <Table.Cell>
-                        <VariantId variantId={result.variant.variant_id} />
-                      </Table.Cell>
-                      <Table.Cell>{result.curator}</Table.Cell>
-                      <Table.Cell>
-                        {result.verdict ? <Verdict verdict={result.verdict} /> : "No verdict"}
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Flags result={result} />
-                      </Table.Cell>
-                      <Table.Cell>{result.notes}</Table.Cell>
-                      <Table.Cell>{result.curator_comments}</Table.Cell>
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table>
-            );
-          }}
-        </Fetch>
-      </PermissionRequired>
-    </Page>
-  );
-};
+            <Table.Body>
+              {results.map((result) => (
+                <Table.Row key={`${result.variant.variant_id}-${result.curator}`}>
+                  <Table.Cell>
+                    <VariantId variantId={result.variant.variant_id} />
+                  </Table.Cell>
+                  <Table.Cell>{result.curator}</Table.Cell>
+                  <Table.Cell>
+                    {result.verdict ? <Verdict verdict={result.verdict} /> : "No verdict"}
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Flags result={result} />
+                  </Table.Cell>
+                  <Table.Cell>{result.notes}</Table.Cell>
+                  <Table.Cell>{result.curator_comments}</Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table>
+        )}
+      </Fetch>
+    </PermissionRequired>
+  </Page>
+);
 
 ProjectResultsPage.propTypes = {
   history: PropTypes.shape({

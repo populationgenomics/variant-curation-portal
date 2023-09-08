@@ -27,6 +27,7 @@ class CustomFlagForm extends React.Component {
     flag: null,
   };
 
+  // eslint-disable-next-line react/no-unused-class-component-methods
   formElement = React.createRef();
 
   constructor(props) {
@@ -55,7 +56,7 @@ class CustomFlagForm extends React.Component {
         showNotification({ title: "Success", message: "Custom flag created", status: "success" });
         return onSave(null, flagData.key);
       },
-      error => {
+      (error) => {
         this.setState({ isSaving: false, errors: error.data });
       }
     );
@@ -71,7 +72,7 @@ class CustomFlagForm extends React.Component {
         showNotification({ title: "Success", message: "Custom flag updated", status: "success" });
         return onSave(flag.key, flagData.key);
       },
-      error => {
+      (error) => {
         this.setState({ isSaving: false, errors: error.data });
       }
     );
@@ -90,7 +91,7 @@ class CustomFlagForm extends React.Component {
         showNotification({ title: "Success", message: "Custom flag deleted", status: "success" });
         return onSave(flag.key, null);
       },
-      error => {
+      (error) => {
         showNotification({ title: "Error", message: "Unable to delete flag", status: "error" });
         this.setState({ isSaving: false, errors: error.data });
       }
@@ -181,59 +182,57 @@ class CustomFlagForm extends React.Component {
     const { flagData, errors } = this.state;
 
     return (
-      <React.Fragment>
-        <Form.Field>
-          <Form.Input
-            id={`form-input-${action}-custom-flag-key`}
-            name="key"
-            help="Hello world"
-            label="Unique Identifier"
-            placeholder="flag_lower_snake_case"
-            value={flagData.key}
-            onChange={e => this.setState({ flagData: { ...flagData, key: e.target.value } })}
-            error={
-              errors?.key
-                ? {
-                    content: errors.key.join(" "),
-                    pointing: "below",
-                  }
-                : false
-            }
-          />
-          <Form.Input
-            id={`form-input-${action}-custom-flag-label`}
-            name="label"
-            label="Flag Label"
-            placeholder="A brief descriptive label"
-            value={flagData.label}
-            onChange={e => this.setState({ flagData: { ...flagData, label: e.target.value } })}
-            error={
-              errors?.label
-                ? {
-                    content: errors.label.join(" "),
-                    pointing: "below",
-                  }
-                : false
-            }
-          />
-          <Form.Input
-            id={`form-input-${action}-custom-flag-shortcut`}
-            name="shortcut"
-            label="Keyboard Shortcut"
-            placeholder="Two upper-case letters"
-            value={flagData.shortcut}
-            onChange={e => this.setState({ flagData: { ...flagData, shortcut: e.target.value } })}
-            error={
-              errors?.shortcut
-                ? {
-                    content: errors.shortcut.join(" "),
-                    pointing: "below",
-                  }
-                : false
-            }
-          />
-        </Form.Field>
-      </React.Fragment>
+      <Form.Field>
+        <Form.Input
+          id={`form-input-${action}-custom-flag-key`}
+          name="key"
+          help="Hello world"
+          label="Unique Identifier"
+          placeholder="flag_lower_snake_case"
+          value={flagData.key}
+          onChange={(e) => this.setState({ flagData: { ...flagData, key: e.target.value } })}
+          error={
+            errors?.key
+              ? {
+                  content: errors.key.join(" "),
+                  pointing: "below",
+                }
+              : false
+          }
+        />
+        <Form.Input
+          id={`form-input-${action}-custom-flag-label`}
+          name="label"
+          label="Flag Label"
+          placeholder="A brief descriptive label"
+          value={flagData.label}
+          onChange={(e) => this.setState({ flagData: { ...flagData, label: e.target.value } })}
+          error={
+            errors?.label
+              ? {
+                  content: errors.label.join(" "),
+                  pointing: "below",
+                }
+              : false
+          }
+        />
+        <Form.Input
+          id={`form-input-${action}-custom-flag-shortcut`}
+          name="shortcut"
+          label="Keyboard Shortcut"
+          placeholder="Two upper-case letters"
+          value={flagData.shortcut}
+          onChange={(e) => this.setState({ flagData: { ...flagData, shortcut: e.target.value } })}
+          error={
+            errors?.shortcut
+              ? {
+                  content: errors.shortcut.join(" "),
+                  pointing: "below",
+                }
+              : false
+          }
+        />
+      </Form.Field>
     );
   }
 
@@ -250,11 +249,11 @@ class CustomFlagForm extends React.Component {
 }
 
 const ConnectedCustomFlagForm = connect(
-  state => state,
-  dispatch => ({
-    onCreate: flag => dispatch(createCustomFlag(flag)),
-    onUpdate: flag => dispatch(updateCustomFlag(flag)),
-    onDelete: flag => dispatch(deleteCustomFlag(flag)),
+  (state) => state,
+  (dispatch) => ({
+    onCreate: (flag) => dispatch(createCustomFlag(flag)),
+    onUpdate: (flag) => dispatch(updateCustomFlag(flag)),
+    onDelete: (flag) => dispatch(deleteCustomFlag(flag)),
   })
 )(CustomFlagForm);
 

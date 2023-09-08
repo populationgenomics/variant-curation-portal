@@ -1,6 +1,7 @@
-Django
+django<3
 django-filter
 django-webpack-loader
 djangorestframework
 rules
 whitenoise
+cloudpathlib[gs]

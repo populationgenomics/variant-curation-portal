@@ -6,7 +6,6 @@ import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("curation_portal", "0012_auto_20230112_0225"),
     ]
