@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import ChoiceField, ModelSerializer, SerializerMethodField
 from rest_framework.views import APIView
 
-from curation_portal.models import CurationResult, Project, Variant, FLAG_FIELDS
+from curation_portal.models import CurationResult, Project, Variant, User, FLAG_FIELDS
 from curation_portal.serializers import ImportedResultSerializer, CustomFlagCurationResultSerializer
 
 
@@ -14,6 +14,18 @@ class VariantSerializer(ModelSerializer):
     class Meta:
         model = Variant
         fields = ("id", "variant_id")
+
+
+class CuratorSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "username")
+
+
+class EditorSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "username")
 
 
 class CurationResultSerializer(ModelSerializer):
@@ -25,7 +37,12 @@ class CurationResultSerializer(ModelSerializer):
     curator = SerializerMethodField()
 
     def get_curator(self, obj):  # pylint: disable=no-self-use
-        return obj.assignment.curator.username
+        return CuratorSerializer(obj.assignment.curator).data
+
+    editor = SerializerMethodField()
+
+    def get_editor(self, obj):  # pylint: disable=no-self-use
+        return EditorSerializer(obj.assignment.result.editor).data
 
     verdict = ChoiceField(
         ["lof", "likely_lof", "uncertain", "likely_not_lof", "not_lof"],
@@ -46,6 +63,7 @@ class CurationResultSerializer(ModelSerializer):
             "verdict",
             "variant",
             "curator",
+            "editor",
         )
 
 
