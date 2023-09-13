@@ -5,7 +5,7 @@ from django.http.response import FileResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.exceptions import NotFound, ParseError
-from rest_framework.fields import CharField, SerializerMethodField
+from rest_framework.fields import SerializerMethodField
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import ChoiceField, ModelSerializer
@@ -108,8 +108,8 @@ def serialize_adjacent_variant(variant_values):
 class OwnerAccessible:
     @property
     def is_project_owner(self):
-        project = Project.objects.get(pk=self.kwargs["project_id"])
-        return project.owners.filter(pk=self.request.user.pk).exists()
+        project = Project.objects.get(pk=self.kwargs["project_id"])  # pylint: disable=no-member
+        return project.owners.filter(pk=self.request.user.pk).exists()  # pylint: disable=no-member
 
     @property
     def project_owner_is_editing_another_curators_result(self):
@@ -117,10 +117,11 @@ class OwnerAccessible:
         if not curator:
             return False
 
-        requester_is_curator = curator.id == self.request.user.id
+        requester_is_curator = curator.id == self.request.user.id  # pylint: disable=no-member
         return self.is_project_owner and not requester_is_curator
 
     def get_curator(self):
+        # pylint: disable-next=no-member
         curator_id = self.request.GET.get("curator") or self.request.data.get("curator")
         if curator_id:
             return User.objects.get(id=curator_id)
@@ -132,7 +133,7 @@ class OwnerAccessible:
             return CurationAssignment.objects.filter(curator=self.get_curator())
 
         # Default to user's own assignments
-        return self.request.user.curation_assignments
+        return self.request.user.curation_assignments  # pylint: disable=no-member
 
 
 class ReadsFileView(APIView, OwnerAccessible):
