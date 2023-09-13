@@ -55,21 +55,26 @@ class ExportProjectResultsView(APIView):
             )
         )
 
-        # Project owners can download all results for the project and optionally filter them by curator.
+        # Project owners can download all results for the project and optionally filter them
+        # by curator.
         # Curators can only download their own results.
         if request.user.has_perm("curation_portal.change_project", project):
             filter_params = request.query_params
         else:
             filter_params = {"curator__username": request.user.username}
 
-        filtered_assignments = ExportResultsFilter(filter_params, queryset=completed_assignments)
+        filtered_assignments = ExportResultsFilter(
+            filter_params,
+            queryset=completed_assignments,
+        )
 
         # Include project name and (if applicable) curator name in downloaded file name.
         filename_prefix = f"{project.name}"
         if "curator__username" in filter_params:
             filename_prefix += "_" + filter_params["curator__username"]
 
-        # Based on django.utils.text.get_valid_filename, but replace characters with "-" instead of removing them.
+        # Based on django.utils.text.get_valid_filename, but replace characters with "-" instead
+        # of removing them.
         filename_prefix = re.sub(r"(?u)[^-\w]", "-", filename_prefix)
 
         response = HttpResponse(content_type="text/csv")
@@ -77,7 +82,7 @@ class ExportProjectResultsView(APIView):
 
         writer = csv.writer(response)
 
-        header_row = ["Variant ID", "Gene", "Transcript", "Curator"] + [
+        header_row = ["Variant ID", "Gene", "Transcript", "Curator", "Editor"] + [
             FLAG_LABELS.get(f, " ".join(word.capitalize() for word in f.split("_")))
             for f in result_fields
         ]
@@ -87,6 +92,7 @@ class ExportProjectResultsView(APIView):
         writer.writerow(header_row)
 
         for assignment in filtered_assignments.qs:
+            editor = assignment.result.editor
             row = (
                 [
                     assignment.variant.variant_id,
@@ -103,6 +109,7 @@ class ExportProjectResultsView(APIView):
                         )
                     ),
                     assignment.curator.username,
+                    editor.username if editor else None,
                 ]
                 + [getattr(assignment.result, f) for f in result_fields]
                 # Custom flag results
