@@ -39,6 +39,7 @@ class UserSettingsSerializer(ModelSerializer):
 
 
 class UserField(RelatedField):
+    fail_if_not_found = False
     default_error_messages = {"invalid": "Invalid username."}
 
     queryset = User.objects.all()
@@ -52,13 +53,20 @@ class UserField(RelatedField):
             validator(data)
 
         try:
-            user, _ = self.get_queryset().get_or_create(username=data)
+            if self.fail_if_not_found:
+                user = self.get_queryset().get(username=data)
+            else:
+                user, _ = self.get_queryset().get_or_create(username=data)
             return user
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, User.DoesNotExist):
             self.fail("invalid")
 
     def to_representation(self, value):
         return value.username
+
+
+class StrictUserField(UserField):
+    fail_if_not_found = True
 
 
 class ProjectSerializer(ModelSerializer):
@@ -291,6 +299,8 @@ class ImportedResultSerializer(ModelSerializer):
 
     custom_flags = CustomFlagCurationResultSerializer(required=False, allow_null=True)
 
+    editor = StrictUserField(required=False, allow_null=True)
+
     class Meta:
         model = CurationResult
         exclude = ("id",)
@@ -302,6 +312,15 @@ class ImportedResultSerializer(ModelSerializer):
 
         return value
 
+    def validate_editor(self, value):
+        if not value:
+            return None
+
+        if not self.context["project"].owners.filter(id=value.id).exists():
+            raise ValidationError(f"User '{value}' is not a project owner")
+
+        return value
+
     def validate(self, attrs):
         if CurationAssignment.objects.filter(
             variant__project=self.context["project"],
@@ -309,6 +328,10 @@ class ImportedResultSerializer(ModelSerializer):
             curator__username=attrs["curator"],
         ).exists():
             raise ValidationError("Duplicate assignment")
+
+        editor = attrs.get("editor", None)
+        if editor and attrs["curator"] == editor:
+            raise ValidationError("'curator' and 'editor' cannot be the same user")
 
         return attrs
 
@@ -323,7 +346,8 @@ class ImportedResultSerializer(ModelSerializer):
         custom_flags = validated_data.pop("custom_flags", {})
         result = CurationResult(**validated_data)
 
-        # If a created/updated timestamp is specified, override the auto_now settings on CurationResult
+        # If a created/updated timestamp is specified, override the auto_now settings on
+        # CurationResult
         for field in result._meta.local_fields:
             if field.name in ["created_at", "updated_at"] and field.name in validated_data:
                 field.auto_now = False
