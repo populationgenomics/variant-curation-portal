@@ -310,3 +310,72 @@ def test_upload_sets_notes_and_curator_comments_fields(db_setup):
     result = CurationResult.objects.get(assignment__variant__variant_id="1-100-A-G")
     assert result.notes == "foo"
     assert result.curator_comments == "bar"
+
+
+def test_upload_results_sets_project_owner_as_editor(db_setup):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    response = client.post(
+        "/api/project/1/results/",
+        [
+            {
+                "curator": "user3@example.com",
+                "variant_id": "1-100-A-G",
+                "verdict": "likely_lof",
+                "editor": "user1@example.com",
+            }
+        ],
+        format="json",
+    )
+
+    assert response.status_code == 200, response.json()
+
+    result = CurationResult.objects.get(assignment__variant__variant_id="1-100-A-G")
+    assert result.editor.username == "user1@example.com"
+
+
+@pytest.mark.parametrize(
+    "curator,editor,error_field,error_message",
+    [
+        (
+            "user1@example.com",
+            "user1@example.com",
+            "non_field_errors",
+            "'curator' and 'editor' cannot be the same user",
+        ),
+        (
+            "user3@example.com",
+            "user2@example.com",
+            "editor",
+            "User 'user2@example.com' is not a project owner",
+        ),
+        (
+            "user3@example.com",
+            "not_a_user",
+            "editor",
+            "Invalid username.",
+        ),
+    ],
+)
+def test_upload_results_rejects_results_when_editor_is_improperly_configured(
+    db_setup, curator, editor, error_field, error_message
+):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    response = client.post(
+        "/api/project/1/results/",
+        [
+            {
+                "curator": curator,
+                "variant_id": "1-100-A-G",
+                "editor": editor,
+            }
+        ],
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert error_message in response.json()[0][error_field]
+    assert not CurationResult.objects.filter(assignment__variant__variant_id="1-100-A-G").exists()

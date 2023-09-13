@@ -75,7 +75,7 @@ def test_get_results_returns_all_curated_variants(db_setup):
     response = client.get("/api/project/1/results/", format="json").json()
 
     actual = set(
-        (row["variant"]["variant_id"], row["curator"], row["verdict"])
+        (row["variant"]["variant_id"], row["curator"]["username"], row["verdict"])
         for row in response["results"]
     )
 
