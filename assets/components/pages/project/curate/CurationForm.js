@@ -118,8 +118,14 @@ class CurationForm extends React.Component {
   saveResult() {
     const { value, onSubmit } = this.props;
 
+    const curator = new URLSearchParams(window.location.search).get("curator");
+    let data = { ...value };
+    if (curator) {
+      data = { ...data, curator };
+    }
+
     this.setState({ isSaving: true });
-    onSubmit(value).then(
+    onSubmit(data).then(
       () => {
         showNotification({ title: "Success", message: "Curation saved", status: "success" });
         this.setState({ isSaving: false });
