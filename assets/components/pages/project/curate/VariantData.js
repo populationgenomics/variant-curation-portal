@@ -176,7 +176,7 @@ class VariantData extends React.Component {
           <strong>Genotype Call:</strong> {(variant.GT ?? []).join(", ")}
         </List.Item>
         <List.Item>
-          <strong>Genotype Depth:</strong> {(variant.DP ?? []).join(", ")}
+          <strong>Read Depth:</strong> {(variant.DP ?? []).join(", ")}
         </List.Item>
         <List.Item>
           <strong>Genotype Quality:</strong> {(variant.GQ ?? []).join(", ")}
