@@ -7,7 +7,6 @@
     "lint": "eslint .",
     "test": "jest"
   },
-
   "devDependencies": {
     "@babel/core": "^7.22.9",
     "@babel/eslint-parser": "^7.22.10",

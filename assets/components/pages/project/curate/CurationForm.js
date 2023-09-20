@@ -26,6 +26,7 @@ import { showNotification } from "../../../Notifications";
 import { CurationResultPropType, CustomFlagPropType } from "../../../propTypes";
 import KeyboardShortcut, { KeyboardShortcutHint } from "../../../KeyboardShortcut";
 import CustomFlagForm from "./CustomFlagForm";
+import CurationFlagRules from "../../../../utilities/CurationFlagRules";
 
 class CurationForm extends React.Component {
   static propTypes = {
@@ -56,11 +57,55 @@ class CurationForm extends React.Component {
       ],
     };
 
+    this.parentFields = {
+      flag_mapping_error: [
+        "flag_self_chain",
+        "flag_str_or_low_complexity",
+        "flag_low_umap_m50",
+        "flag_dubious_read_alignment",
+      ],
+      flag_genotyping_error: [
+        "flag_low_genotype_quality",
+        "flag_low_read_depth",
+        "flag_allele_balance",
+        "flag_gc_rich",
+        "flag_homopolymer_or_str",
+        "flag_strand_bias",
+      ],
+      flag_inconsequential_transcript: [
+        "flag_multiple_annotations",
+        "flag_pext_less_than_half_max",
+        "flag_uninformative_pext",
+        "flag_minority_of_transcripts",
+        "flag_minor_protein_isoform",
+        "flag_weak_exon_conservation",
+        "flag_untranslated_transcript",
+      ],
+      flag_rescue: [
+        "flag_mnp",
+        "flag_frame_restoring_indel",
+        "flag_first_150_bp",
+        "flag_in_frame_sai",
+        "flag_methionine_resuce",
+        "flag_escapes_nmd",
+        "flag_low_truncated",
+      ],
+    };
+
     this.state = {
       isSaving: false,
       showCreateFlagForm: false,
       flagToUpdate: null,
     };
+  }
+
+  componentDidUpdate() {
+    const { value } = this.props;
+    const verdictRules = CurationFlagRules(value);
+    if (value["verdict"] && !verdictRules[value["verdict"]]) {
+      // if there was a verdict but now it's one of the greyed out options, remove it
+      this.setResultField("verdict", null);
+    }
   }
 
   setResultField(field, fieldValue) {
@@ -117,7 +162,6 @@ class CurationForm extends React.Component {
 
   saveResult() {
     const { value, onSubmit } = this.props;
-
     this.setState({ isSaving: true });
     onSubmit(value).then(
       () => {
@@ -141,10 +185,33 @@ class CurationForm extends React.Component {
     return newResult;
   }
 
+  UncheckParentIfChildIsOnlyTicked(field, value) {
+    const { onChange } = this.props;
+    if (!value[field]) return this.setResultField(field, true); //if flag was unchecked
+    const found = Object.entries(this.parentFields).find(([parent, childFields]) =>
+      childFields.includes(field)
+    );
+    if (!found) return this.setResultField(field, false); // if flag is not a child of a parent
+    const parentFlag = found[0];
+    const childFlags = found[1];
+    if (!value[parentFlag]) return this.setResultField(field, false); //if the parent flag hasn't been checked
+    if (
+      !Object.entries(value).some(
+        ([flag, bool]) => childFlags.includes(flag) && bool && flag !== field
+      )
+    ) {
+      //only child of parent that is ticked
+      onChange(this.syncFields({ ...value, [field]: false, [parentFlag]: false }));
+    } else {
+      this.setResultField(field, false); // everything else
+    }
+  }
+
   renderFlagInput(field, label, shortcut, parent = false, isCustomFlag = false) {
     const { value, customFlags } = this.props;
 
     const disabledFields = Object.keys(this.syncedFields);
+    const mainFields = Object.keys(this.parentFields);
 
     return (
       <React.Fragment key={field}>
@@ -183,8 +250,15 @@ class CurationForm extends React.Component {
           }}
           onChange={(e) => {
             if (disabledFields.includes(field)) return null;
+            if (
+              mainFields.includes(field) &&
+              !Object.entries(value).some(
+                ([flag, value]) => this.parentFields[field].includes(flag) && value
+              )
+            )
+              return null; // dont allow selection of parent without child
             if (isCustomFlag) return this.setCustomFlagField(field, e.target.checked);
-            return this.setResultField(field, e.target.checked);
+            return this.UncheckParentIfChildIsOnlyTicked(field, value);
           }}
         />
         {shortcut != null ? (
@@ -192,8 +266,15 @@ class CurationForm extends React.Component {
             keys={shortcut}
             onShortcut={() => {
               if (disabledFields.includes(field)) return null;
+              if (
+                mainFields.includes(field) &&
+                !Object.entries(value).some(
+                  ([flag, value]) => this.parentFields[field].includes(flag) && value
+                )
+              )
+                return null;
               if (isCustomFlag) return this.toggleCustomFlagField(field);
-              return this.toggleResultField(field);
+              return this.UncheckParentIfChildIsOnlyTicked(field, value);
             }}
           />
         ) : null}
@@ -283,6 +364,7 @@ class CurationForm extends React.Component {
   render() {
     const { value, errors } = this.props;
     const { isSaving } = this.state;
+    const verdictRules = CurationFlagRules(value);
 
     return (
       <Ref innerRef={this.formElement}>
@@ -456,6 +538,7 @@ class CurationForm extends React.Component {
                 <React.Fragment key={verdict}>
                   <Form.Field
                     control={Radio}
+                    disabled={!verdictRules[verdict]}
                     checked={value.verdict === verdict}
                     label={{
                       children: (
@@ -479,6 +562,9 @@ class CurationForm extends React.Component {
                   />
                 </React.Fragment>
               ))}
+              <Button type="button" onClick={() => this.setResultField("verdict", null)}>
+                Clear
+              </Button>
             </Form.Group>
           </div>
 

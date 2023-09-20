@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Item, List } from "semantic-ui-react";
 
 import { CurationAssignmentPropType, CurationResultPropType } from "../../../propTypes";
-import Flags from "../../../result/Flags";
+import Flags, { RenderFlagRulesFollowedIcon } from "../../../result/Flags";
 import Verdict from "../../../result/Verdict";
 import VariantId from "../../../VariantId";
 
@@ -13,6 +13,7 @@ const CurationResult = ({ result }) => (
     {result.verdict && <Verdict verdict={result.verdict} />}{" "}
     <span style={{ marginLeft: "1ch" }}>
       <Flags result={result} />
+      {result.verdict && <RenderFlagRulesFollowedIcon result={result} />}
     </span>{" "}
     {result.notes && (
       <span>
