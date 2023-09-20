@@ -26,7 +26,7 @@ const CurationFlagRules = (flags) => {
     return verdictFlags;
   }
   if (flags["flag_reference_error"]) {
-    verdictFlags["lof"] = true;
+    verdictFlags["not_lof"] = true;
     return verdictFlags;
   }
   if (
