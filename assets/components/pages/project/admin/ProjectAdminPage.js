@@ -59,7 +59,15 @@ const ProjectAdminPage = ({ project, user }) => {
                         download
                         href={`/api/project/${project.id}/results/export/?curator__username=${curator}`}
                       >
-                        Download results
+                        Download CSV results
+                      </Button>
+                      <Button
+                        as="a"
+                        disabled={completed === 0}
+                        download
+                        href={`/api/project/${project.id}/results/export/?curator__username=${curator}&format=json`}
+                      >
+                        Download JSON results
                       </Button>
                     </Item.Meta>
                   </Item.Content>
