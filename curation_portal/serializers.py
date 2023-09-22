@@ -354,11 +354,11 @@ class ImportedResultSerializer(ModelSerializer):
     def create(self, validated_data):
         curator = validated_data.pop("curator", None)
         variant_id = validated_data.pop("variant_id", None)
+        custom_flags = validated_data.pop("custom_flags", {})
 
         variant = Variant.objects.get(project=self.context["project"], variant_id=variant_id)
+        # Assignment might already exist but a curation result has not yet been created.
         assignment = CurationAssignment.objects.get_or_create(curator=curator, variant=variant)[0]
-
-        custom_flags = validated_data.pop("custom_flags", {})
         result = CurationResult(**validated_data)
 
         # If a created/updated timestamp is specified, override the auto_now settings on
