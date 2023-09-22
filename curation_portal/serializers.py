@@ -2,6 +2,7 @@ from collections import Counter, defaultdict
 
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import MaxLengthValidator
+from rest_framework.fields import CharField
 from rest_framework.serializers import (
     ChoiceField,
     ListSerializer,
@@ -286,8 +287,48 @@ class ImportedResultListSerializer(ListSerializer):  # pylint: disable=abstract-
 
         return attrs
 
+    def get_assignment(self, variant_id, curator):
+        return CurationAssignment.objects.filter(
+            variant__project=self.child.context["project"],
+            variant__variant_id=variant_id,
+            curator__username=curator,
+        ).first()
+
+    def save(self, **kwargs):
+        """
+        Save and return a list of object instances.
+        """
+        # Guard against incorrect use of `serializer.save(commit=False)`
+        assert "commit" not in kwargs, (
+            "'commit' is not a valid keyword argument to the 'save()' method. "
+            "If you need to access data before committing to the database then "
+            "inspect 'serializer.validated_data' instead. "
+            "You can also pass additional keyword arguments to 'save()' if you "
+            "need to set extra attributes on the saved model instance. "
+            "For example: 'serializer.save(owner=request.user)'.'"
+        )
+
+        validated_data = [{**attrs, **kwargs} for attrs in self.validated_data]
+        instances = []
+        for attrs in validated_data:
+            instance = self.get_assignment(attrs["variant_id"], attrs["curator"])
+            if instance and instance.result:
+                attrs.pop("created_at", None)
+                attrs.pop("updated_at", None)
+                instance = self.child.update(instance.result, attrs)
+                assert instance is not None, "`update()` did not return an object instance."
+            else:
+                instance = self.child.create(attrs)
+                assert instance is not None, "`create()` did not return an object instance."
+
+            instances.append(instance)
+
+        return instances
+
 
 class ImportedResultSerializer(ModelSerializer):
+    # Dev Note: Keep these fields in-sync with ../assets/results-schema.json and also with
+    # ExportedResultSerializer below.
     curator = UserField(required=True)
     variant_id = RegexField(VARIANT_ID_REGEX, required=True)
 
@@ -298,8 +339,6 @@ class ImportedResultSerializer(ModelSerializer):
     )
 
     custom_flags = CustomFlagCurationResultSerializer(required=False, allow_null=True)
-
-    editor = StrictUserField(required=False, allow_null=True)
 
     class Meta:
         model = CurationResult
@@ -312,36 +351,12 @@ class ImportedResultSerializer(ModelSerializer):
 
         return value
 
-    def validate_editor(self, value):
-        if not value:
-            return None
-
-        if not self.context["project"].owners.filter(id=value.id).exists():
-            raise ValidationError(f"User '{value}' is not a project owner")
-
-        return value
-
-    def validate(self, attrs):
-        if CurationAssignment.objects.filter(
-            variant__project=self.context["project"],
-            variant__variant_id=attrs["variant_id"],
-            curator__username=attrs["curator"],
-        ).exists():
-            raise ValidationError("Duplicate assignment")
-
-        editor = attrs.get("editor", None)
-        if editor and attrs["curator"] == editor:
-            raise ValidationError("'curator' and 'editor' cannot be the same user")
-
-        return attrs
-
     def create(self, validated_data):
         curator = validated_data.pop("curator", None)
         variant_id = validated_data.pop("variant_id", None)
 
         variant = Variant.objects.get(project=self.context["project"], variant_id=variant_id)
-
-        assignment = CurationAssignment.objects.create(curator=curator, variant=variant)
+        assignment = CurationAssignment.objects.get_or_create(curator=curator, variant=variant)[0]
 
         custom_flags = validated_data.pop("custom_flags", {})
         result = CurationResult(**validated_data)
@@ -355,6 +370,7 @@ class ImportedResultSerializer(ModelSerializer):
 
         result.save()
         if custom_flags:
+            # Will throw error unless CustomFlag instance already exists.
             self.fields["custom_flags"].create(result=result, data=custom_flags)
 
         assignment.result = result
@@ -363,4 +379,48 @@ class ImportedResultSerializer(ModelSerializer):
         return result
 
     def update(self, instance, validated_data):
-        raise NotImplementedError
+        curator = validated_data.pop("curator", None)
+        variant_id = validated_data.pop("variant_id", None)
+        custom_flags = validated_data.pop("custom_flags", {})
+
+        variant = Variant.objects.get(project=self.context["project"], variant_id=variant_id)
+        assignment = CurationAssignment.objects.get(curator=curator, variant=variant)
+        result = assignment.result
+
+        # Only save the result if any of the fields have changed.
+        result_changed = False
+        for attr, value in validated_data.items():
+            if getattr(result, attr) != value:
+                result_changed = True
+                setattr(result, attr, value)
+
+        if result_changed:
+            result.save()
+
+        for flag_key, checked in custom_flags.items():
+            flag = result.custom_flags.get(flag__key__exact=flag_key)
+            if flag.checked != checked:
+                result_changed = True
+                flag.checked = checked
+                flag.save()
+
+        if result_changed:
+            result.editor = self.context["request"].user
+            result.save()
+
+            assignment.result = result
+            assignment.save()
+
+        return result
+
+
+class ExportedResultSerializer(ModelSerializer):
+    # Dev Note: Keep these fields in-sync with ../assets/results-schema.json and also with
+    # ImportedResultSerializer above.
+    curator = CharField(source="assignment.curator.username")
+    variant_id = CharField(source="assignment.variant.variant_id")
+    custom_flags = CustomFlagCurationResultSerializer(required=False, allow_null=True)
+
+    class Meta:
+        model = CurationResult
+        exclude = ("id", "editor")
