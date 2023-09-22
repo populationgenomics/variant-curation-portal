@@ -342,7 +342,7 @@ class ImportedResultSerializer(ModelSerializer):
 
     class Meta:
         model = CurationResult
-        exclude = ("id",)
+        exclude = ("id", "editor")
         list_serializer_class = ImportedResultListSerializer
 
     def validate_variant_id(self, value):
@@ -404,7 +404,7 @@ class ImportedResultSerializer(ModelSerializer):
                 flag.checked = checked
                 flag.save()
 
-        if result_changed:
+        if result_changed and result.assignment.curator != self.context["request"].user:
             result.editor = self.context["request"].user
             result.save()
 
@@ -420,7 +420,8 @@ class ExportedResultSerializer(ModelSerializer):
     curator = CharField(source="assignment.curator.username")
     variant_id = CharField(source="assignment.variant.variant_id")
     custom_flags = CustomFlagCurationResultSerializer(required=False, allow_null=True)
+    editor = UserField(required=False, allow_null=True)
 
     class Meta:
         model = CurationResult
-        exclude = ("id", "editor")
+        exclude = ("id",)

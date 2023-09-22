@@ -10,6 +10,7 @@ from curation_portal.models import (
     User,
     CustomFlag,
     CustomFlagCurationResult,
+    Variant,
 )
 
 pytestmark = pytest.mark.django_db  # pylint: disable=invalid-name
@@ -313,7 +314,7 @@ def test_upload_sets_notes_and_curator_comments_fields(db_setup):
     assert result.curator_comments == "bar"
 
 
-def test_upload_results_updates_existing_and_sets_requester_as_editor(db_setup):
+def test_upload_results_updates_fields_updated_at_timestamp_and_sets_requester_as_editor(db_setup):
     client = APIClient()
     client.force_authenticate(User.objects.get(username="user1@example.com"))
 
@@ -343,6 +344,36 @@ def test_upload_results_updates_existing_and_sets_requester_as_editor(db_setup):
     timestamp_after = assignment.result.updated_at
     assert assignment.result.editor.username == "user1@example.com"
     assert timestamp_before < timestamp_after
+
+
+def test_upload_results_does_not_set_editor_if_requester_is_the_curator_for_an_assignment(db_setup):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    # Create new assignment curation result
+    assignment = CurationAssignment.objects.create(
+        curator=User.objects.get(username="user1@example.com"),
+        variant=Variant.objects.get(variant_id="1-100-A-G"),
+    )
+    assignment.result = CurationResult.objects.create()
+    assignment.save()
+
+    response = client.post(
+        "/api/project/1/results/",
+        [
+            {
+                "curator": "user1@example.com",
+                "variant_id": "1-100-A-G",
+                "notes": "Hello, world!",
+            }
+        ],
+        format="json",
+    )
+
+    assert response.status_code == 200, response.json()
+
+    assignment.result.refresh_from_db()
+    assert assignment.result.editor is None
 
 
 def test_upload_results_does_not_update_result_if_fields_have_not_changed(db_setup):
