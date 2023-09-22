@@ -93,7 +93,7 @@ class ProjectResultsView(APIView):
         project = self.get_project()
 
         serializer = ImportedResultSerializer(
-            data=request.data, context={"project": project}, many=True
+            data=request.data, context={"project": project, "request": request}, many=True
         )
         serializer.is_valid(raise_exception=True)
 
