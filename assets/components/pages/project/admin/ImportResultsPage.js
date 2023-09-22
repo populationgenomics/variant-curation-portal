@@ -159,9 +159,9 @@ class ImportResultsPage extends Component {
             <Header as="h4">Upload results from file</Header>
             <p>
               Existing results will be updated and marked as edited by you if any of the fields in
-              the uploaded file differ from what is in the system. If a result&apos;s field is
-              missing in the uploaded file, then the original data in the system for this field will
-              be kept.
+              the uploaded file differ from what is in the system. The original data in the system
+              will be kept for all optional fields in the JSON schema that are not present in the
+              uploaded file.
             </p>
             <p>
               Omit the <b>created_at</b> and <b>updated_at</b> fields to set them as the current
