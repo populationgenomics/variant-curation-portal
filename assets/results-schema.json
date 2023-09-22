@@ -13,10 +13,6 @@
         "type": "string",
         "pattern": "^(\\d+|X|Y)[-:]([0-9]+)[-:]([ACGT]+)[-:]([ACGT]+)$"
       },
-      "editor": {
-        "description": "Editor's username (must be a project owner)",
-        "type": "string"
-      },
       "verdict": {
         "description": "Curation verdict",
         "enum": ["lof", "likely_lof", "uncertain", "likely_not_lof", "not_lof"]
