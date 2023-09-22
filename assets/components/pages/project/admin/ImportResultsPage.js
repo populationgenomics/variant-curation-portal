@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import { Button, Form, Header, Icon, Message, Modal, Segment } from "semantic-ui-react";
+import { Button, Form, Header, Message, Modal, Segment } from "semantic-ui-react";
 
 import api from "../../../../api";
 import { PermissionRequired } from "../../../../permissions";
@@ -120,12 +120,13 @@ class ImportResultsPage extends Component {
           </>
         );
       }
+      return null;
     });
 
     return (
       <Message error>
         <Message.Header>Failed to upload results</Message.Header>
-        <Message.List items={items} />
+        <Message.List items={items.filter((i) => i != null)} />
       </Message>
     );
   }
