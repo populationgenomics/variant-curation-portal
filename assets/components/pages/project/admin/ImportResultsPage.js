@@ -168,6 +168,10 @@ class ImportResultsPage extends Component {
               time when creating new results. These timestamp fields will be ignored when updating
               existing results, and the <b>updated_at</b> field will be set to the current time.
             </p>
+            <p>
+              The <b>editor</b> field is ignored during upload, but is present in the downloaded
+              JSON file for your reference.
+            </p>
             <Form error={Boolean(fileReadError || saveError)} onSubmit={this.onSubmit}>
               <Button
                 as="label"
