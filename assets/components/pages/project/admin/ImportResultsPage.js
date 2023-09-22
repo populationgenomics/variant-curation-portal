@@ -89,6 +89,47 @@ class ImportResultsPage extends Component {
     reader.readAsText(file);
   };
 
+  renderErrorDetail(detail) {
+    return Object.entries(detail).map(([key, value], index) => {
+      const { variant_id: variantId, curator } = this.resultsData[index];
+      return (
+        <li key={`${variantId}-${curator}-${key}`}>
+          <b>{key}:</b> {value}
+        </li>
+      );
+    });
+  }
+
+  renderError(error) {
+    if (!error.data) {
+      return <Message error header="Failed to upload results (unknown error)" />;
+    }
+
+    const errorList = Array.isArray(error.data) ? error.data : [error.data];
+
+    const items = errorList.map((detail, index) => {
+      if (Object.entries(detail).length) {
+        const { variant_id: variantId, curator } = this.resultsData[index];
+        return (
+          <>
+            <div key={`list-item-${index + 1}`}>
+              <b>Item {index + 1}:</b> Variant: {variantId} | Curator: {curator}
+              <ul>{this.renderErrorDetail(detail)}</ul>
+            </div>
+            <br />
+          </>
+        );
+      }
+    });
+
+    return (
+      <Message error>
+        <Message.Header>Failed to upload results</Message.Header>
+        <Message.List items={items} />
+      </Message>
+    );
+  }
+
   render() {
     const { project, user } = this.props;
     const {
@@ -115,6 +156,17 @@ class ImportResultsPage extends Component {
         <PermissionRequired user={user} action="edit" resourceType="project" resource={project}>
           <Segment attached>
             <Header as="h4">Upload results from file</Header>
+            <p>
+              Existing results will be updated and marked as edited by you if any of the fields in
+              the uploaded file differ from what is in the system. If a result&apos;s field is
+              missing in the uploaded file, then the original data in the system for this field will
+              be kept.
+            </p>
+            <p>
+              Omit the <b>created_at</b> and <b>updated_at</b> fields to set them as the current
+              time when creating new results. These timestamp fields will be ignored when updating
+              existing results, and the <b>updated_at</b> field will be set to the current time.
+            </p>
             <Form error={Boolean(fileReadError || saveError)} onSubmit={this.onSubmit}>
               <Button
                 as="label"
@@ -122,7 +174,7 @@ class ImportResultsPage extends Component {
                 loading={isReadingFile}
                 htmlFor="results-file"
               >
-                <Icon name="upload" />
+                {/* <Icon name="upload" /> */}
                 {fileName || "Select results file"}
                 <input
                   disabled={isReadingFile}
@@ -133,7 +185,7 @@ class ImportResultsPage extends Component {
                 />
               </Button>
               {fileReadError && <Message error header="Failed to read file" />}
-              {saveError && <Message error header="Failed to upload results" />}
+              {saveError && this.renderError(saveError)}
               <Button disabled={!hasFileData || isSaving} loading={isSaving} primary type="submit">
                 Upload
               </Button>
