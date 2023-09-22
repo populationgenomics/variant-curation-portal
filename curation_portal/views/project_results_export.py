@@ -1,3 +1,4 @@
+import json
 import csv
 import re
 
@@ -16,7 +17,10 @@ from curation_portal.models import (
     CustomFlag,
     FLAG_FIELDS,
     FLAG_LABELS,
+    CurationResult,
 )
+
+from curation_portal.serializers import ExportedResultSerializer
 
 
 class ExportResultsFilter(FilterSet):
@@ -37,8 +41,6 @@ class ExportProjectResultsView(APIView):
 
     def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
         project = self.get_project()
-
-        result_fields = ["notes", "curator_comments", "should_revisit", "verdict", *FLAG_FIELDS]
 
         completed_assignments = (
             CurationAssignment.objects.filter(
@@ -76,6 +78,28 @@ class ExportProjectResultsView(APIView):
         # Based on django.utils.text.get_valid_filename, but replace characters with "-" instead
         # of removing them.
         filename_prefix = re.sub(r"(?u)[^-\w]", "-", filename_prefix)
+
+        if request.query_params.get("format") == "json":
+            return self.get_json_response(filtered_assignments, filename_prefix)
+        else:
+            return self.get_csv_response(filtered_assignments, filename_prefix)
+
+    def get_json_response(self, filtered_assignments, filename_prefix):
+        response = HttpResponse(content_type="application/json")
+        response["Content-Disposition"] = f'attachment; filename="{filename_prefix}_results.json"'
+
+        project = self.get_project()
+        serializer = ExportedResultSerializer(
+            instance=CurationResult.objects.filter(assignment__in=filtered_assignments.qs),
+            many=True,
+            context={"project": project},
+        )
+        response.write(json.dumps(serializer.data))
+
+        return response
+
+    def get_csv_response(self, filtered_assignments, filename_prefix):
+        result_fields = ["notes", "curator_comments", "should_revisit", "verdict", *FLAG_FIELDS]
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = f'attachment; filename="{filename_prefix}_results.csv"'
