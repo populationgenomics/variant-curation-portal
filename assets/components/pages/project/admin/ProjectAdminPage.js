@@ -84,7 +84,10 @@ const ProjectAdminPage = ({ project, user }) => {
           <Link to={`/project/${project.id}/results/import/`}>Import curation results</Link>
         </p>
         <Button as="a" download href={`/api/project/${project.id}/results/export/`}>
-          Download all results
+          Download CSV results
+        </Button>
+        <Button as="a" download href={`/api/project/${project.id}/results/export/?format=json`}>
+          Download JSON results
         </Button>
       </PermissionRequired>
     </Page>
