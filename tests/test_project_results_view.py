@@ -1,5 +1,6 @@
 # pylint: disable=redefined-outer-name,unused-argument
 import pytest
+from django.utils.dateparse import parse_datetime
 from rest_framework.test import APIClient
 
 from curation_portal.models import (
@@ -9,6 +10,7 @@ from curation_portal.models import (
     User,
     CustomFlag,
     CustomFlagCurationResult,
+    Variant,
 )
 
 pytestmark = pytest.mark.django_db  # pylint: disable=invalid-name
@@ -154,7 +156,7 @@ def test_upload_results_rejects_results_for_variants_that_do_not_exist(db_setup)
     assert not CurationResult.objects.filter(assignment__variant__variant_id="1-400-A-C").exists()
 
 
-def test_upload_results_rejects_results_for_assignments_that_already_exist(db_setup):
+def test_upload_results_updates_results_for_assignments_that_already_exist(db_setup):
     client = APIClient()
     client.force_authenticate(User.objects.get(username="user1@example.com"))
     response = client.post(
@@ -163,7 +165,7 @@ def test_upload_results_rejects_results_for_assignments_that_already_exist(db_se
         format="json",
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 200
     assert (
         CurationAssignment.objects.filter(
             variant__project=1,
@@ -310,3 +312,134 @@ def test_upload_sets_notes_and_curator_comments_fields(db_setup):
     result = CurationResult.objects.get(assignment__variant__variant_id="1-100-A-G")
     assert result.notes == "foo"
     assert result.curator_comments == "bar"
+
+
+def test_upload_results_updates_fields_updated_at_timestamp_and_sets_requester_as_editor(db_setup):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    # Create new assignment curation result
+    assignment = CurationAssignment.objects.get(
+        curator__username="user2@example.com", variant__variant_id="1-100-A-G"
+    )
+    assignment.result = CurationResult.objects.create()
+    assignment.save()
+    timestamp_before = assignment.result.updated_at
+
+    response = client.post(
+        "/api/project/1/results/",
+        [
+            {
+                "curator": "user2@example.com",
+                "variant_id": "1-100-A-G",
+                "notes": "Hello, world!",
+            }
+        ],
+        format="json",
+    )
+
+    assert response.status_code == 200, response.json()
+
+    assignment.result.refresh_from_db()
+    timestamp_after = assignment.result.updated_at
+    assert assignment.result.editor.username == "user1@example.com"
+    assert timestamp_before < timestamp_after
+
+
+def test_upload_results_does_not_set_editor_if_requester_is_the_curator_for_an_assignment(db_setup):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    # Create new assignment curation result
+    assignment = CurationAssignment.objects.create(
+        curator=User.objects.get(username="user1@example.com"),
+        variant=Variant.objects.get(variant_id="1-100-A-G"),
+    )
+    assignment.result = CurationResult.objects.create()
+    assignment.save()
+
+    response = client.post(
+        "/api/project/1/results/",
+        [
+            {
+                "curator": "user1@example.com",
+                "variant_id": "1-100-A-G",
+                "notes": "Hello, world!",
+            }
+        ],
+        format="json",
+    )
+
+    assert response.status_code == 200, response.json()
+
+    assignment.result.refresh_from_db()
+    assert assignment.result.editor is None
+
+
+def test_upload_results_does_not_update_result_if_fields_have_not_changed(db_setup):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    # Create new assignment curation result
+    assignment = CurationAssignment.objects.get(
+        curator__username="user2@example.com", variant__variant_id="1-100-A-G"
+    )
+    assignment.result = CurationResult.objects.create(notes="Hello, world!")
+    assignment.save()
+    timestamp_before = assignment.result.updated_at
+
+    response = client.post(
+        "/api/project/1/results/",
+        [
+            {
+                "curator": "user2@example.com",
+                "variant_id": "1-100-A-G",
+                "notes": "Hello, world!",
+            }
+        ],
+        format="json",
+    )
+
+    assert response.status_code == 200, response.json()
+
+    assignment.result.refresh_from_db()
+    timestamp_after = assignment.result.updated_at
+    # No editor should be set, and the timestamp should not have changed
+    assert assignment.result.editor is None
+    assert timestamp_before == timestamp_after
+
+
+def test_upload_results_ignores_timestamps_when_updating_existing_result(db_setup):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    # Create new assignment curation result
+    assignment = CurationAssignment.objects.get(
+        curator__username="user2@example.com", variant__variant_id="1-100-A-G"
+    )
+    assignment.result = CurationResult.objects.create()
+    assignment.save()
+
+    response = client.post(
+        "/api/project/1/results/",
+        [
+            {
+                "curator": "user2@example.com",
+                "variant_id": "1-100-A-G",
+                "notes": "Hello, world!",
+                "created_at": "2023-09-08T00:00:28.145556",
+                "updated_at": "2023-09-18T07:24:24.534399",
+            }
+        ],
+        format="json",
+    )
+
+    assert response.status_code == 200, response.json()
+
+    assignment.result.refresh_from_db()
+    assert parse_datetime(str(assignment.result.created_at)) != parse_datetime(
+        "2023-09-08T00:00:28.145556"
+    )
+    assert parse_datetime(str(assignment.result.updated_at)) != parse_datetime(
+        "2023-09-18T07:24:24.534399"
+    )

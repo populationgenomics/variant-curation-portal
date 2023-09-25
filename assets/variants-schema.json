@@ -53,12 +53,12 @@
         "minimum": 0
       },
       "GT": {
-        "description": "List of Genotype calls",
+        "description": "List of genotype calls",
         "type": ["array", "null"],
         "items": { "type": "string" }
       },
       "DP": {
-        "description": "List of genotype depths",
+        "description": "List of genotype call read depths",
         "type": ["array", "null"],
         "items": { "type": "integer" }
       },
