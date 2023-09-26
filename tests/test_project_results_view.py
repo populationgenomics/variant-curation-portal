@@ -76,7 +76,7 @@ def test_results_can_only_be_uploaded_by_project_owners(db_setup, username, expe
     client.force_authenticate(User.objects.get(username=username))
     response = client.post(
         "/api/project/1/results/",
-        [{"variant_id": "1-100-A-G", "curator": "user3@example.com", "verdict": "uncertain"}],
+        [{"variant_id": "1-100-A-G", "curator": "user3@example.com"}],
         format="json",
     )
     assert response.status_code == expected_status_code
@@ -87,7 +87,7 @@ def test_upload_results_creates_assignments_and_results(db_setup):
     client.force_authenticate(User.objects.get(username="user1@example.com"))
     response = client.post(
         "/api/project/1/results/",
-        [{"variant_id": "1-100-A-G", "curator": "user3@example.com", "verdict": "likely_lof"}],
+        [{"variant_id": "1-100-A-G", "curator": "user3@example.com", "verdict": "lof"}],
         format="json",
     )
     assert response.status_code == 200
@@ -95,7 +95,7 @@ def test_upload_results_creates_assignments_and_results(db_setup):
     query = {"assignment__variant__variant_id": "1-100-A-G", "assignment__variant__project": 1}
     assert CurationResult.objects.filter(**query).exists()
     result = CurationResult.objects.get(**query)
-    assert result.verdict == "likely_lof"
+    assert result.verdict == "lof"
 
 
 def test_upload_results_validates_variant_ids(db_setup):
