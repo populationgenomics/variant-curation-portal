@@ -40,3 +40,5 @@ RANKED_CONSEQUENCE_TERMS = [
 ]
 
 CONSEQUENCE_TERM_RANK = {term: rank for rank, term in enumerate(RANKED_CONSEQUENCE_TERMS)}
+
+VERDICTS = ["lof", "likely_lof", "uncertain", "likely_not_lof", "not_lof"]
