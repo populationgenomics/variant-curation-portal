@@ -4,7 +4,7 @@ from cloudpathlib.anypath import to_anypath
 from django.http.response import FileResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from rest_framework.exceptions import NotFound, ParseError, ValidationError
+from rest_framework.exceptions import NotFound, ParseError
 from rest_framework.fields import SerializerMethodField
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
