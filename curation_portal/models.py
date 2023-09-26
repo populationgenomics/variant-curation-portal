@@ -162,6 +162,15 @@ class CurationResult(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Track which project owner last edited this result.
+    editor = models.ForeignKey(
+        User,
+        default=None,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="edited_results",
+    )
+
     # Flags
     ## Technical
     flag_no_read_data = models.BooleanField(default=False)

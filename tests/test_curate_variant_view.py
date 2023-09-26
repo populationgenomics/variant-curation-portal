@@ -125,6 +125,55 @@ def test_curate_variant_view_can_only_be_viewed_by_variant_curators(
     assert response.status_code == expected_status_code
 
 
+@pytest.mark.parametrize(
+    "username,expected_status_code",
+    [
+        ("user1@example.com", 200),
+        ("user2@example.com", 200),
+        ("user3@example.com", 404),
+        ("user4@example.com", 404),
+    ],
+)
+def test_curate_variant_view_can_only_be_viewed_by_project_owners_when_specifying_result_curators_id(
+    db_setup, username, expected_status_code
+):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username=username))
+
+    variant1 = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    curator = User.objects.get(username="user2@example.com")
+    response = client.get(f"/api/project/1/variant/{variant1.id}/curate/?curator={curator.id}")
+    assert response.status_code == expected_status_code
+
+    response = client.post(
+        path=f"/api/project/1/variant/{variant1.id}/curate/",
+        data={"curator": curator.id},
+        format="json",
+    )
+    assert response.status_code == expected_status_code
+
+
+def test_curate_variant_view_cannot_be_viewed_by_project_owners_when_not_specifying_result_curators_id(
+    db_setup,
+):
+    client = APIClient()
+    owner = User.objects.get(username="user1@example.com")
+    client.force_authenticate(owner)
+
+    variant1 = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    response = client.get(f"/api/project/1/variant/{variant1.id}/curate/")
+    assert response.status_code == 404
+
+    response = client.post(
+        path=f"/api/project/1/variant/{variant1.id}/curate/",
+        data={},
+        format="json",
+    )
+    assert response.status_code == 404
+
+
 def test_curate_variant_stores_result(db_setup):
     client = APIClient()
     client.force_authenticate(User.objects.get(username="user2@example.com"))
@@ -157,6 +206,58 @@ def test_curate_variant_stores_result(db_setup):
     assert assignment.result.verdict == "lof"
     assert assignment.result.notes == "LoF for sure"
     assert assignment.result.curator_comments == "This is a Loss of Function variant"
+
+
+def test_curate_variant_view_sets_editor_if_request_is_from_a_project_owner(db_setup):
+    client = APIClient()
+    owner = User.objects.get(username="user1@example.com")
+    curator = User.objects.get(username="user2@example.com")
+
+    client.force_authenticate(owner)
+
+    variant1 = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    response = client.post(
+        path=f"/api/project/1/variant/{variant1.id}/curate/",
+        data={"curator": curator.id},
+        format="json",
+    )
+    assert response.status_code == 200
+
+    result = CurationResult.objects.filter(
+        assignment__curator__username="user2@example.com",
+        assignment__variant__project=1,
+        assignment__variant__variant_id="1-100-A-G",
+    )
+    assert result.exists()
+    assert result.first().editor == owner
+
+
+def test_curate_variant_view_unsets_editor_if_request_is_from_assigned_curator(db_setup):
+    client = APIClient()
+    owner = User.objects.get(username="user1@example.com")
+    curator = User.objects.get(username="user2@example.com")
+
+    client.force_authenticate(curator)
+
+    variant1 = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+    assignment = CurationAssignment.objects.get(curator=curator, variant=variant1)
+    result, _ = CurationResult.objects.get_or_create(editor=owner)
+    assignment.result = result
+    assignment.save()
+
+    response = client.post(
+        path=f"/api/project/1/variant/{variant1.id}/curate/",
+        data={},
+        format="json",
+    )
+    assert response.status_code == 200
+
+    result.refresh_from_db()
+    assignment.refresh_from_db()
+
+    assert assignment.result == result
+    assert result.editor is None
 
 
 def test_curate_variant_stores_custom_flags(db_setup):

@@ -1,3 +1,4 @@
+import json
 import csv
 import re
 
@@ -16,7 +17,10 @@ from curation_portal.models import (
     CustomFlag,
     FLAG_FIELDS,
     FLAG_LABELS,
+    CurationResult,
 )
+
+from curation_portal.serializers import ExportedResultSerializer
 
 
 class ExportResultsFilter(FilterSet):
@@ -38,8 +42,6 @@ class ExportProjectResultsView(APIView):
     def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
         project = self.get_project()
 
-        result_fields = ["notes", "curator_comments", "should_revisit", "verdict", *FLAG_FIELDS]
-
         completed_assignments = (
             CurationAssignment.objects.filter(
                 variant__project=project, result__verdict__isnull=False
@@ -55,29 +57,56 @@ class ExportProjectResultsView(APIView):
             )
         )
 
-        # Project owners can download all results for the project and optionally filter them by curator.
+        # Project owners can download all results for the project and optionally filter them
+        # by curator.
         # Curators can only download their own results.
         if request.user.has_perm("curation_portal.change_project", project):
             filter_params = request.query_params
         else:
             filter_params = {"curator__username": request.user.username}
 
-        filtered_assignments = ExportResultsFilter(filter_params, queryset=completed_assignments)
+        filtered_assignments = ExportResultsFilter(
+            filter_params,
+            queryset=completed_assignments,
+        )
 
         # Include project name and (if applicable) curator name in downloaded file name.
         filename_prefix = f"{project.name}"
         if "curator__username" in filter_params:
             filename_prefix += "_" + filter_params["curator__username"]
 
-        # Based on django.utils.text.get_valid_filename, but replace characters with "-" instead of removing them.
+        # Based on django.utils.text.get_valid_filename, but replace characters with "-" instead
+        # of removing them.
         filename_prefix = re.sub(r"(?u)[^-\w]", "-", filename_prefix)
+
+        if request.query_params.get("format") == "json":
+            return self.get_json_response(filtered_assignments, filename_prefix)
+        else:
+            return self.get_csv_response(filtered_assignments, filename_prefix)
+
+    def get_json_response(self, filtered_assignments, filename_prefix):
+        response = HttpResponse(content_type="application/json")
+        response["Content-Disposition"] = f'attachment; filename="{filename_prefix}_results.json"'
+
+        project = self.get_project()
+        serializer = ExportedResultSerializer(
+            instance=CurationResult.objects.filter(assignment__in=filtered_assignments.qs),
+            many=True,
+            context={"project": project},
+        )
+        response.write(json.dumps(serializer.data))
+
+        return response
+
+    def get_csv_response(self, filtered_assignments, filename_prefix):
+        result_fields = ["notes", "curator_comments", "should_revisit", "verdict", *FLAG_FIELDS]
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = f'attachment; filename="{filename_prefix}_results.csv"'
 
         writer = csv.writer(response)
 
-        header_row = ["Variant ID", "Gene", "Transcript", "Curator"] + [
+        header_row = ["Variant ID", "Gene", "Transcript", "Curator", "Editor"] + [
             FLAG_LABELS.get(f, " ".join(word.capitalize() for word in f.split("_")))
             for f in result_fields
         ]
@@ -87,6 +116,7 @@ class ExportProjectResultsView(APIView):
         writer.writerow(header_row)
 
         for assignment in filtered_assignments.qs:
+            editor = assignment.result.editor
             row = (
                 [
                     assignment.variant.variant_id,
@@ -103,6 +133,7 @@ class ExportProjectResultsView(APIView):
                         )
                     ),
                     assignment.curator.username,
+                    editor.username if editor else None,
                 ]
                 + [getattr(assignment.result, f) for f in result_fields]
                 # Custom flag results
