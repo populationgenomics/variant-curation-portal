@@ -26,6 +26,7 @@ import { showNotification } from "../../../Notifications";
 import { CurationResultPropType, CustomFlagPropType } from "../../../propTypes";
 import KeyboardShortcut, { KeyboardShortcutHint } from "../../../KeyboardShortcut";
 import CustomFlagForm from "./CustomFlagForm";
+import { CurationResultVerdictValidator } from "../../../../utilities/CurationFlagRules";
 
 class CurationForm extends React.Component {
   static propTypes = {
@@ -56,63 +57,95 @@ class CurationForm extends React.Component {
       ],
     };
 
+    this.parentFields = {
+      flag_mapping_error: [
+        "flag_self_chain",
+        "flag_str_or_low_complexity",
+        "flag_low_umap_m50",
+        "flag_dubious_read_alignment",
+      ],
+      flag_genotyping_error: [
+        "flag_low_genotype_quality",
+        "flag_low_read_depth",
+        "flag_allele_balance",
+        "flag_gc_rich",
+        "flag_homopolymer_or_str",
+        "flag_strand_bias",
+      ],
+      flag_inconsequential_transcript: [
+        "flag_multiple_annotations",
+        "flag_pext_less_than_half_max",
+        "flag_uninformative_pext",
+        "flag_minority_of_transcripts",
+        "flag_minor_protein_isoform",
+        "flag_weak_exon_conservation",
+        "flag_untranslated_transcript",
+      ],
+      flag_rescue: [
+        "flag_mnp",
+        "flag_frame_restoring_indel",
+        "flag_first_150_bp",
+        "flag_in_frame_sai",
+        "flag_methionine_resuce",
+        "flag_escapes_nmd",
+        "flag_low_truncated",
+      ],
+    };
+
     this.state = {
       isSaving: false,
       showCreateFlagForm: false,
       flagToUpdate: null,
+      verdictValidator: new CurationResultVerdictValidator(),
     };
   }
 
   setResultField(field, fieldValue) {
     const { value, onChange } = this.props;
-    onChange(this.syncFields({ ...value, [field]: fieldValue }));
-  }
 
-  setCustomFlagField(field, fieldValue) {
-    const { value, onChange } = this.props;
-    const customFlags = value.custom_flags;
-    onChange({ ...value, custom_flags: { ...customFlags, [field]: fieldValue } });
+    onChange(this.syncFields({ ...value, [field]: fieldValue }));
   }
 
   updateCustomFlagField(oldField, newField) {
     const { value, onChange } = this.props;
+
     const customFlags = { ...(value.custom_flags || {}) };
+    const newResult = { ...value };
 
     // Adding a new custom flag
     if (oldField == null && newField != null) {
-      onChange({
-        ...value,
-        custom_flags: { ...customFlags, [newField]: false },
-      });
+      newResult.custom_flags = { ...customFlags, [newField]: false };
     }
 
     // Deleting an existing field
     if (oldField != null && newField == null) {
-      onChange({
-        ...value,
-        custom_flags: { ...omit(customFlags, oldField) },
-      });
+      newResult.custom_flags = omit(customFlags, oldField);
     }
 
     // Updating an existing custom flag
     if (oldField != null && newField != null) {
       const fieldValue = customFlags[oldField];
-      onChange({
-        ...value,
-        custom_flags: { ...omit(customFlags, oldField), [newField]: fieldValue },
-      });
+      newResult.custom_flags = { ...omit(customFlags, oldField), [newField]: fieldValue };
     }
+
+    onChange(this.syncFields(newResult));
   }
 
   toggleResultField(field) {
     const { value, onChange } = this.props;
-    onChange(this.syncFields({ ...value, [field]: !value[field] }));
+
+    const newResult = this.syncFields({ ...value, [field]: !value[field] });
+    onChange(this.syncFields(newResult));
   }
 
   toggleCustomFlagField(field) {
     const { value, onChange } = this.props;
-    const customFlags = value.custom_flags;
-    onChange({ ...value, custom_flags: { ...customFlags, [field]: !customFlags[field] } });
+
+    const newResult = {
+      ...value,
+      custom_flags: { ...value.custom_flags, [field]: !value.custom_flags[field] },
+    };
+    onChange(this.syncFields(newResult));
   }
 
   saveResult() {
@@ -138,26 +171,66 @@ class CurationForm extends React.Component {
   }
 
   syncFields(result) {
+    const { verdictValidator } = this.state;
+
     const newResult = { ...result };
 
+    // Sync fields that are always checked if any of their children are checked.
     Object.entries(this.syncedFields).forEach(([field, children]) => {
-      newResult[field] = children.reduce((acc, f) => acc || newResult[f], false);
+      newResult[field] = children.some((f) => newResult[f]);
     });
+
+    // Uncheck parent flags if all of their children are unchecked.
+    Object.entries(this.parentFields).forEach(([parent, children]) => {
+      const anyChildChecked = children.some((f) => newResult[f]);
+      if (!anyChildChecked) {
+        newResult[parent] = false;
+      }
+    });
+
+    if (!verdictValidator.isValid(newResult)) {
+      // if there was a verdict, but now it's one of the greyed out options, remove it
+      newResult.verdict = null;
+    }
 
     return newResult;
   }
 
+  flagIsCheckable(flag) {
+    const { value } = this.props;
+
+    // Auto-selected fields that only become checked when other fields are ticked. Not manually
+    // check-able.
+    const syncedFields = Object.keys(this.syncedFields);
+    if (syncedFields.includes(flag)) {
+      return false;
+    }
+
+    // Parent fields that can only be checked if one of their children is checked.
+    const parentFields = Object.keys(this.parentFields);
+    if (!parentFields.includes(flag)) {
+      return true;
+    }
+
+    // Dealing with a parent flag, so check if any of its children are checked.
+    const anyChildIsChecked = Object.entries(value).some(
+      ([childFlag, checked]) => this.parentFields[flag].includes(childFlag) && checked
+    );
+
+    return anyChildIsChecked;
+  }
+
   renderFlagInput(field, label, shortcut, parent = false, isCustomFlag = false) {
     const { value, customFlags } = this.props;
-
-    const disabledFields = Object.keys(this.syncedFields);
+    const { custom_flags: customFlagsValue } = value;
 
     return (
       <React.Fragment key={field}>
         <Form.Field
-          checked={isCustomFlag ? value.custom_flags[field] : value[field]}
+          checked={isCustomFlag ? customFlagsValue[field] : value[field]}
           className="mousetrap"
           control={Checkbox}
+          disabled={!this.flagIsCheckable(field)}
           id={field}
           label={{
             children: (
@@ -187,17 +260,15 @@ class CurationForm extends React.Component {
               </React.Fragment>
             ),
           }}
-          onChange={(e) => {
-            if (disabledFields.includes(field)) return null;
-            if (isCustomFlag) return this.setCustomFlagField(field, e.target.checked);
-            return this.setResultField(field, e.target.checked);
+          onChange={() => {
+            if (isCustomFlag) return this.toggleCustomFlagField(field);
+            return this.toggleResultField(field);
           }}
         />
         {shortcut != null ? (
           <KeyboardShortcut
             keys={shortcut}
             onShortcut={() => {
-              if (disabledFields.includes(field)) return null;
               if (isCustomFlag) return this.toggleCustomFlagField(field);
               return this.toggleResultField(field);
             }}
@@ -272,7 +343,7 @@ class CurationForm extends React.Component {
     if (flagToUpdate != null) {
       return (
         <CustomFlagForm
-          open={flagToUpdate != null}
+          open
           flag={flagToUpdate}
           onSave={(oldKey, newKey) => {
             this.setState({ flagToUpdate: null });
@@ -288,7 +359,7 @@ class CurationForm extends React.Component {
 
   render() {
     const { value, errors } = this.props;
-    const { isSaving } = this.state;
+    const { isSaving, verdictValidator } = this.state;
 
     return (
       <Ref innerRef={this.formElement}>
@@ -462,6 +533,7 @@ class CurationForm extends React.Component {
                 <React.Fragment key={verdict}>
                   <Form.Field
                     control={Radio}
+                    disabled={!verdictValidator.verdictIsAllowed(value, verdict)}
                     checked={value.verdict === verdict}
                     label={{
                       children: (
@@ -502,6 +574,16 @@ class CurationForm extends React.Component {
               >
                 Save <KeyboardShortcutHint keys="s" color="rgba(255,255,255,0.8)" />
               </Button>
+              <Button
+                data-shortcut="s"
+                disabled={isSaving}
+                loading={isSaving}
+                primary
+                type="button"
+                onClick={() => this.setResultField("verdict", null)}
+              >
+                Clear Verdict <KeyboardShortcutHint keys="c" color="rgba(255,255,255,0.8)" />
+              </Button>
             </span>
             <KeyboardShortcut
               keys="s"
@@ -509,7 +591,12 @@ class CurationForm extends React.Component {
                 this.saveResult();
               }}
             />
-
+            <KeyboardShortcut
+              keys="c"
+              onShortcut={() => {
+                this.setResultField("verdict", null);
+              }}
+            />
             {this.renderFlagInput("should_revisit", "Revisit this variant", "r v")}
           </div>
         </Form>

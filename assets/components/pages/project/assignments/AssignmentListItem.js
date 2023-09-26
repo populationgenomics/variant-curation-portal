@@ -5,6 +5,7 @@ import { Item, List } from "semantic-ui-react";
 
 import { CurationAssignmentPropType, CurationResultPropType } from "../../../propTypes";
 import Flags from "../../../result/Flags";
+import VerdictValidIcon from "../../../result/VerdictValidIcon";
 import Verdict from "../../../result/Verdict";
 import VariantId from "../../../VariantId";
 
@@ -13,6 +14,7 @@ const CurationResult = ({ result }) => (
     {result.verdict && <Verdict verdict={result.verdict} />}{" "}
     <span style={{ marginLeft: "1ch" }}>
       <Flags result={result} />
+      {result.verdict && <VerdictValidIcon result={result} />}
     </span>{" "}
     {result.notes && (
       <span>

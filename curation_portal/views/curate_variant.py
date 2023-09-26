@@ -23,6 +23,7 @@ from curation_portal.models import (
     User,
 )
 from curation_portal.serializers import CustomFlagCurationResultSerializer
+from curation_portal.verdict import validate_result_verdict
 
 
 class VariantAnnotationSerializer(ModelSerializer):
@@ -78,6 +79,12 @@ class CurationResultSerializer(ModelSerializer):
             "verdict",
             "editor",
         )
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        validate_result_verdict(data)
+
+        return data
 
     def create(self, validated_data):
         # Pop before calling super's update, so we can handle the saving of custom flags manually.

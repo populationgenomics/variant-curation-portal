@@ -5,6 +5,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Variant curation</title>
+  {# FIXME: Manually add CSS since new webpack has stopped bundling the icons in semantic-react-ui  #}
+  <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.5.0/components/icon.min.css"
+      integrity="sha512-rTyypI20S663Wq9zrzMSOP1MNPHaYX7+ug5OZ/DTqCDLwRdErCo2W30Hdme3aUzJSvAUap3SmBk0r5j0vRxyGw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+  />
   {% render_bundle "bundle" "css" %}
 </head>
 <body style="width:100%; height:100%;">

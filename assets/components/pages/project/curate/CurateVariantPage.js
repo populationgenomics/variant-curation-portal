@@ -11,6 +11,7 @@ import Fetch from "../../../Fetch";
 import KeyboardShortcut, { KeyboardShortcutHint } from "../../../KeyboardShortcut";
 import VariantId from "../../../VariantId";
 import Flags from "../../../result/Flags";
+import VerdictValidIcon from "../../../result/VerdictValidIcon";
 import Verdict from "../../../result/Verdict";
 import withParamsAsProps from "../../withParamsAsProps";
 
@@ -289,6 +290,9 @@ class CurateVariantPage extends React.Component {
                       <List.Item>
                         <span style={{ marginRight: "10px" }}>
                           <ResultVerdict />
+                        </span>
+                        <span style={{ marginRight: "10px" }}>
+                          <VerdictValidIcon result={result} />
                         </span>
                         <ResultFlags />
                       </List.Item>

@@ -2,6 +2,7 @@
 import pytest
 from rest_framework.test import APIClient
 
+from curation_portal.constants import VERDICTS
 from curation_portal.models import (
     CurationAssignment,
     CurationResult,
@@ -351,7 +352,7 @@ def test_curate_variant_fails_if_custom_flag_does_not_exist(db_setup):
 
 
 @pytest.mark.parametrize("verdict", ["some_invalid_verdict", ""])
-def test_curate_variant_validates_verdict(db_setup, verdict):
+def test_curate_variant_validates_verdict_choice(db_setup, verdict):
     client = APIClient()
     client.force_authenticate(User.objects.get(username="user2@example.com"))
 
@@ -361,6 +362,74 @@ def test_curate_variant_validates_verdict(db_setup, verdict):
         f"/api/project/1/variant/{variant1.id}/curate/", {"verdict": verdict}, format="json"
     )
     assert response.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "flags,verdict,status_code",
+    [
+        ({}, "lof", 200),
+        # Test flow_chart_overridden flag
+        *[({"flag_flow_chart_overridden": True}, v, 200) for v in VERDICTS],
+        # Test no_read_data flag
+        *[({"flag_no_read_data": True}, v, 200 if v in ["uncertain"] else 400) for v in VERDICTS],
+        # Test reference_error flag
+        *[({"flag_reference_error": True}, v, 200 if v in ["not_lof"] else 400) for v in VERDICTS],
+        # Test flags for uncertain, likely_not_lof, and not_lof verdicts
+        *[
+            (
+                {"flag_mapping_error": True},
+                v,
+                200 if v in ["uncertain", "likely_not_lof", "not_lof"] else 400,
+            )
+            for v in VERDICTS
+        ],
+        *[
+            (
+                {"flag_genotyping_error": True},
+                v,
+                200 if v in ["uncertain", "likely_not_lof", "not_lof"] else 400,
+            )
+            for v in VERDICTS
+        ],
+        *[
+            (
+                {"flag_inconsequential_transcript": True},
+                v,
+                200 if v in ["uncertain", "likely_not_lof", "not_lof"] else 400,
+            )
+            for v in VERDICTS
+        ],
+        *[
+            (
+                {"flag_rescue": True},
+                v,
+                200 if v in ["uncertain", "likely_not_lof", "not_lof"] else 400,
+            )
+            for v in VERDICTS
+        ],
+        # Test any other flag
+        *[
+            (
+                {"flag_strand_bias": True},
+                v,
+                200 if v in ["lof", "likely_lof", "uncertain"] else 400,
+            )
+            for v in VERDICTS
+        ],
+    ],
+)
+def test_curate_variant_validates_verdict_flag_rules(db_setup, flags, verdict, status_code):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user2@example.com"))
+
+    variant1 = Variant.objects.get(variant_id="1-100-A-G", project__id=1)
+
+    response = client.post(
+        f"/api/project/1/variant/{variant1.id}/curate/",
+        {"verdict": verdict, **flags},
+        format="json",
+    )
+    assert response.status_code == status_code
 
 
 def test_curate_variant_orders_multiallelic_variants(db_setup):

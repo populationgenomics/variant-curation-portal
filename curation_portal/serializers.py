@@ -28,7 +28,7 @@ from curation_portal.models import (
     FLAG_SHORTCUTS,
 )
 from curation_portal.constants import RANKED_CONSEQUENCE_TERMS
-
+from curation_portal.verdict import validate_result_verdict
 
 VARIANT_ID_REGEX = r"^(\d+|X|Y)[-:]([0-9]+)[-:]([ACGT]+)[-:]([ACGT]+)$"
 
@@ -350,6 +350,12 @@ class ImportedResultSerializer(ModelSerializer):
             raise ValidationError("Variant does not exist")
 
         return value
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        validate_result_verdict(data)
+
+        return data
 
     def create(self, validated_data):
         curator = validated_data.pop("curator", None)
