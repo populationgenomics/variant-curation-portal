@@ -325,7 +325,7 @@ class CurateVariantPage extends React.Component {
                           position: "absolute",
                           right: "1.5rem",
                           top: "100%",
-                          zIndex: 1,
+                          zIndex: 9999999,
                           maxHeight: "calc(100vh - 180px)",
                           overflowX: "hidden",
                           overflowY: "auto",
