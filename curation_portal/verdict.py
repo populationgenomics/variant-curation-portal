@@ -63,7 +63,7 @@ def verdict_is_valid(curation_result):
 def validate_result_verdict(data):
     if not verdict_is_valid(data):
         allowed = allowed_verdicts(data)
-        human_readable_allowed = [f"{v} ({VERDICTS.index(v) + 1})" for v in allowed]
+        human_readable_allowed = [f"'{v}' ({VERDICTS.index(v) + 1})" for v in allowed]
         raise ValidationError(
             detail={
                 "verdict": f"Verdict is not compatible with the current selection of flags. "
