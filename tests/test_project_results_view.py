@@ -3,6 +3,7 @@ import pytest
 from django.utils.dateparse import parse_datetime
 from rest_framework.test import APIClient
 
+from curation_portal.constants import VERDICTS
 from curation_portal.models import (
     CurationAssignment,
     CurationResult,
@@ -119,6 +120,77 @@ def test_upload_results_validates_verdicts(db_setup, verdict):
         format="json",
     )
     assert response.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "flags,verdict,status_code",
+    [
+        ({}, "lof", 200),
+        # Test flow_chart_overridden flag
+        *[({"flag_flow_chart_overridden": True}, v, 200) for v in VERDICTS],
+        # Test no_read_data flag
+        *[({"flag_no_read_data": True}, v, 200 if v in ["uncertain"] else 400) for v in VERDICTS],
+        # Test reference_error flag
+        *[({"flag_reference_error": True}, v, 200 if v in ["not_lof"] else 400) for v in VERDICTS],
+        # Test flags for uncertain, likely_not_lof, and not_lof verdicts
+        *[
+            (
+                {"flag_mapping_error": True},
+                v,
+                200 if v in ["uncertain", "likely_not_lof", "not_lof"] else 400,
+            )
+            for v in VERDICTS
+        ],
+        *[
+            (
+                {"flag_genotyping_error": True},
+                v,
+                200 if v in ["uncertain", "likely_not_lof", "not_lof"] else 400,
+            )
+            for v in VERDICTS
+        ],
+        *[
+            (
+                {"flag_inconsequential_transcript": True},
+                v,
+                200 if v in ["uncertain", "likely_not_lof", "not_lof"] else 400,
+            )
+            for v in VERDICTS
+        ],
+        *[
+            (
+                {"flag_rescue": True},
+                v,
+                200 if v in ["uncertain", "likely_not_lof", "not_lof"] else 400,
+            )
+            for v in VERDICTS
+        ],
+        # Test any other flag
+        *[
+            (
+                {"flag_strand_bias": True},
+                v,
+                200 if v in ["lof", "likely_lof", "uncertain"] else 400,
+            )
+            for v in VERDICTS
+        ],
+    ],
+)
+def test_upload_results_validates_verdict_flag_rules(db_setup, flags, verdict, status_code):
+    client = APIClient()
+    client.force_authenticate(User.objects.get(username="user1@example.com"))
+
+    response = client.post(
+        f"/api/project/1/results/",
+        [{"variant_id": "1-200-G-A", "curator": "user2@example.com", "verdict": verdict, **flags}],
+        format="json",
+    )
+    assert response.status_code == status_code
+    if status_code == 400:
+        assert (
+            "Verdict is not compatible with the current selection of flags"
+            in response.json()[0]["verdict"][0]
+        )
 
 
 def test_upload_results_creates_no_results_on_validation_errors(db_setup):
