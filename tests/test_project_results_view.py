@@ -181,7 +181,7 @@ def test_upload_results_validates_verdict_flag_rules(db_setup, flags, verdict, s
     client.force_authenticate(User.objects.get(username="user1@example.com"))
 
     response = client.post(
-        f"/api/project/1/results/",
+        "/api/project/1/results/",
         [{"variant_id": "1-200-G-A", "curator": "user2@example.com", "verdict": verdict, **flags}],
         format="json",
     )
