@@ -30,6 +30,7 @@ const ProjectResultsPage = ({ project, user }) => (
               <Table.Row>
                 <Table.HeaderCell>Variant ID</Table.HeaderCell>
                 <Table.HeaderCell>Curator</Table.HeaderCell>
+                <Table.HeaderCell>Edited by</Table.HeaderCell>
                 <Table.HeaderCell>Verdict</Table.HeaderCell>
                 <Table.HeaderCell>Flags</Table.HeaderCell>
                 <Table.HeaderCell>Notes</Table.HeaderCell>
@@ -39,11 +40,16 @@ const ProjectResultsPage = ({ project, user }) => (
 
             <Table.Body>
               {results.map((result) => (
-                <Table.Row key={`${result.variant.variant_id}-${result.curator}`}>
+                <Table.Row key={`${result.variant.variant_id}-${result.curator.username}`}>
                   <Table.Cell>
-                    <VariantId variantId={result.variant.variant_id} />
+                    <Link
+                      to={`/project/${project.id}/variant/${result.variant.id}/curate/?curator=${result.curator.id}`}
+                    >
+                      <VariantId variantId={result.variant.variant_id} />
+                    </Link>
                   </Table.Cell>
-                  <Table.Cell>{result.curator}</Table.Cell>
+                  <Table.Cell>{result.curator.username}</Table.Cell>
+                  <Table.Cell>{result.editor?.username}</Table.Cell>
                   <Table.Cell>
                     {result.verdict ? <Verdict verdict={result.verdict} /> : "No verdict"}
                   </Table.Cell>

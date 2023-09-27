@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
-import { Button, Divider, Header, List } from "semantic-ui-react";
+import { Button, Divider, Header, Label, List, Popup } from "semantic-ui-react";
 
 import { saveResult, setResult } from "../../../../redux/actions/curationResultActions";
 import { getCurationResult } from "../../../../redux/selectors/curationResultSelectors";
@@ -11,6 +11,7 @@ import Fetch from "../../../Fetch";
 import KeyboardShortcut, { KeyboardShortcutHint } from "../../../KeyboardShortcut";
 import VariantId from "../../../VariantId";
 import Flags from "../../../result/Flags";
+import VerdictValidIcon from "../../../result/VerdictValidIcon";
 import Verdict from "../../../result/Verdict";
 import withParamsAsProps from "../../withParamsAsProps";
 
@@ -36,6 +37,9 @@ class CurateVariantPage extends React.Component {
       id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
     }).isRequired,
+    location: PropTypes.shape({
+      search: PropTypes.string.isRequired,
+    }).isRequired,
     user: PropTypes.shape({
       settings: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
     }).isRequired,
@@ -58,12 +62,39 @@ class CurateVariantPage extends React.Component {
     );
   }
 
+  curator() {
+    const { location } = this.props;
+    const curator = new URLSearchParams(location.search).get("curator");
+    if (curator) {
+      return parseInt(curator, 10);
+    }
+    return null;
+  }
+
+  apiPath() {
+    const { project, variantId } = this.props;
+
+    if (this.curator()) {
+      return `/project/${project.id}/variant/${variantId}/curate/?curator=${this.curator()}`;
+    }
+    return `/project/${project.id}/variant/${variantId}/curate/`;
+  }
+
+  readsPath() {
+    const { project, variantId } = this.props;
+
+    if (this.curator()) {
+      return `/api/project/${project.id}/variant/${variantId}/reads/?curator=${this.curator()}`;
+    }
+    return `/api/project/${project.id}/variant/${variantId}/reads/`;
+  }
+
   render() {
     const { project, user, variantId, onLoadResult } = this.props;
     const { showForm } = this.state;
 
     return (
-      <Fetch path={`/project/${project.id}/variant/${variantId}/curate/`} onLoad={onLoadResult}>
+      <Fetch path={this.apiPath()} onLoad={onLoadResult}>
         {({
           data: {
             index,
@@ -111,6 +142,15 @@ class CurateVariantPage extends React.Component {
                   </Header>
                   <div style={{ flexShrink: 0 }}>
                     <List horizontal>
+                      {result.editor ? (
+                        <List.Item>
+                          <Popup
+                            content={result.editor.username}
+                            position="bottom center"
+                            trigger={<Label color="blue">edited</Label>}
+                          />
+                        </List.Item>
+                      ) : null}
                       <List.Item>
                         {previousVariant ? (
                           <React.Fragment>
@@ -251,6 +291,9 @@ class CurateVariantPage extends React.Component {
                         <span style={{ marginRight: "10px" }}>
                           <ResultVerdict />
                         </span>
+                        <span style={{ marginRight: "10px" }}>
+                          <VerdictValidIcon result={result} />
+                        </span>
                         <ResultFlags />
                       </List.Item>
                       <List.Item>
@@ -321,8 +364,8 @@ class CurateVariantPage extends React.Component {
                     chrom={variant.chrom}
                     pos={variant.pos}
                     referenceGenome={variant.reference_genome}
-                    reads={variant.reads}
-                    endpoint={`/api/project/${project.id}/variant/${variantId}/reads/`}
+                    reads={variant.reads || []}
+                    endpoint={this.readsPath()}
                   />
                   <br />
                 </div>

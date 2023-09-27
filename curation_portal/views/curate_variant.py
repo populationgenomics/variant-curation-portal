@@ -5,6 +5,7 @@ from django.http.response import FileResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.exceptions import NotFound, ParseError
+from rest_framework.fields import SerializerMethodField
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import ChoiceField, ModelSerializer
@@ -18,8 +19,11 @@ from curation_portal.models import (
     Variant,
     VariantAnnotation,
     VariantTag,
+    Project,
+    User,
 )
 from curation_portal.serializers import CustomFlagCurationResultSerializer
+from curation_portal.verdict import validate_result_verdict
 
 
 class VariantAnnotationSerializer(ModelSerializer):
@@ -43,6 +47,12 @@ class VariantSerializer(ModelSerializer):
         exclude = ("project",)
 
 
+class EditorSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id", "username")
+
+
 class CurationResultSerializer(ModelSerializer):
     verdict = ChoiceField(
         ["lof", "likely_lof", "uncertain", "likely_not_lof", "not_lof"],
@@ -50,6 +60,13 @@ class CurationResultSerializer(ModelSerializer):
         allow_null=True,
     )
     custom_flags = CustomFlagCurationResultSerializer(required=False, allow_null=True)
+
+    editor = SerializerMethodField()
+
+    def get_editor(self, obj):
+        if obj.editor:
+            return EditorSerializer(obj.editor).data
+        return None
 
     class Meta:
         model = CurationResult
@@ -60,10 +77,17 @@ class CurationResultSerializer(ModelSerializer):
             "curator_comments",
             "should_revisit",
             "verdict",
+            "editor",
         )
 
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        validate_result_verdict(data)
+
+        return data
+
     def create(self, validated_data):
-        # Pop before calling super's update so we can handle the saving of custom flags manually.
+        # Pop before calling super's update, so we can handle the saving of custom flags manually.
         custom_flags = validated_data.pop("custom_flags", {})
 
         instance = super().create(validated_data)
@@ -72,7 +96,7 @@ class CurationResultSerializer(ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        # Pop before calling super's update so we can handle the saving of custom flags manually.
+        # Pop before calling super's update, so we can handle the saving of custom flags manually.
         custom_flags = validated_data.pop("custom_flags", {})
 
         instance = super().update(instance, validated_data)
@@ -88,13 +112,46 @@ def serialize_adjacent_variant(variant_values):
     return {"id": variant_values["variant"], "variant_id": variant_values["variant__variant_id"]}
 
 
-class ReadsFileView(APIView):
+class OwnerAccessible:
+    @property
+    def is_project_owner(self):
+        project = Project.objects.get(pk=self.kwargs["project_id"])  # pylint: disable=no-member
+        return project.owners.filter(pk=self.request.user.pk).exists()  # pylint: disable=no-member
+
+    @property
+    def project_owner_is_editing_another_curators_result(self):
+        curator = self.get_curator()
+        if not curator:
+            return False
+
+        requester_is_curator = curator.id == self.request.user.id  # pylint: disable=no-member
+        return self.is_project_owner and not requester_is_curator
+
+    def get_curator(self):
+        # pylint: disable-next=no-member
+        curator_id = self.request.GET.get("curator") or self.request.data.get("curator")
+        if curator_id:
+            return User.objects.get(id=curator_id)
+        return None
+
+    def get_queryset(self):
+        # Project owners are allowed to view any curator's assignments in the project
+        if self.project_owner_is_editing_another_curators_result:
+            return CurationAssignment.objects.filter(curator=self.get_curator())
+
+        # Default to user's own assignments
+        return self.request.user.curation_assignments  # pylint: disable=no-member
+
+
+class ReadsFileView(APIView, OwnerAccessible):
     permission_classes = (IsAuthenticated,)
 
     def get_assignment(self):
         try:
-            assignment = self.request.user.curation_assignments.select_related("variant").get(
-                variant=self.kwargs["variant_id"], variant__project=self.kwargs["project_id"]
+            assignment = (
+                self.get_queryset()
+                .select_related("variant")
+                .get(variant=self.kwargs["variant_id"], variant__project=self.kwargs["project_id"])
             )
             return assignment
         except CurationAssignment.DoesNotExist as error:
@@ -137,13 +194,14 @@ class ReadsFileView(APIView):
         return FileResponse(stream_contents(), as_attachment=False)
 
 
-class CurateVariantView(APIView):
+class CurateVariantView(APIView, OwnerAccessible):
     permission_classes = (IsAuthenticated,)
 
     def get_assignment(self):
         try:
             assignment = (
-                self.request.user.curation_assignments.select_related("variant", "result")
+                self.get_queryset()
+                .select_related("variant", "result")
                 .prefetch_related("variant__annotations", "variant__tags", "result__custom_flags")
                 .get(variant=self.kwargs["variant_id"], variant__project=self.kwargs["project_id"])
             )
@@ -156,42 +214,50 @@ class CurateVariantView(APIView):
     def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
         assignment = self.get_assignment()
 
-        filtered_assignments = AssignmentFilter(
-            request.GET,
-            request.user.curation_assignments.filter(variant__project=assignment.variant.project),
-        )
+        if self.project_owner_is_editing_another_curators_result:
+            # Disable navigation if editing another curator's result
+            index = None
+            next_variant = None
+            previous_variant = None
+        else:
+            filtered_assignments = AssignmentFilter(
+                request.GET,
+                request.user.curation_assignments.filter(
+                    variant__project=assignment.variant.project
+                ),
+            )
 
-        previous_site_variants = (
-            filtered_assignments.qs.filter(variant__xpos__lt=assignment.variant.xpos)
-            .order_by("variant__xpos", "variant__ref", "variant__alt")
-            .reverse()
-            .values("variant", "variant__variant_id")
-        )
-        num_previous_site_variants = previous_site_variants.count()
-        previous_site_variant = previous_site_variants.first()
+            previous_site_variants = (
+                filtered_assignments.qs.filter(variant__xpos__lt=assignment.variant.xpos)
+                .order_by("variant__xpos", "variant__ref", "variant__alt")
+                .reverse()
+                .values("variant", "variant__variant_id")
+            )
+            num_previous_site_variants = previous_site_variants.count()
+            previous_site_variant = previous_site_variants.first()
 
-        colocated_variants = (
-            filtered_assignments.qs.filter(variant__xpos=assignment.variant.xpos)
-            .order_by("variant__xpos", "variant__ref", "variant__alt")
-            .values("variant", "variant__variant_id")
-        )
+            colocated_variants = (
+                filtered_assignments.qs.filter(variant__xpos=assignment.variant.xpos)
+                .order_by("variant__xpos", "variant__ref", "variant__alt")
+                .values("variant", "variant__variant_id")
+            )
 
-        next_site_variant = (
-            filtered_assignments.qs.filter(variant__xpos__gt=assignment.variant.xpos)
-            .order_by("variant__xpos", "variant__ref", "variant__alt")
-            .values("variant", "variant__variant_id")
-            .first()
-        )
+            next_site_variant = (
+                filtered_assignments.qs.filter(variant__xpos__gt=assignment.variant.xpos)
+                .order_by("variant__xpos", "variant__ref", "variant__alt")
+                .values("variant", "variant__variant_id")
+                .first()
+            )
 
-        surrounding_variants = [previous_site_variant, *colocated_variants, next_site_variant]
-        index_in_surrounding_variants = [
-            v["variant__variant_id"] if v is not None else None for v in surrounding_variants
-        ].index(assignment.variant.variant_id)
+            surrounding_variants = [previous_site_variant, *colocated_variants, next_site_variant]
+            index_in_surrounding_variants = [
+                v["variant__variant_id"] if v is not None else None for v in surrounding_variants
+            ].index(assignment.variant.variant_id)
 
-        previous_variant = surrounding_variants[index_in_surrounding_variants - 1]
-        next_variant = surrounding_variants[index_in_surrounding_variants + 1]
+            previous_variant = surrounding_variants[index_in_surrounding_variants - 1]
+            next_variant = surrounding_variants[index_in_surrounding_variants + 1]
 
-        index = num_previous_site_variants + index_in_surrounding_variants - 1
+            index = num_previous_site_variants + index_in_surrounding_variants - 1
 
         return Response(
             {
@@ -206,14 +272,36 @@ class CurateVariantView(APIView):
     def post(self, request, *args, **kwargs):  # pylint: disable=unused-argument
         assignment = self.get_assignment()
 
+        # Cache result to avoid calling it multiple times, since each call hits the db.
+        project_owner_is_editing_another_curators_result = (
+            self.project_owner_is_editing_another_curators_result
+        )
+
         if assignment.result:
             result = assignment.result
         else:
             result = CurationResult()
 
-        serializer = CurationResultSerializer(result, data=request.data)
+        data = dict(request.data)
+        if project_owner_is_editing_another_curators_result:
+            # Curator field is used to get the correct curation result from the database. Since
+            # it's not a field on the model, we should remove it before passing the data to the
+            # serializer.
+            data.pop("curator", None)
+
+        serializer = CurationResultSerializer(result, data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        if project_owner_is_editing_another_curators_result:
+            # Track which project owner made this change.
+            result.editor = self.request.user
+        else:
+            # Asignee is making a change, so clear the editor field.
+            result.editor = None
+
+        result.save()
+
         assignment.result = result
         assignment.save()
 
