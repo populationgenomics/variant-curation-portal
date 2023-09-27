@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import { Button, Form, Header, Message, Modal, Segment } from "semantic-ui-react";
+import { Button, Form, Header, Icon, Message, Modal, Segment } from "semantic-ui-react";
 
 import api from "../../../../api";
 import { PermissionRequired } from "../../../../permissions";
@@ -179,7 +179,7 @@ class ImportResultsPage extends Component {
                 loading={isReadingFile}
                 htmlFor="results-file"
               >
-                {/* <Icon name="upload" /> */}
+                <Icon name="upload" />
                 {fileName || "Select results file"}
                 <input
                   disabled={isReadingFile}
