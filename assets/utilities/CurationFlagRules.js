@@ -7,10 +7,10 @@ export class CurationResultVerdictValidator {
   }
 
   isValid(result) {
-    const { verdict } = result;
-    if (!verdict) return true;
+    // No verdict made yet, so allow this result.
+    if (result?.verdict == null) return true;
 
-    return this.getValidVerdicts(result).includes(verdict);
+    return this.verdictIsAllowed(result, result.verdict);
   }
 
   verdictIsAllowed(result, verdict) {
@@ -19,7 +19,7 @@ export class CurationResultVerdictValidator {
 
   getValidVerdicts(result) {
     const flags = Object.fromEntries(
-      Object.entries(result).filter(([key]) => this.flags.includes(key))
+      Object.entries(result || {}).filter(([key]) => this.flags.includes(key))
     );
 
     // Note: These don't include custom flags.
