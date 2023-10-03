@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import { Message } from "semantic-ui-react";
 
 import PubSub from "../utilities/PubSub";
+import { IGVIndex } from "./IGVComponent";
 
 const notificationService = new PubSub();
 
@@ -58,7 +59,9 @@ class Notifications extends Component {
 
     return (
       <div style={{ position: "relative" }}>
-        <div style={{ position: "absolute", right: "1.5rem", bottom: "1.5rem", zIndex: 2 }}>
+        <div
+          style={{ position: "absolute", right: "1.5rem", bottom: "1.5rem", zIndex: IGVIndex + 2 }}
+        >
           {notifications.map((notification) => {
             const { id, title, message, status } = notification;
             return (
