@@ -3,6 +3,7 @@ module.exports = {
   env: {
     browser: true,
   },
+  ignorePatterns: ["jest.config.js"],
   overrides: [
     {
       files: ["**/*.test.js"],
