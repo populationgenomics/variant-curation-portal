@@ -4,6 +4,8 @@ import PropTypes from "prop-types";
 import { Segment, List } from "semantic-ui-react";
 import igv from "igv/dist/igv.esm";
 
+export const IGVIndex = 512;
+
 const parseGCSPath = (gcsPath) => {
   // eslint-disable-next-line no-unused-vars
   const [_, ...path] = gcsPath.replace("gs://", "").split("/");

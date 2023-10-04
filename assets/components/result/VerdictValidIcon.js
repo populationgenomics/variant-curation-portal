@@ -1,9 +1,7 @@
 import React from "react";
 
 import { Icon, Popup } from "semantic-ui-react";
-import { connect } from "react-redux";
 import { CurationResultPropType } from "../propTypes";
-import { getCurationResult } from "../../redux/selectors/curationResultSelectors";
 import { CurationResultVerdictValidator } from "../../utilities/CurationFlagRules";
 
 const VerdictValidIcon = ({ result }) => {
@@ -23,8 +21,4 @@ VerdictValidIcon.propTypes = {
   result: CurationResultPropType.isRequired,
 };
 
-const ConnectedVerdictValidIcon = connect((state) => ({
-  result: getCurationResult(state),
-}))(VerdictValidIcon);
-
-export default ConnectedVerdictValidIcon;
+export default VerdictValidIcon;

@@ -20,11 +20,15 @@ import { GnomadVariantView, GnomadGeneView } from "./gnomad";
 import { UCSCVariantView, UCSCGeneView } from "./UCSC";
 import VariantData from "./VariantData";
 import SpliceAILookupView from "./SpliceAILookupView";
-import IGVComponent from "../../../IGVComponent";
+import IGVComponent, { IGVIndex } from "../../../IGVComponent";
 
 const ResultVerdict = connect((state) => ({
   verdict: getCurationResult(state).verdict,
 }))(({ verdict }) => (verdict ? <Verdict verdict={verdict} /> : <span>No verdict</span>));
+
+const VerdictValid = connect((state) => ({
+  result: getCurationResult(state),
+}))(({ result }) => (result ? <VerdictValidIcon result={result} /> : null));
 
 const ResultFlags = connect((state) => ({ result: getCurationResult(state) }))(Flags);
 
@@ -292,7 +296,7 @@ class CurateVariantPage extends React.Component {
                           <ResultVerdict />
                         </span>
                         <span style={{ marginRight: "10px" }}>
-                          <VerdictValidIcon result={result} />
+                          <VerdictValid />
                         </span>
                         <ResultFlags />
                       </List.Item>
@@ -325,7 +329,7 @@ class CurateVariantPage extends React.Component {
                           position: "absolute",
                           right: "1.5rem",
                           top: "100%",
-                          zIndex: 612, // IGV track uses 512
+                          zIndex: IGVIndex + 1,
                           maxHeight: "calc(100vh - 180px)",
                           overflowX: "hidden",
                           overflowY: "auto",
