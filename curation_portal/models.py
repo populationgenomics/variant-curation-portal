@@ -78,6 +78,14 @@ class Variant(models.Model):
         null=True,
         blank=True,
     )
+    AD = ArrayField(
+        ArrayField(models.IntegerField(blank=False, null=False), size=2), null=True, blank=True
+    )
+    AD_all = ArrayField(
+        ArrayField(models.IntegerField(blank=False, null=False), size=2), null=True, blank=True
+    )
+    DP_all = ArrayField(models.IntegerField(blank=False, null=False), null=True, blank=True)
+    GQ_all = ArrayField(models.IntegerField(blank=False, null=False), null=True, blank=True)
     reads = ArrayField(
         models.CharField(max_length=2000, blank=False, null=False),
         null=True,
