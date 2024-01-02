@@ -20,13 +20,18 @@ jobs:
 
     steps:
       - name: "checkout repo"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: "gcloud setup"
-        uses: google-github-actions/setup-gcloud@v0
+      - id: "google-cloud-auth"
+        name: "Authenticate to Google Cloud"
+        uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ env.PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
+          workload_identity_provider: ""
+          service_account: ""
+
+      - id: "google-cloud-sdk-setup"
+        name: "gcloud setup"
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: "set deployment info"
         id: "deploy_info"
