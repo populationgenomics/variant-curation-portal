@@ -70,7 +70,7 @@
       "AD": {
         "description": "List of allele depths",
         "type": ["array", "null"],
-        "items": { "type": "integer" }
+        "items": { "type": "array", "items": { "type": "integer" } }
       },
       "AD_all": {
         "description": "List of allele depths for all alleles",
