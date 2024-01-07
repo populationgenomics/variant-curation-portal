@@ -30,8 +30,8 @@ jobs:
         name: "Authenticate to Google Cloud"
         uses: google-github-actions/setup-gcloud@v2
         with:
-          workload_identity_provider: ""
-          service_account: ""
+          workload_identity_provider: "projects/907612474960/locations/global/workloadIdentityPools/github/providers/github-pool"
+          service_account: "curator-deploy@curator-348003.iam.gserviceaccount.com"
 
       - id: "google-cloud-sdk-setup"
         name: "gcloud setup"
