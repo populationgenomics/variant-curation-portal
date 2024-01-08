@@ -1,4 +1,4 @@
-import PropTypes, { arrayOf } from "prop-types";
+import PropTypes from "prop-types";
 import React from "react";
 import { Button, List } from "semantic-ui-react";
 
@@ -189,13 +189,13 @@ class VariantData extends React.Component {
           <strong>Allelic Depths:</strong> {(variant.AD ?? []).join(", ")}
         </List.Item>
         <List.Item>
-          <strong>Read Depth (all ALT genotypes):</strong> {(variant.DP_all ?? []).join(", ")}
+          <strong>Read Depths (all ALT genotypes):</strong> {(variant.DP_all ?? []).join(", ")}
         </List.Item>
         <List.Item>
           <strong>Genotype Quality (all ALT genotypes):</strong> {(variant.GQ_all ?? []).join(", ")}
         </List.Item>
         <List.Item>
-          <strong>Allelic Depth (all ALT genotypes):</strong> {(variant.AD_all ?? []).join(", ")}
+          <strong>Allelic Depths (all ALT genotypes):</strong> {(variant.AD_all ?? []).join(", ")}
         </List.Item>
         <List.Item>
           <strong>Number of homozygotes:</strong> {variant.n_homozygotes}
