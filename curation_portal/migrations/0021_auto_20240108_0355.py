@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('curation_portal', '0020_curationresult_editor'),
     ]
@@ -14,21 +13,39 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='variant',
             name='AD',
-            field=django.contrib.postgres.fields.ArrayField(base_field=django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(), size=2), blank=True, null=True, size=None),
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=django.contrib.postgres.fields.ArrayField(
+                    base_field=models.IntegerField(), size=2
+                ),
+                blank=True,
+                null=True,
+                size=None,
+            ),
         ),
         migrations.AddField(
             model_name='variant',
             name='AD_all',
-            field=django.contrib.postgres.fields.ArrayField(base_field=django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(), size=2), blank=True, null=True, size=None),
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=django.contrib.postgres.fields.ArrayField(
+                    base_field=models.IntegerField(), size=2
+                ),
+                blank=True,
+                null=True,
+                size=None,
+            ),
         ),
         migrations.AddField(
             model_name='variant',
             name='DP_all',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(), blank=True, null=True, size=None),
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.IntegerField(), blank=True, null=True, size=None
+            ),
         ),
         migrations.AddField(
             model_name='variant',
             name='GQ_all',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(), blank=True, null=True, size=None),
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.IntegerField(), blank=True, null=True, size=None
+            ),
         ),
     ]
