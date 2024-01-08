@@ -2,10 +2,19 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy"
+        required: true
+        default: "main"
   push:
     branches:
       - main
       # - dev # TODO: uncomment this when dev deployments have been implemented on GCP
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build_and_deploy:
@@ -21,13 +30,18 @@ jobs:
 
     steps:
       - name: "checkout repo"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: "gcloud setup"
-        uses: google-github-actions/setup-gcloud@v0
+      - id: "google-cloud-auth"
+        name: "Authenticate to Google Cloud"
+        uses: google-github-actions/auth@v2
         with:
-          project_id: ${{ env.PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_DEPLOY_KEY }}
+          workload_identity_provider: "projects/907612474960/locations/global/workloadIdentityPools/github/providers/github-pool"
+          service_account: "curator-deploy@curator-348003.iam.gserviceaccount.com"
+
+      - id: "google-cloud-sdk-setup"
+        name: "gcloud setup"
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: "set deployment info"
         id: "deploy_info"
@@ -64,14 +78,17 @@ jobs:
           gcloud auth configure-docker $REGION_ID-docker.pkg.dev
 
       - name: "build image"
+        if: github.ref == 'refs/heads/main'
         run: |
           docker build -t ${{ steps.deploy_info.outputs.image_tag }} . --no-cache
 
       - name: "push image"
+        if: github.ref == 'refs/heads/main'
         run: |
           docker push ${{ steps.deploy_info.outputs.image_tag }}
 
       - name: "run migrations"
+        if: github.ref == 'refs/heads/main'
         run: |
           gcloud beta run jobs ${{ steps.deploy_info.outputs.job_command }} \
             curator-${{ steps.deploy_info.outputs.type }}-migrate-db \
@@ -86,6 +103,7 @@ jobs:
             --wait
 
       - name: "deploy"
+        if: github.ref == 'refs/heads/main'
         run: |
           gcloud run deploy \
             curator-${{ steps.deploy_info.outputs.type }} \
