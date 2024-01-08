@@ -2,6 +2,11 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy"
+        required: true
+        default: "main"
   push:
     branches:
       - main
@@ -73,14 +78,17 @@ jobs:
           gcloud auth configure-docker $REGION_ID-docker.pkg.dev
 
       - name: "build image"
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         run: |
           docker build -t ${{ steps.deploy_info.outputs.image_tag }} . --no-cache
 
       - name: "push image"
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         run: |
           docker push ${{ steps.deploy_info.outputs.image_tag }}
 
       - name: "run migrations"
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         run: |
           gcloud beta run jobs ${{ steps.deploy_info.outputs.job_command }} \
             curator-${{ steps.deploy_info.outputs.type }}-migrate-db \
@@ -95,6 +103,7 @@ jobs:
             --wait
 
       - name: "deploy"
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         run: |
           gcloud run deploy \
             curator-${{ steps.deploy_info.outputs.type }} \
