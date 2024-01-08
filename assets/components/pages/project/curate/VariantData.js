@@ -1,4 +1,4 @@
-import PropTypes from "prop-types";
+import PropTypes, { arrayOf } from "prop-types";
 import React from "react";
 import { Button, List } from "semantic-ui-react";
 
@@ -129,6 +129,10 @@ class VariantData extends React.Component {
       GT: PropTypes.arrayOf(PropTypes.string),
       DP: PropTypes.arrayOf(PropTypes.number),
       GQ: PropTypes.arrayOf(PropTypes.number),
+      AD: PropTypes.arrayOf(arrayOf(PropTypes.number)),
+      DP_all: PropTypes.arrayOf(PropTypes.number),
+      GQ_all: PropTypes.arrayOf(PropTypes.number),
+      AD_all: PropTypes.arrayOf(arrayOf(PropTypes.number)),
       sample_ids: PropTypes.arrayOf(PropTypes.string),
       n_homozygotes: PropTypes.number,
       n_heterozygotes: PropTypes.number,
@@ -180,6 +184,18 @@ class VariantData extends React.Component {
         </List.Item>
         <List.Item>
           <strong>Genotype Quality:</strong> {(variant.GQ ?? []).join(", ")}
+        </List.Item>
+        <List.Item>
+          <strong>Allelic Depths:</strong> {(variant.AD ?? []).join(", ")}
+        </List.Item>
+        <List.Item>
+          <strong>Read Depth (all ALT genotypes):</strong> {(variant.DP_all ?? []).join(", ")}
+        </List.Item>
+        <List.Item>
+          <strong>Genotype Quality (all ALT genotypes):</strong> {(variant.GQ_all ?? []).join(", ")}
+        </List.Item>
+        <List.Item>
+          <strong>Allelic Depth (all ALT genotypes):</strong> {(variant.AD_all ?? []).join(", ")}
         </List.Item>
         <List.Item>
           <strong>Number of homozygotes:</strong> {variant.n_homozygotes}
