@@ -6,13 +6,13 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('curation_portal', '0020_curationresult_editor'),
+        ("curation_portal", "0020_curationresult_editor"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='variant',
-            name='AD',
+            model_name="variant",
+            name="AD",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=django.contrib.postgres.fields.ArrayField(
                     base_field=models.IntegerField(), size=2
@@ -23,8 +23,8 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name='variant',
-            name='AD_all',
+            model_name="variant",
+            name="AD_all",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=django.contrib.postgres.fields.ArrayField(
                     base_field=models.IntegerField(), size=2
@@ -35,15 +35,15 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name='variant',
-            name='DP_all',
+            model_name="variant",
+            name="DP_all",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=models.IntegerField(), blank=True, null=True, size=None
             ),
         ),
         migrations.AddField(
-            model_name='variant',
-            name='GQ_all',
+            model_name="variant",
+            name="GQ_all",
             field=django.contrib.postgres.fields.ArrayField(
                 base_field=models.IntegerField(), blank=True, null=True, size=None
             ),
