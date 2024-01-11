@@ -67,6 +67,26 @@
         "type": ["array", "null"],
         "items": { "type": "integer" }
       },
+      "AD": {
+        "description": "List of allele depths",
+        "type": ["array", "null"],
+        "items": { "type": "array", "items": { "type": "integer" } }
+      },
+      "AD_all": {
+        "description": "List of allele depths for all alleles",
+        "type": ["array", "null"],
+        "items": { "type": "array", "items": { "type": "integer" } }
+      },
+      "DP_all": {
+        "description": "List of read depths for all alleles",
+        "type": ["array", "null"],
+        "items": { "type": "integer" }
+      },
+      "GQ_all": {
+        "description": "List of genotype qualities for all alleles",
+        "type": ["array", "null"],
+        "items": { "type": "integer" }
+      },
       "reads": {
         "description": "List of reads file locations (cram or bam) on GCS storage",
         "type": ["array", "null"],
