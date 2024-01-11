@@ -196,7 +196,7 @@ class VariantData extends React.Component {
           <strong>Genotype Quality (all ALT genotypes):</strong> {(variant.GQ_all ?? []).join(", ")}
         </List.Item>
         <List.Item>
-          <strong>Allelic Depths (all ALT genotypes):</strong> {" "}
+          <strong>Allelic Depths (all ALT genotypes):</strong>{" "}
           {variant.AD_all.map((depths) => `(${depths.join(", ")})`).join(", ")}
         </List.Item>
         <List.Item>
