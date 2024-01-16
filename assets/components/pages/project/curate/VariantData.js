@@ -1,9 +1,9 @@
 import PropTypes from "prop-types";
 import React from "react";
 import { Button, List } from "semantic-ui-react";
-import { Chart, registerables } from 'chart.js';
+import { Chart, registerables } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { Tabs } from 'antd';
+import { Tabs } from "antd";
 
 Chart.register(...registerables);
 
@@ -148,13 +148,17 @@ class VariantData extends React.Component {
     }).isRequired,
   };
 
+  state = {
+    showAll: false,
+  };
+
   getGQFrequencies() {
     const { variant } = this.props;
 
     const options = {
       scales: {
         x: {
-          type: 'linear',
+          type: "linear",
           beginAtZero: true,
           max: 100,
           grid: {
@@ -164,7 +168,7 @@ class VariantData extends React.Component {
             font: {
               size: 14,
             },
-            color: '#333',
+            color: "#333",
           },
         },
         y: {
@@ -175,7 +179,7 @@ class VariantData extends React.Component {
             font: {
               size: 14,
             },
-            color: '#333',
+            color: "#333",
             callback: (value) => (Number.isInteger(value) ? value : null),
           },
         },
@@ -199,10 +203,10 @@ class VariantData extends React.Component {
       labels: Object.keys(gqFrequencies).map(Number),
       datasets: [
         {
-          label: 'GQ Frequencies',
+          label: "GQ Frequencies",
           data: Object.values(gqFrequencies),
-          backgroundColor: 'rgba(75,192,192,0.4)',
-          borderColor: 'rgba(75,192,192,1)',
+          backgroundColor: "rgba(75,192,192,0.4)",
+          borderColor: "rgba(75,192,192,1)",
           borderWidth: 1,
         },
       ],
@@ -217,7 +221,7 @@ class VariantData extends React.Component {
     const options = {
       scales: {
         x: {
-          type: 'linear',
+          type: "linear",
           beginAtZero: true,
           grid: {
             display: false,
@@ -226,7 +230,7 @@ class VariantData extends React.Component {
             font: {
               size: 14,
             },
-            color: '#333',
+            color: "#333",
           },
         },
         y: {
@@ -237,13 +241,12 @@ class VariantData extends React.Component {
             font: {
               size: 14,
             },
-            color: '#333',
+            color: "#333",
             callback: (value) => (Number.isInteger(value) ? value : null),
           },
         },
       },
     };
-
 
     if (!variant.DP_all) {
       // Handle the case where GQ_all is null
@@ -262,10 +265,10 @@ class VariantData extends React.Component {
       labels: Object.keys(dpFrequencies).map(Number),
       datasets: [
         {
-          label: 'DP Frequencies',
+          label: "DP Frequencies",
           data: Object.values(dpFrequencies),
-          backgroundColor: 'rgba(75,192,192,0.4)',
-          borderColor: 'rgba(75,192,192,1)',
+          backgroundColor: "rgba(75,192,192,0.4)",
+          borderColor: "rgba(75,192,192,1)",
           borderWidth: 1,
         },
       ],
@@ -280,7 +283,7 @@ class VariantData extends React.Component {
     const options = {
       scales: {
         x: {
-          type: 'linear',
+          type: "linear",
           beginAtZero: true,
           max: 1,
           grid: {
@@ -290,7 +293,7 @@ class VariantData extends React.Component {
             font: {
               size: 14,
             },
-            color: '#333',
+            color: "#333",
           },
         },
         y: {
@@ -301,7 +304,7 @@ class VariantData extends React.Component {
             font: {
               size: 14,
             },
-            color: '#333',
+            color: "#333",
             callback: (value) => (Number.isInteger(value) ? value : null),
           },
         },
@@ -314,7 +317,9 @@ class VariantData extends React.Component {
     }
 
     // Calculate the allele balances from the AD_all values
-    const alleleBalances = variant.AD_all.map((depths) => (depths[1] / (depths[0] + depths[1])).toFixed(2));
+    const alleleBalances = variant.AD_all.map((depths) =>
+      (depths[1] / (depths[0] + depths[1])).toFixed(2)
+    );
 
     // Calculate the frequency of each allele balance value
     const alleleBalanceFrequencies = alleleBalances.reduce((acc, value) => {
@@ -329,22 +334,19 @@ class VariantData extends React.Component {
       labels: Object.keys(alleleBalanceFrequencies),
       datasets: [
         {
-          label: 'Allele Balances',
+          label: "Allele Balances",
           data: Object.values(alleleBalanceFrequencies),
-          backgroundColor: 'rgba(75,192,192,0.4)',
-          borderColor: 'rgba(75,192,192,1)',
+          backgroundColor: "rgba(75,192,192,0.4)",
+          borderColor: "rgba(75,192,192,1)",
           borderWidth: 1,
-          hoverBackgroundColor: 'rgba(75,192,192,0.7)',
-          hoverBorderColor: 'rgba(75,192,192,1)',
+          hoverBackgroundColor: "rgba(75,192,192,0.7)",
+          hoverBorderColor: "rgba(75,192,192,1)",
         },
       ],
     };
 
     return { data, options };
   }
-  state = {
-    showAll: false,
-  };
 
   render() {
     const { variant } = this.props;
@@ -356,32 +358,32 @@ class VariantData extends React.Component {
 
     const tabItems = [
       {
-        key: '1',
-        label: 'Genotype Qualities',
+        key: "1",
+        label: "Genotype Qualities",
         children: (
           <div style={{ height: "300px", width: "100%" }}>
-            {<Bar data={gqData} options={gqOptions} />}
+            <Bar data={gqData} options={gqOptions} />
           </div>
-        )
+        ),
       },
       {
-        key: '2',
-        label: 'Read Depths',
+        key: "2",
+        label: "Read Depths",
         children: (
           <div style={{ height: "300px", width: "100%" }}>
-            {<Bar data={dpData} options={dpOptions} />}
+            <Bar data={dpData} options={dpOptions} />
           </div>
-        )
+        ),
       },
       {
-        key: '3',
-        label: 'Allele Balances',
+        key: "3",
+        label: "Allele Balances",
         children: (
           <div style={{ height: "300px", width: "100%" }}>
-            {<Bar data={abData} options={abOptions} />}
+            <Bar data={abData} options={abOptions} />
           </div>
-        )
-      }
+        ),
+      },
     ];
 
     return (
