@@ -1,9 +1,8 @@
 import PropTypes from "prop-types";
 import React from "react";
-import { Button, List } from "semantic-ui-react";
+import { Button, List, Tab, TabPane } from "semantic-ui-react";
 import { Chart, registerables } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { Tabs } from "antd";
 
 Chart.register(...registerables);
 
@@ -124,6 +123,78 @@ TagsList.propTypes = {
   ).isRequired,
 };
 
+function getPreparedBinnedData(inputValues, binSize, valuesAreAllelicDepths, max = null) {
+  const options = {
+    scales: {
+      x: {
+        type: "linear",
+        beginAtZero: true,
+        max: max !== null ? max : undefined,
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 14,
+          },
+          color: "#333",
+        },
+      },
+      y: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 14,
+          },
+          color: "#333",
+          callback: (value) => (Number.isInteger(value) ? value : null),
+        },
+      },
+    },
+  };
+
+  if (!inputValues) {
+    // Handle the case where values is null
+    return { data: { labels: [], datasets: [] }, options };
+  }
+
+  // Calculate allele balances = ALT/(REF+ALT) where the input array is [[REF, ALT], [REF, ALT], ...]
+  let values = inputValues;
+  if (valuesAreAllelicDepths) {
+    values = inputValues.map((depths) => {
+      const result = (depths[1] / (depths[0] + depths[1])).toFixed(2);
+      return Number.isNaN(result) ? [] : result;
+    });
+  }
+
+  // Calculate the binned frequencies of the array values with a for loop
+  const frequencies = {};
+  for (let i = 0; i < values.length; i += 1) {
+    const bin = Math.floor(values[i] / binSize) * binSize; // Bin values in groups of binSize
+    frequencies[bin] = (frequencies[bin] || 0) + 1;
+  }
+
+  // Prepare data for the bar chart
+  const data = {
+    labels: Object.keys(frequencies).map(Number),
+    datasets: [
+      {
+        label: "Frequencies",
+        data: Object.values(frequencies),
+        backgroundColor: "rgba(75,192,192,0.4)",
+        borderColor: "rgba(75,192,192,1)",
+        borderWidth: 1,
+        hoverBackgroundColor: "rgba(75,192,192,0.7)",
+        hoverBorderColor: "rgba(75,192,192,1)",
+      },
+    ],
+  };
+
+  return { data, options };
+}
+
 class VariantData extends React.Component {
   static propTypes = {
     variant: PropTypes.shape({
@@ -152,236 +223,58 @@ class VariantData extends React.Component {
     showAll: false,
   };
 
-  getGQFrequencies() {
-    const { variant } = this.props;
-
-    const options = {
-      scales: {
-        x: {
-          type: "linear",
-          beginAtZero: true,
-          max: 100,
-          grid: {
-            display: false,
-          },
-          ticks: {
-            font: {
-              size: 14,
-            },
-            color: "#333",
-          },
-        },
-        y: {
-          grid: {
-            display: false,
-          },
-          ticks: {
-            font: {
-              size: 14,
-            },
-            color: "#333",
-            callback: (value) => (Number.isInteger(value) ? value : null),
-          },
-        },
-      },
-    };
-
-    if (!variant.GQ_all) {
-      // Handle the case where GQ_all is null
-      return { data: { labels: [], datasets: [] }, options };
-    }
-
-    // Calculate the frequency of each GQ_all value
-    const gqFrequencies = variant.GQ_all.reduce((acc, value) => {
-      const bin = Math.floor(value / 5) * 5; // Bin values in groups of 5
-      acc[bin] = (acc[bin] || 0) + 1;
-      return acc;
-    }, {});
-
-    // Prepare data for the bar chart
-    const data = {
-      labels: Object.keys(gqFrequencies).map(Number),
-      datasets: [
-        {
-          label: "GQ Frequencies",
-          data: Object.values(gqFrequencies),
-          backgroundColor: "rgba(75,192,192,0.4)",
-          borderColor: "rgba(75,192,192,1)",
-          borderWidth: 1,
-        },
-      ],
-    };
-
-    return { data, options };
-  }
-
-  getDPFrequencies() {
-    const { variant } = this.props;
-
-    const options = {
-      scales: {
-        x: {
-          type: "linear",
-          beginAtZero: true,
-          grid: {
-            display: false,
-          },
-          ticks: {
-            font: {
-              size: 14,
-            },
-            color: "#333",
-          },
-        },
-        y: {
-          grid: {
-            display: false,
-          },
-          ticks: {
-            font: {
-              size: 14,
-            },
-            color: "#333",
-            callback: (value) => (Number.isInteger(value) ? value : null),
-          },
-        },
-      },
-    };
-
-    if (!variant.DP_all) {
-      // Handle the case where GQ_all is null
-      return { data: { labels: [], datasets: [] }, options };
-    }
-
-    // Calculate the frequency of each DP_all value
-    const dpFrequencies = variant.DP_all.reduce((acc, value) => {
-      const bin = Math.floor(value / 5) * 5; // Bin values in groups of 5
-      acc[bin] = (acc[bin] || 0) + 1;
-      return acc;
-    }, {});
-
-    // Prepare data for the bar chart
-    const data = {
-      labels: Object.keys(dpFrequencies).map(Number),
-      datasets: [
-        {
-          label: "DP Frequencies",
-          data: Object.values(dpFrequencies),
-          backgroundColor: "rgba(75,192,192,0.4)",
-          borderColor: "rgba(75,192,192,1)",
-          borderWidth: 1,
-        },
-      ],
-    };
-
-    return { data, options };
-  }
-
-  getAlleleBalances() {
-    const { variant } = this.props;
-
-    const options = {
-      scales: {
-        x: {
-          type: "linear",
-          beginAtZero: true,
-          max: 1,
-          grid: {
-            display: false,
-          },
-          ticks: {
-            font: {
-              size: 14,
-            },
-            color: "#333",
-          },
-        },
-        y: {
-          grid: {
-            display: false,
-          },
-          ticks: {
-            font: {
-              size: 14,
-            },
-            color: "#333",
-            callback: (value) => (Number.isInteger(value) ? value : null),
-          },
-        },
-      },
-    };
-
-    if (!variant.AD_all) {
-      // Handle the case where GQ_all is null
-      return { data: { labels: [], datasets: [] }, options };
-    }
-
-    // Calculate the allele balances from the AD_all values
-    const alleleBalances = variant.AD_all.map((depths) =>
-      (depths[1] / (depths[0] + depths[1])).toFixed(2)
-    );
-
-    // Calculate the frequency of each allele balance value
-    const alleleBalanceFrequencies = alleleBalances.reduce((acc, value) => {
-      // Bin values in groups of 0.05
-      const bin = Math.floor(value / 0.05) * 0.05;
-      acc[bin] = (acc[bin] || 0) + 1;
-      return acc;
-    }, {});
-
-    // Prepare data for the bar chart
-    const data = {
-      labels: Object.keys(alleleBalanceFrequencies),
-      datasets: [
-        {
-          label: "Allele Balances",
-          data: Object.values(alleleBalanceFrequencies),
-          backgroundColor: "rgba(75,192,192,0.4)",
-          borderColor: "rgba(75,192,192,1)",
-          borderWidth: 1,
-          hoverBackgroundColor: "rgba(75,192,192,0.7)",
-          hoverBorderColor: "rgba(75,192,192,1)",
-        },
-      ],
-    };
-
-    return { data, options };
-  }
-
   render() {
     const { variant } = this.props;
     const { showAll } = this.state;
 
-    const { data: gqData, options: gqOptions } = this.getGQFrequencies();
-    const { data: dpData, options: dpOptions } = this.getDPFrequencies();
-    const { data: abData, options: abOptions } = this.getAlleleBalances();
+    const { data: gqData, options: gqOptions } = getPreparedBinnedData(
+      variant.GQ_all,
+      5,
+      false,
+      100
+    );
+    const { data: dpData, options: dpOptions } = getPreparedBinnedData(
+      variant.DP_all,
+      5,
+      false,
+      null
+    );
+    const { data: abData, options: abOptions } = getPreparedBinnedData(
+      variant.AD_all,
+      0.05,
+      true,
+      1.0
+    );
 
     const tabItems = [
       {
-        key: "1",
-        label: "Genotype Qualities",
-        children: (
-          <div style={{ height: "300px", width: "100%" }}>
-            <Bar data={gqData} options={gqOptions} />
-          </div>
+        menuItem: "Genotype Qualities",
+        render: () => (
+          <TabPane>
+            <div style={{ height: "300px", width: "100%" }}>
+              <Bar data={gqData} options={gqOptions} />
+            </div>
+          </TabPane>
         ),
       },
       {
-        key: "2",
-        label: "Read Depths",
-        children: (
-          <div style={{ height: "300px", width: "100%" }}>
-            <Bar data={dpData} options={dpOptions} />
-          </div>
+        menuItem: "Read Depths",
+        render: () => (
+          <TabPane>
+            <div style={{ height: "300px", width: "100%" }}>
+              <Bar data={dpData} options={dpOptions} />
+            </div>
+          </TabPane>
         ),
       },
       {
-        key: "3",
-        label: "Allele Balances",
-        children: (
-          <div style={{ height: "300px", width: "100%" }}>
-            <Bar data={abData} options={abOptions} />
-          </div>
+        menuItem: "Allele Balances",
+        render: () => (
+          <TabPane>
+            <div style={{ height: "300px", width: "100%" }}>
+              <Bar data={abData} options={abOptions} />
+            </div>
+          </TabPane>
         ),
       },
     ];
@@ -485,7 +378,7 @@ class VariantData extends React.Component {
           )}
         </List.Item>
         <List.Item>
-          <Tabs defaultActiveKey="1" items={tabItems} />
+          <Tab panes={tabItems} />
         </List.Item>
       </List>
     );
