@@ -4,6 +4,7 @@ import { Button, List, Tab, TabPane } from "semantic-ui-react";
 import { Chart, registerables } from "chart.js";
 import { Bar } from "react-chartjs-2";
 
+// Register chart.js plugins to use scale types in charts (e.g. "linear")
 Chart.register(...registerables);
 
 const AnnotationsList = ({ annotations }) => {
