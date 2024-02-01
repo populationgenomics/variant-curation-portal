@@ -1,6 +1,11 @@
 import PropTypes from "prop-types";
 import React from "react";
-import { Button, List } from "semantic-ui-react";
+import { Button, List, Tab, TabPane } from "semantic-ui-react";
+import { Chart, registerables } from "chart.js";
+import { Bar } from "react-chartjs-2";
+
+// Register chart.js plugins to use scale types in charts (e.g. "linear")
+Chart.register(...registerables);
 
 const AnnotationsList = ({ annotations }) => {
   const annotationsGroupedByGene = annotations.reduce(
@@ -119,6 +124,78 @@ TagsList.propTypes = {
   ).isRequired,
 };
 
+function getPreparedBinnedData(inputValues, binSize, valuesAreAllelicDepths, max = null) {
+  const options = {
+    scales: {
+      x: {
+        type: "linear",
+        beginAtZero: true,
+        max: max !== null ? max : undefined,
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 14,
+          },
+          color: "#333",
+        },
+      },
+      y: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          font: {
+            size: 14,
+          },
+          color: "#333",
+          callback: (value) => (Number.isInteger(value) ? value : null),
+        },
+      },
+    },
+  };
+
+  if (!inputValues) {
+    // Handle the case where values is null
+    return { data: { labels: [], datasets: [] }, options };
+  }
+
+  // Calculate allele balances = ALT/(REF+ALT) where the input array is [[REF, ALT], [REF, ALT], ...]
+  let values = inputValues;
+  if (valuesAreAllelicDepths) {
+    values = inputValues.map((depths) => {
+      const result = (depths[1] / (depths[0] + depths[1])).toFixed(2);
+      return Number.isNaN(result) ? [] : result;
+    });
+  }
+
+  // Calculate the binned frequencies of the array values with a for loop
+  const frequencies = {};
+  for (let i = 0; i < values.length; i += 1) {
+    const bin = Math.floor(values[i] / binSize) * binSize; // Bin values in groups of binSize
+    frequencies[bin] = (frequencies[bin] || 0) + 1;
+  }
+
+  // Prepare data for the bar chart
+  const data = {
+    labels: Object.keys(frequencies).map(Number),
+    datasets: [
+      {
+        label: "Frequencies",
+        data: Object.values(frequencies),
+        backgroundColor: "rgba(75,192,192,0.4)",
+        borderColor: "rgba(75,192,192,1)",
+        borderWidth: 1,
+        hoverBackgroundColor: "rgba(75,192,192,0.7)",
+        hoverBorderColor: "rgba(75,192,192,1)",
+      },
+    ],
+  };
+
+  return { data, options };
+}
+
 class VariantData extends React.Component {
   static propTypes = {
     variant: PropTypes.shape({
@@ -150,6 +227,58 @@ class VariantData extends React.Component {
   render() {
     const { variant } = this.props;
     const { showAll } = this.state;
+
+    const { data: gqData, options: gqOptions } = getPreparedBinnedData(
+      variant.GQ_all,
+      5,
+      false,
+      100
+    );
+    const { data: dpData, options: dpOptions } = getPreparedBinnedData(
+      variant.DP_all,
+      5,
+      false,
+      null
+    );
+    const { data: abData, options: abOptions } = getPreparedBinnedData(
+      variant.AD_all,
+      0.05,
+      true,
+      1.0
+    );
+
+    const tabItems = [
+      {
+        menuItem: "Genotype Qualities",
+        render: () => (
+          <TabPane>
+            <div style={{ height: "300px", width: "100%" }}>
+              <Bar data={gqData} options={gqOptions} />
+            </div>
+          </TabPane>
+        ),
+      },
+      {
+        menuItem: "Read Depths",
+        render: () => (
+          <TabPane>
+            <div style={{ height: "300px", width: "100%" }}>
+              <Bar data={dpData} options={dpOptions} />
+            </div>
+          </TabPane>
+        ),
+      },
+      {
+        menuItem: "Allele Balances",
+        render: () => (
+          <TabPane>
+            <div style={{ height: "300px", width: "100%" }}>
+              <Bar data={abData} options={abOptions} />
+            </div>
+          </TabPane>
+        ),
+      },
+    ];
 
     return (
       <List>
@@ -187,7 +316,7 @@ class VariantData extends React.Component {
         </List.Item>
         <List.Item>
           <strong>Allelic Depths:</strong>{" "}
-          {variant.AD ? variant.AD.map((depths) => `(${depths.join(", ")})`).join(", ") : "N/A"}
+          {(variant.AD ?? []).map((depths) => `(${depths.join(", ")})`).join(", ") || "N/A"}
         </List.Item>
         <List.Item>
           <strong>Read Depths (all ALT genotypes):</strong> {(variant.DP_all ?? []).join(", ")}
@@ -197,9 +326,7 @@ class VariantData extends React.Component {
         </List.Item>
         <List.Item>
           <strong>Allelic Depths (all ALT genotypes):</strong>{" "}
-          {variant.AD_all
-            ? variant.AD_all.map((depths) => `(${depths.join(", ")})`).join(", ")
-            : "N/A"}
+          {(variant.AD_all ?? []).map((depths) => `(${depths.join(", ")})`).join(", ") || "N/A"}
         </List.Item>
         <List.Item>
           <strong>Number of homozygotes:</strong> {variant.n_homozygotes}
@@ -250,6 +377,9 @@ class VariantData extends React.Component {
           ) : (
             <p>No tags available for this variant</p>
           )}
+        </List.Item>
+        <List.Item>
+          <Tab panes={tabItems} />
         </List.Item>
       </List>
     );
