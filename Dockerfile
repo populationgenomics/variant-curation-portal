@@ -53,6 +53,8 @@ RUN chown -R app:app .
 USER app
 
 # Run
+# Worker and thread count set according to gunicorn docs
+# https://docs.gunicorn.org/en/stable/design.html#how-many-workers
 CMD ["gunicorn", \
   "--bind", ":8000", \
   "--log-file", "-", \
