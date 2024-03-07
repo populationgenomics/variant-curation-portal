@@ -109,6 +109,5 @@ jobs:
             --add-cloudsql-instances=${{ steps.deploy_info.outputs.cloud_sql_id }} \
             --image=${{ steps.deploy_info.outputs.image_tag }} \
             --port=8000 \
-            --memory=1024Mi \
             --set-env-vars=DJANGO_SETTINGS_MODULE=${{ steps.deploy_info.outputs.django_settings_module }},DB_ENGINE=$DB_ENGINE,DB_HOST=/cloudsql/${{ steps.deploy_info.outputs.cloud_sql_id }},DB_DATABASE=${{ steps.deploy_info.outputs.db_database }},DB_USER=${{ steps.deploy_info.outputs.db_user }},ALLOWED_HOSTS=curator.populationgenomics.org.au,CURATION_PORTAL_AUTH_HEADER=HTTP_X_GOOG_AUTHENTICATED_USER_EMAIL \
             --update-secrets=SECRET_KEY=django-secret-key-${{ steps.deploy_info.outputs.type }}:latest,DB_PASSWORD=postgres-password-${{ steps.deploy_info.outputs.type }}:latest
