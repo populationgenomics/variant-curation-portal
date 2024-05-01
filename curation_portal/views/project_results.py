@@ -85,7 +85,7 @@ class ProjectResultsView(APIView):
 
         results = CurationResult.objects.filter(
             assignment__variant__project=project
-        ).prefetch_related("assignment__curator", "assignment__variant")
+        ).prefetch_related("assignment__curator", "assignment__variant", "custom_flags__flag")
         serializer = CurationResultSerializer(results, many=True)
         return Response({"results": serializer.data})
 
