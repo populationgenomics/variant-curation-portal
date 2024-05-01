@@ -14,7 +14,7 @@ permissions:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-
+    environment: production
     env:
       DOCKER_BUILDKIT: 1
       BUILDKIT_PROGRESS: plain

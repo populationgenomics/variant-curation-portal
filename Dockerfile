@@ -53,9 +53,11 @@ RUN chown -R app:app .
 USER app
 
 # Run
+# Worker and thread count set according to gunicorn docs
+# https://docs.gunicorn.org/en/stable/design.html#how-many-workers
 CMD ["gunicorn", \
   "--bind", ":8000", \
   "--log-file", "-", \
-  "--workers", "2", "--threads", "4", "--worker-class", "gthread", \
+  "--workers", "3", "--threads", "1", "--worker-class", "gthread", \
   "--worker-tmp-dir", "/dev/shm", \
   "curation_portal.wsgi"]
