@@ -18,6 +18,8 @@ from curation_portal.models import (
     FLAG_FIELDS,
     FLAG_LABELS,
     CurationResult,
+    CustomFlagCurationResult,
+    User,
 )
 
 from curation_portal.serializers import ExportedResultSerializer
@@ -70,6 +72,18 @@ class ExportProjectResultsView(APIView):
             queryset=completed_assignments,
         )
 
+        # Prefetch related objects and annotations
+        filtered_assignments_qs = filtered_assignments.qs.prefetch_related(
+            Prefetch(
+                "result__custom_flags",
+                queryset=CustomFlagCurationResult.objects.select_related("flag"),
+            ),
+            Prefetch(
+                "result__editor",
+                queryset=User.objects.only("username"),
+            ),
+        )
+
         # Include project name and (if applicable) curator name in downloaded file name.
         filename_prefix = f"{project.name}"
         if "curator__username" in filter_params:
@@ -80,17 +94,23 @@ class ExportProjectResultsView(APIView):
         filename_prefix = re.sub(r"(?u)[^-\w]", "-", filename_prefix)
 
         if request.query_params.get("format") == "json":
-            return self.get_json_response(filtered_assignments, filename_prefix)
+            return self.get_json_response(filtered_assignments_qs, filename_prefix)
         else:
-            return self.get_csv_response(filtered_assignments, filename_prefix)
+            return self.get_csv_response(filtered_assignments_qs, filename_prefix)
 
-    def get_json_response(self, filtered_assignments, filename_prefix):
+    def get_json_response(self, filtered_assignments_qs, filename_prefix):
         response = HttpResponse(content_type="application/json")
         response["Content-Disposition"] = f'attachment; filename="{filename_prefix}_results.json"'
 
         project = self.get_project()
+        curation_results = CurationResult.objects.filter(assignment__in=filtered_assignments_qs).prefetch_related(
+            Prefetch(
+                "custom_flags",
+                queryset=CustomFlagCurationResult.objects.select_related("flag"),
+            ),
+        )
         serializer = ExportedResultSerializer(
-            instance=CurationResult.objects.filter(assignment__in=filtered_assignments.qs),
+            instance=curation_results,
             many=True,
             context={"project": project},
         )
@@ -98,7 +118,7 @@ class ExportProjectResultsView(APIView):
 
         return response
 
-    def get_csv_response(self, filtered_assignments, filename_prefix):
+    def get_csv_response(self, filtered_assignments_qs, filename_prefix):
         result_fields = ["notes", "curator_comments", "should_revisit", "verdict", *FLAG_FIELDS]
 
         response = HttpResponse(content_type="text/csv")
@@ -111,35 +131,37 @@ class ExportProjectResultsView(APIView):
             for f in result_fields
         ]
         # Custom flag headers
-        header_row += [f.label for f in CustomFlag.objects.all()]
+        custom_flags = CustomFlag.objects.all()
+        header_row += [f.label for f in custom_flags]
 
         writer.writerow(header_row)
 
-        for assignment in filtered_assignments.qs:
-            editor = assignment.result.editor
+        for assignment in filtered_assignments_qs:
+            variant_annotations = assignment.variant.annotations.all()
+            custom_flag_results = {flag.flag.key: flag.checked for flag in assignment.result.custom_flags.all()}
+            
             row = (
                 [
                     assignment.variant.variant_id,
                     ";".join(
                         set(
                             f"{annotation.gene_id}:{annotation.gene_symbol}"
-                            for annotation in assignment.variant.annotations.all()
+                            for annotation in variant_annotations
                         )
                     ),
                     ";".join(
                         set(
                             annotation.transcript_id
-                            for annotation in assignment.variant.annotations.all()
+                            for annotation in variant_annotations
                         )
                     ),
                     assignment.curator.username,
-                    editor.username if editor else None,
+                    assignment.result.editor.username if assignment.result.editor else None,
                 ]
                 + [getattr(assignment.result, f) for f in result_fields]
                 # Custom flag results
                 + [
-                    getattr(assignment.result.custom_flags.filter(flag=f).first(), "checked", False)
-                    for f in CustomFlag.objects.all()
+                    custom_flag_results.get(flag.key, False) for flag in custom_flags
                 ]
             )
             writer.writerow(row)
