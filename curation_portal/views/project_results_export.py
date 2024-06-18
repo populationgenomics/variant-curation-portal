@@ -111,6 +111,7 @@ class ExportProjectResultsView(APIView):
         )
         serializer = ExportedResultSerializer(
             instance=curation_results,
+            # instance=CurationResult.objects.filter(assignment__in=filtered_assignments_qs),
             many=True,
             context={"project": project},
         )
@@ -137,7 +138,7 @@ class ExportProjectResultsView(APIView):
         writer.writerow(header_row)
 
         for assignment in filtered_assignments_qs:
-            variant_annotations = assignment.variant.annotations.all()
+            editor = assignment.result.editor
             custom_flag_results = {flag.flag.key: flag.checked for flag in assignment.result.custom_flags.all()}
             
             row = (
@@ -146,17 +147,17 @@ class ExportProjectResultsView(APIView):
                     ";".join(
                         set(
                             f"{annotation.gene_id}:{annotation.gene_symbol}"
-                            for annotation in variant_annotations
+                            for annotation in assignment.variant.annotations.all()
                         )
                     ),
                     ";".join(
                         set(
                             annotation.transcript_id
-                            for annotation in variant_annotations
+                            for annotation in assignment.variant.annotations.all()
                         )
                     ),
                     assignment.curator.username,
-                    assignment.result.editor.username if assignment.result.editor else None,
+                    editor.username if editor else None,
                 ]
                 + [getattr(assignment.result, f) for f in result_fields]
                 # Custom flag results
