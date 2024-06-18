@@ -111,7 +111,6 @@ class ExportProjectResultsView(APIView):
         )
         serializer = ExportedResultSerializer(
             instance=curation_results,
-            # instance=CurationResult.objects.filter(assignment__in=filtered_assignments_qs),
             many=True,
             context={"project": project},
         )
