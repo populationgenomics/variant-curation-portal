@@ -219,7 +219,7 @@ class CustomFlagSerializer(ModelSerializer):
 
 class CustomFlagCurationResultSerializer(DictField):
     custom_flags = CustomFlag.objects.all()
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.error_messages[

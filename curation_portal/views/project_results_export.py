@@ -103,7 +103,9 @@ class ExportProjectResultsView(APIView):
         response["Content-Disposition"] = f'attachment; filename="{filename_prefix}_results.json"'
 
         project = self.get_project()
-        curation_results = CurationResult.objects.filter(assignment__in=filtered_assignments_qs).prefetch_related(
+        curation_results = CurationResult.objects.filter(
+            assignment__in=filtered_assignments_qs
+        ).prefetch_related(
             Prefetch(
                 "custom_flags",
                 queryset=CustomFlagCurationResult.objects.select_related("flag"),
@@ -138,8 +140,10 @@ class ExportProjectResultsView(APIView):
 
         for assignment in filtered_assignments_qs:
             editor = assignment.result.editor
-            custom_flag_results = {flag.flag.key: flag.checked for flag in assignment.result.custom_flags.all()}
-            
+            custom_flag_results = {
+                flag.flag.key: flag.checked for flag in assignment.result.custom_flags.all()
+            }
+
             row = (
                 [
                     assignment.variant.variant_id,
@@ -160,9 +164,7 @@ class ExportProjectResultsView(APIView):
                 ]
                 + [getattr(assignment.result, f) for f in result_fields]
                 # Custom flag results
-                + [
-                    custom_flag_results.get(flag.key, False) for flag in custom_flags
-                ]
+                + [custom_flag_results.get(flag.key, False) for flag in custom_flags]
             )
             writer.writerow(row)
 
