@@ -218,6 +218,8 @@ class CustomFlagSerializer(ModelSerializer):
 
 
 class CustomFlagCurationResultSerializer(DictField):
+    custom_flags = CustomFlag.objects.all()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.error_messages[
@@ -227,23 +229,22 @@ class CustomFlagCurationResultSerializer(DictField):
     def get_default(self):
         default = super().get_default()
         if not default:
-            return {f.key: False for f in CustomFlag.objects.all()}
+            return {f.key: False for f in self.custom_flags}
         return default
 
     def get_initial(self):
         initial = super().get_initial()
         if not initial:
-            return {f.key: False for f in CustomFlag.objects.all()}
+            return {f.key: False for f in self.custom_flags}
         return initial
 
     def to_representation(self, value):
         flags_related_to_curation_result = getattr(value, "all", lambda: [])()
         flags = {c.flag.key: c.checked for c in flags_related_to_curation_result}
 
-        for flag in CustomFlag.objects.all():
+        for flag in self.custom_flags:
             if flag.key not in flags:
                 flags[flag.key] = False
-
         return flags
 
     def create(self, result, data):
