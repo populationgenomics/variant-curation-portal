@@ -5,7 +5,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/2.2/topics/http/urls/
 """
 
-from django.urls import path, register_converter
+from django.urls import path, register_converter, include
 from django.views.generic import TemplateView
 
 from curation_portal.views.app_settings import ApplicationSettingsView
@@ -140,11 +140,11 @@ urlpatterns = [
         CustomFlagViewset.as_view({"patch": "partial_update"}),
         name="api-custom-flag-update",
     ),
-    path(
-        "api/custom_flag/<int:pk>/delete",
-        CustomFlagViewset.as_view({"delete": "destroy"}),
-        name="api-custom-flag-update",
-    ),
+    # path(
+    #     "api/custom_flag/<int:pk>/delete",
+    #     CustomFlagViewset.as_view({"delete": "destroy"}),
+    #     name="api-custom-flag-update",
+    # ),
 ]
 
 handler400 = "rest_framework.exceptions.bad_request"  # pylint: disable=invalid-name
