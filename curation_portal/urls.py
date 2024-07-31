@@ -140,11 +140,11 @@ urlpatterns = [
         CustomFlagViewset.as_view({"patch": "partial_update"}),
         name="api-custom-flag-update",
     ),
-    path(
-        "api/custom_flag/<int:pk>/delete",
-        CustomFlagViewset.as_view({"delete": "destroy"}),
-        name="api-custom-flag-update",
-    ),
+    # path(
+    #     "api/custom_flag/<int:pk>/delete",
+    #     CustomFlagViewset.as_view({"delete": "destroy"}),
+    #     name="api-custom-flag-update",
+    # ),
 ]
 
 handler400 = "rest_framework.exceptions.bad_request"  # pylint: disable=invalid-name
