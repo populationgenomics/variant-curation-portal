@@ -232,7 +232,7 @@ def get_gnomad_lof_variants(
     ds = ds.filter((hl.len(ds.exome.filters) == 0) | (hl.len(ds.genome.filters) == 0))
 
     # Add the liftover mapping to hg37 or hg38 from the gnomAD liftover tables
-    ds = add_liftover_mapping(ds)
+    ds = add_liftover_mapping(ds, reference_genome)
 
     # Format for the LoF curation portal.
     ds = ds.select(
