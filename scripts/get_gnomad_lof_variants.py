@@ -168,19 +168,17 @@ def add_liftover_mapping(ds, reference_genome, sequencing_type='genome'):
 
 def variant_id(locus, alleles):
     """Format a variant ID string from a locus and alleles."""
-    return hl.eval(
-        hl.if_else(
-            hl.is_missing(locus) | hl.is_missing(alleles), 
-            hl.missing(hl.tstr), 
-            (
-                locus.contig.replace("^chr", "")
-                + "-"
-                + hl.str(locus.position)
-                + "-"
-                + alleles[0]
-                + "-"
-                + alleles[1]
-            )
+    return hl.if_else(
+        hl.is_missing(locus) | hl.is_missing(alleles), 
+        hl.missing(hl.tstr), 
+        (
+            locus.contig.replace("^chr", "")
+            + "-"
+            + hl.str(locus.position)
+            + "-"
+            + alleles[0]
+            + "-"
+            + alleles[1]
         )
     )
 
