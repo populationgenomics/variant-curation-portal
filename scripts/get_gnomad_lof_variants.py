@@ -119,46 +119,49 @@ def load_gnomad_v3_variants():
     return ds
 
 
-def add_liftover_mapping(ds, reference_genome):
+def add_liftover_mapping(ds, reference_genome, sequencing_type='genome'):
     """
     Load the gnomAD liftover Hail tables depending on the reference genome
     Add a mapping from the hg37 sites to the hg38 sites to the dataset (or vice versa)
     """
     if reference_genome == "GRCh37":
-        exome_liftover_mapping = hl.read_table(GNOMAD_V2_EXOME_LIFTOVER)
-        genome_liftover_mapping = hl.read_table(GNOMAD_V2_GENOME_LIFTOVER)
-
         # hg38 fields: ['locus', 'alleles']
-        ds_exome = ds.annotate(
-            liftover_locus=exome_liftover_mapping[ds.locus, ds.alleles].locus,
-            liftover_alleles=exome_liftover_mapping[ds.locus, ds.alleles].alleles,
-        )
-        ds_genome = ds.annotate(
-            liftover_locus=genome_liftover_mapping[ds.locus, ds.alleles].locus,
-            liftover_alleles=genome_liftover_mapping[ds.locus, ds.alleles].alleles,
-        )
+        if sequencing_type == 'exome':
+            exome_liftover_mapping = hl.read_table(GNOMAD_V2_EXOME_LIFTOVER)
+            ds = ds.annotate(
+                liftover_locus=exome_liftover_mapping[ds.locus, ds.alleles].locus,
+                liftover_alleles=exome_liftover_mapping[ds.locus, ds.alleles].alleles,
+            )
+            
+        elif sequencing_type == 'genome':
+            genome_liftover_mapping = hl.read_table(GNOMAD_V2_GENOME_LIFTOVER)
+            ds = ds.annotate(
+                liftover_locus=genome_liftover_mapping[ds.locus, ds.alleles].locus,
+                liftover_alleles=genome_liftover_mapping[ds.locus, ds.alleles].alleles,
+            )
+        else:
+            raise Exception(f"Invalid sequencing type {sequencing_type}")
 
     elif reference_genome == "GRCh38":
-        exome_liftover_mapping = hl.read_table(GNOMAD_V3_EXOME_LIFTOVER)
-        genome_liftover_mapping = hl.read_table(GNOMAD_V3_GENOME_LIFTOVER)
-
         # hg37 fields: ['original_locus', 'original_alleles']
-        ds_exome = ds.annotate(
-            liftover_locus=exome_liftover_mapping[ds.locus, ds.alleles].original_locus,
-            liftover_alleles=exome_liftover_mapping[ds.locus, ds.alleles].original_alleles,
-        )
-        ds_genome = ds.annotate(
-            liftover_locus=genome_liftover_mapping[ds.locus, ds.alleles].original_locus,
-            liftover_alleles=genome_liftover_mapping[ds.locus, ds.alleles].original_alleles,
-        )
+        if sequencing_type == 'exome':
+            exome_liftover_mapping = hl.read_table(GNOMAD_V3_EXOME_LIFTOVER)
+            ds = ds.annotate(
+                liftover_locus=exome_liftover_mapping[ds.locus, ds.alleles].original_locus,
+                liftover_alleles=exome_liftover_mapping[ds.locus, ds.alleles].original_alleles,
+            )
+            
+        elif sequencing_type == 'genome':
+            genome_liftover_mapping = hl.read_table(GNOMAD_V3_GENOME_LIFTOVER)
+            ds = ds.annotate(
+                liftover_locus=genome_liftover_mapping[ds.locus, ds.alleles].original_locus,
+                liftover_alleles=genome_liftover_mapping[ds.locus, ds.alleles].original_alleles,
+            )
+        else:
+            raise Exception(f"Invalid sequencing type {sequencing_type}")
 
     else:
         raise Exception(f"Invalid reference genome {reference_genome}")
-
-    ds = ds.annotate(
-        liftover_locus=hl.or_else(ds_exome.liftover_locus, ds_genome.liftover_locus),
-        liftover_alleles=hl.or_else(ds_exome.liftover_alleles, ds_genome.liftover_alleles),
-    )
 
     return ds
 
@@ -232,7 +235,7 @@ def get_gnomad_lof_variants(
     ds = ds.filter((hl.len(ds.exome.filters) == 0) | (hl.len(ds.genome.filters) == 0))
 
     # Add the liftover mapping to hg37 or hg38 from the gnomAD liftover tables
-    ds = add_liftover_mapping(ds, reference_genome)
+    ds = add_liftover_mapping(ds, reference_genome, sequencing_type='exome' if args.exome else 'genome')
 
     # Format for the LoF curation portal.
     ds = ds.select(
@@ -393,6 +396,11 @@ if __name__ == "__main__":
         "--output",
         required=True,
         help="relative dataset path (analysis category) for variants file",
+    )
+    parser.add_argument(
+        "--exome",
+        action="store_true",
+        help="Use the gnomAD exome liftover tables (defaults to genome)",
     )
     args = parser.parse_args()
 
