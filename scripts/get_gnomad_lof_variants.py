@@ -119,7 +119,7 @@ def load_gnomad_v3_variants():
     return ds
 
 
-def add_liftover_mapping(ds, reference_genome, sequencing_type):
+def add_liftover_mapping(ds, reference_genome, sequencing_type='genome'):
     """
     Load the gnomAD liftover Hail tables depending on the reference genome
     Add a mapping from the hg37 sites to the hg38 sites to the dataset (or vice versa)
@@ -235,7 +235,7 @@ def get_gnomad_lof_variants(
     ds = ds.filter((hl.len(ds.exome.filters) == 0) | (hl.len(ds.genome.filters) == 0))
 
     # Add the liftover mapping to hg37 or hg38 from the gnomAD liftover tables
-    ds = add_liftover_mapping(ds, reference_genome)
+    ds = add_liftover_mapping(ds, reference_genome, sequencing_type='exome' if args.exome else 'genome')
 
     # Format for the LoF curation portal.
     ds = ds.select(
@@ -396,6 +396,11 @@ if __name__ == "__main__":
         "--output",
         required=True,
         help="relative dataset path (analysis category) for variants file",
+    )
+    parser.add_argument(
+        "--exome",
+        action="store_true",
+        help="Use the gnomAD exome liftover tables (defaults to genome)",
     )
     args = parser.parse_args()
 
