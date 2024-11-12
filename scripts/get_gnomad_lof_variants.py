@@ -5,9 +5,9 @@ from cloudpathlib import AnyPath
 
 import hail as hl
 import pandas as pd
-import requests
 
-from cpg_utils.hail_batch import init_batch, dataset_path, output_path
+from cpg_utils.hail_batch import init_batch, dataset_path
+from cpg_utils.config import output_path
 
 CONSEQUENCE_TERMS = [
     "transcript_ablation",
