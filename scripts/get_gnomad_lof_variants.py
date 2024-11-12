@@ -119,8 +119,6 @@ def load_gnomad_v3_variants():
     return ds
 
 
-
-
 def add_liftover_mapping(ds, reference_genome, sequencing_type):
     """
     Load the gnomAD liftover Hail tables depending on the reference genome
