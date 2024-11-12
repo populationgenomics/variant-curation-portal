@@ -167,7 +167,7 @@ def add_liftover_mapping(ds, reference_genome, sequencing_type='genome'):
 
 
 def variant_id(locus, alleles):
-    if not locus or not alleles:
+    if hl.is_missing(locus) or hl.is_missing(alleles):
         return hl.missing(hl.tstr)
     return (
         locus.contig.replace("^chr", "")
