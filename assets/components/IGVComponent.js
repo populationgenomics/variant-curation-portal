@@ -37,6 +37,8 @@ const createTracks = ({ reads, endpoint }) => {
     return {
       name: sampleId,
       sourceType: "file",
+      colorBy: "strand",
+      showSoftClips: true,
       url: `${endpoint}/?file=${encodeURIComponent(read)}`.replace("//", "/"),
       indexURL: `${endpoint}/?file=${encodeURIComponent(indexURL)}`.replace("//", "/"),
       format: ext,
